@@ -65,7 +65,7 @@ export class CanvasRenderer {
     return this.canvas;
   }
 
-  async preload(cast: CastMember[], events: ScriptEvent[]): Promise<void> {
+  async preload(cast: CastMember[], events: ScriptEvent[], chatConfig?: ChatConfig): Promise<void> {
     const staticUrls: [string, string][] = [
       ['signal', 'https://raw.githubusercontent.com/truls-dev/images/main/signalbarsblack.png'],
       ['wifi', 'https://raw.githubusercontent.com/truls-dev/images/main/wifi.png'],
@@ -92,6 +92,13 @@ export class CanvasRenderer {
       if (e.mediaUrl) {
         promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
       }
+    }
+
+    if (chatConfig?.exportBackgroundUrl) {
+      promises.push(this.loadImg('exportBg', chatConfig.exportBackgroundUrl));
+    }
+    if (chatConfig?.groupIconUrl) {
+      promises.push(this.loadImg('groupIcon', chatConfig.groupIconUrl));
     }
 
     await Promise.all(promises);
@@ -144,9 +151,43 @@ export class CanvasRenderer {
       this.drawPhoneUI(ctx, state, kbH);
       ctx.restore();
     } else {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, this.W, this.H);
-      this.drawPhoneUI(ctx, state, kbH);
+      const exportBg = this.images.get('exportBg');
+      if (exportBg) {
+        const imgR = exportBg.width / exportBg.height;
+        const canR = this.W / this.H;
+        let dw: number, dh: number, dx: number, dy: number;
+        if (imgR > canR) {
+          dh = this.H; dw = this.H * imgR; dx = (this.W - dw) / 2; dy = 0;
+        } else {
+          dw = this.W; dh = this.W / imgR; dx = 0; dy = (this.H - dh) / 2;
+        }
+        ctx.drawImage(exportBg, dx, dy, dw, dh);
+      } else {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, this.W, this.H);
+      }
+
+      if (state.chatConfig.isShortCrop) {
+        const phoneH = this.H * 0.75;
+        const phoneY = (this.H - phoneH) / 2;
+        const cr = state.chatConfig.topCornerRadius * 2.77;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cr, phoneY);
+        ctx.lineTo(this.W - cr, phoneY);
+        ctx.quadraticCurveTo(this.W, phoneY, this.W, phoneY + cr);
+        ctx.lineTo(this.W, phoneY + phoneH);
+        ctx.lineTo(0, phoneY + phoneH);
+        ctx.lineTo(0, phoneY + cr);
+        ctx.quadraticCurveTo(0, phoneY, cr, phoneY);
+        ctx.closePath();
+        ctx.clip();
+        ctx.translate(0, phoneY);
+        this.drawPhoneUI(ctx, state, kbH);
+        ctx.restore();
+      } else {
+        this.drawPhoneUI(ctx, state, kbH);
+      }
     }
 
     return this.canvas;
@@ -255,8 +296,18 @@ export class CanvasRenderer {
     const others = state.cast.filter(c => !c.isMe);
     if (others[0]) {
       const avatarImg = this.images.get(`selfie_${others[0].bitmojiAvatarId}`);
-      if (avatarImg) {
-        if (state.chatConfig.isGroup) {
+      if (state.chatConfig.isGroup) {
+        const groupIconImg = this.images.get('groupIcon');
+        if (groupIconImg) {
+          const s = 90;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx + s / 2, y + HEADER_H / 2, s / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(groupIconImg, cx, y + HEADER_H / 2 - s / 2, s, s);
+          ctx.restore();
+          cx += s + 16;
+        } else if (avatarImg) {
           const s = 76;
           ctx.save();
           ctx.beginPath();
@@ -277,21 +328,21 @@ export class CanvasRenderer {
             }
           }
           cx += s + 40;
-        } else {
-          const containerW = 110;
-          const imgScale = 1.3;
-          const imgW = containerW * imgScale;
-          const imgH = avatarImg.height * (imgW / avatarImg.width);
-          const imgX = cx + (containerW - imgW) / 2;
-          const imgY = y + HEADER_H - imgH;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(cx - 10, y, containerW + 20, HEADER_H);
-          ctx.clip();
-          ctx.drawImage(avatarImg, imgX, imgY, imgW, imgH);
-          ctx.restore();
-          cx += containerW - 20;
         }
+      } else if (avatarImg) {
+        const containerW = 110;
+        const imgScale = 1.3;
+        const imgW = containerW * imgScale;
+        const imgH = avatarImg.height * (imgW / avatarImg.width);
+        const imgX = cx + (containerW - imgW) / 2;
+        const imgY = y + HEADER_H - imgH;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx - 10, y, containerW + 20, HEADER_H);
+        ctx.clip();
+        ctx.drawImage(avatarImg, imgX, imgY, imgW, imgH);
+        ctx.restore();
+        cx += containerW - 20;
       }
     }
 

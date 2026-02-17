@@ -25,6 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **Path Aliases**: `@/` maps to `client/src/`, `@shared/` maps to `shared/`
 
 ### Key Frontend Services
+- **`canvasRenderer.ts`**: Native 1080x1920 canvas-based renderer for HD video export. Draws all UI elements programmatically (status bar, header, messages, typing indicators, presence pills, input, keyboard). Supports video background mode, short crop, export background images, and group icons. Uses WebCodecs VideoEncoder for frame encoding — no screen capture required.
 - **`geminiService.ts`**: Calls Google Gemini API directly from the client using `@google/genai`. Uses `import.meta.env.VITE_GEMINI_API_KEY` for the API key. Generates conversations and AI profile pictures.
 - **`bitmojiService.ts`**: Renders Bitmoji avatars using the Bitmoji SDK CDN. Maintains a pool of avatar IDs and generates selfie/peeking URLs.
 - **`customojiService.ts`**: Loads a sticker catalog from `templates.json` (in `client/public/`) and provides tag-based search for sticker suggestions.

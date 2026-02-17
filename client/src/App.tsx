@@ -9,6 +9,7 @@ import PresencePills from './components/PresencePills';
 import TypingBubble from './components/TypingBubble';
 import { SNAP_COLORS, GROUP_COLORS } from './constants';
 import { soundService } from './services/soundService';
+import { CanvasRenderer, FrameState } from './services/canvasRenderer';
 import { 
   getRandomAvatarId,
   getSelfieUrlForAvatar,
@@ -88,6 +89,23 @@ const App: React.FC = () => {
   const muxerRef = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const canvasRendererRef = useRef<CanvasRenderer | null>(null);
+  const frameStateRef = useRef<FrameState>({
+    messages: [],
+    compositionText: '',
+    isMeTyping: false,
+    activeKey: null,
+    isShiftActive: true,
+    keyboardLayout: 'ALPHA',
+    typingParticipantIds: [],
+    activeParticipantIds: [],
+    systemConfig: state.system,
+    chatConfig: state.chat,
+    cast: state.cast,
+    time: 0,
+    backgroundVideo: null,
+  });
+
   const groupIconInputRef = useRef<HTMLInputElement>(null);
   const exportBgInputRef = useRef<HTMLInputElement>(0 as any);
   const exportBgVideoInputRef = useRef<HTMLInputElement>(0 as any);
@@ -101,6 +119,24 @@ const App: React.FC = () => {
     initCatalog();
     soundService.prepare();
   }, []);
+
+  useEffect(() => {
+    frameStateRef.current = {
+      ...frameStateRef.current,
+      messages: playbackMode ? playbackItems : state.script,
+      compositionText,
+      isMeTyping,
+      activeKey,
+      isShiftActive,
+      keyboardLayout,
+      typingParticipantIds,
+      activeParticipantIds,
+      systemConfig: state.system,
+      chatConfig: state.chat,
+      cast: state.cast,
+      backgroundVideo: previewVideoRef.current,
+    };
+  });
 
   useEffect(() => {
     const ids = Array.from(new Set(
@@ -768,12 +804,11 @@ const App: React.FC = () => {
     if (videoEncoderRef.current) { try { videoEncoderRef.current.close(); } catch(e){} videoEncoderRef.current = null; }
     if (audioEncoderRef.current) { try { audioEncoderRef.current.close(); } catch(e){} audioEncoderRef.current = null; }
     
+    canvasRendererRef.current = null;
+    
     if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
         streamRef.current = null;
-    }
-    if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
     }
     if (previewVideoRef.current) previewVideoRef.current.pause();
   };
@@ -782,8 +817,6 @@ const App: React.FC = () => {
     setShowRecInstructions(false);
     const win = window as any;
     try {
-      if (!contentToRecordRef.current) return;
-      
       resetSimulationState();
       setPlaybackMode(true);
 
@@ -792,52 +825,17 @@ const App: React.FC = () => {
 
       await soundService.prepare();
       soundService.setRecordingSyncDelay(0);
-      
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 60, cursor: 'never' } as any,
-        audio: false 
-      });
-      streamRef.current = displayStream;
-      setIsRecording(true); 
-      await contentToRecordRef.current.requestFullscreen();
-      await new Promise(r => setTimeout(r, 2000)); 
-      
+
+      const renderer = new CanvasRenderer();
+      canvasRendererRef.current = renderer;
+      await renderer.preload(state.cast, state.script, state.chat);
+
+      setIsRecording(true);
+      await new Promise(r => setTimeout(r, 500));
+
       runningStatusRef.current = 'recording';
-      
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1920;
-      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true })!;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      
-      const video = document.createElement('video');
-      video.srcObject = displayStream;
-      video.muted = true;
-      safePlayVideo(video);
 
-      while (video.videoWidth === 0) await new Promise(r => setTimeout(r, 50));
-
-      const vW = video.videoWidth; 
-      const vH = video.videoHeight;
-      const isVideoMode = state.chat.isVideoBackgroundMode;
-      const videoModeScale = state.chat.videoModeScale; 
-      
-      const phoneWidthInSource = vH * (9 / 19.5) * (isVideoMode ? videoModeScale : 1);
-      const sx = (vW - phoneWidthInSource) / 2;
-      
-      let phoneHeightInSource = vH;
-      let sy = 0;
-      
-      if (state.chat.isShortCrop) {
-        phoneHeightInSource = (state.chat.shortCropHeight / window.innerHeight) * vH * (isVideoMode ? videoModeScale : 1);
-        sy = (vH - phoneHeightInSource) / 2;
-      }
-
-      const destW = canvas.width * (isVideoMode ? videoModeScale : 1);
-      const destH = phoneHeightInSource * (destW / phoneWidthInSource);
-      const destX = (canvas.width - destW) / 2;
-      const destY = (canvas.height - destH) / 2;
+      const canvas = renderer.getCanvas();
 
       const muxer = new Muxer({
         target: new ArrayBufferTarget(),
@@ -862,10 +860,10 @@ const App: React.FC = () => {
       });
 
       videoEncoder.configure({
-        codec: 'avc1.640033', 
+        codec: 'avc1.640033',
         width: canvas.width,
         height: canvas.height,
-        bitrate: 25_000_000, 
+        bitrate: 25_000_000,
         framerate: 60,
         latencyMode: 'quality'
       });
@@ -876,10 +874,10 @@ const App: React.FC = () => {
         error: (e: any) => console.error("AudioEncoder error:", e)
       });
       audioEncoder.configure({
-        codec: 'mp4a.40.2', 
+        codec: 'mp4a.40.2',
         sampleRate: 48000,
         numberOfChannels: 2,
-        bitrate: 192_000 
+        bitrate: 192_000
       });
       audioEncoderRef.current = audioEncoder;
 
@@ -913,54 +911,15 @@ const App: React.FC = () => {
         const targetFrames = Math.floor(elapsedUs / frameDurationUs);
 
         while (frameCount <= targetFrames) {
-            // LAYER 1: Draw high-res background source video
-            if (isVideoMode && previewVideoRef.current) {
-                const vid = previewVideoRef.current;
-                const vidRatio = vid.videoWidth / vid.videoHeight;
-                const canvasRatio = canvas.width / canvas.height;
-                let drawW, drawH, drawX, drawY;
-                
-                if (vidRatio > canvasRatio) {
-                    drawH = canvas.height;
-                    drawW = canvas.height * vidRatio;
-                    drawX = (canvas.width - drawW) / 2;
-                    drawY = 0;
-                } else {
-                    drawW = canvas.width;
-                    drawH = canvas.width / vidRatio;
-                    drawX = 0;
-                    drawY = (canvas.height - drawH) / 2;
-                }
-                ctx.drawImage(vid, drawX, drawY, drawW, drawH);
-            } else {
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
+            const currentFrameState: FrameState = {
+              ...frameStateRef.current,
+              time: now - startTime,
+            };
+            renderer.renderFrame(currentFrameState);
 
-            // LAYER 2: Draw the captured Snapchat Interface overlay with clipping for rounded corners
-            ctx.save();
-            const scaledRadius = state.chat.topCornerRadius * (destW / (phoneWidthInSource / (isVideoMode ? videoModeScale : 1)));
-            
-            ctx.beginPath();
-            ctx.moveTo(destX, destY + destH);
-            ctx.lineTo(destX, destY + scaledRadius);
-            ctx.quadraticCurveTo(destX, destY, destX + scaledRadius, destY);
-            ctx.lineTo(destX + destW - scaledRadius, destY);
-            ctx.quadraticCurveTo(destX + destW, destY, destX + destW, destY + scaledRadius);
-            ctx.lineTo(destX + destW, destY + destH);
-            ctx.closePath();
-            ctx.clip();
-
-            ctx.drawImage(
-                video, 
-                sx, sy, phoneWidthInSource, phoneHeightInSource, 
-                destX, destY, destW, destH
-            );
-            ctx.restore();
-            
             const frameTimestamp = Math.floor(frameCount * frameDurationUs);
             const frame = new win.VideoFrame(canvas, { timestamp: frameTimestamp });
-            
+
             if (videoEncoder.state === 'configured') {
                 videoEncoder.encode(frame);
             }
@@ -969,7 +928,7 @@ const App: React.FC = () => {
         }
         requestAnimationFrame(renderLoop);
       };
-      
+
       requestAnimationFrame(renderLoop);
       runPlaybackLoop(true);
 
@@ -980,13 +939,13 @@ const App: React.FC = () => {
             await videoEncoder.flush();
             await audioEncoder.flush();
             muxer.finalize();
-            
+
             const buffer = muxer.target.buffer;
             const blob = new Blob([buffer], { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `SnapGen_Cinematic_${Date.now()}.mp4`;
+            a.download = `SnapGen_HD_${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -998,7 +957,7 @@ const App: React.FC = () => {
 
     } catch (err) {
       console.error("Recording error:", err);
-      alert("Failed to load recording module or start capture. Please try again.");
+      alert("Failed to start recording. Please try again.");
       stopPlayback();
     }
   };
@@ -1813,11 +1772,11 @@ const App: React.FC = () => {
               <div className="w-24 h-24 bg-[#FFFC00] text-black rounded-[32px] mx-auto flex items-center justify-center text-5xl shadow-[0_0_50px_rgba(255,252,0,0.3)]"><i className="fa-solid fa-clapperboard"></i></div>
               <div className="space-y-3">
                 <h2 className="text-3xl font-black uppercase tracking-tight">Ready for Export</h2>
-                <p className="text-gray-400 text-lg leading-relaxed px-4">To capture the highest quality 9:16 vertical video, please select <span className="text-white font-bold underline decoration-[#FFFC00]">Entire Screen</span> or the browser window when prompted.</p>
+                <p className="text-gray-400 text-lg leading-relaxed px-4">Your video will be rendered at native <span className="text-white font-bold underline decoration-[#FFFC00]">1080x1920 HD</span> resolution directly on canvas. No screen capture required.</p>
               </div>
               <div className="flex gap-4 pt-4">
                  <button onClick={() => setShowRecInstructions(false)} className="flex-1 bg-white/5 py-6 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs transition hover:bg-white/10">Discard</button>
-                 <button onClick={initiateRecording} className="flex-1 bg-[#FFFC00] text-black py-6 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs shadow-[0_10px_30px_rgba(255,252,0,0.2)] hover:scale-[1.03] active:scale-95 transition-all">Start Capture</button>
+                 <button onClick={initiateRecording} className="flex-1 bg-[#FFFC00] text-black py-6 rounded-[28px] font-black uppercase tracking-[0.2em] text-xs shadow-[0_10px_30px_rgba(255,252,0,0.2)] hover:scale-[1.03] active:scale-95 transition-all">Start Export</button>
               </div>
            </div>
         </div>
