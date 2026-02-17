@@ -886,7 +886,7 @@ export class CanvasRenderer {
         SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * typingEased;
-      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
       const bubbleY =
@@ -896,7 +896,7 @@ export class CanvasRenderer {
         SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * (1 - typingEased);
-      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     }
   }
