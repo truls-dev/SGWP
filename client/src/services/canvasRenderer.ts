@@ -372,21 +372,39 @@ export class CanvasRenderer {
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, y, this.W, STATUS_BAR_H);
 
-    const signalImg = this.images.get("signal");
-    if (signalImg) {
-      const ih = 16;
-      const iw = signalImg.width * (ih / signalImg.height);
-      ctx.save();
-      ctx.filter = "brightness(0)";
-      ctx.drawImage(signalImg, 22, y + (STATUS_BAR_H - ih) / 2 + 1, iw, ih);
-      ctx.restore();
-    }
-
     ctx.fillStyle = "#000000";
     ctx.font = `bold 28px ${FONT_SYSTEM}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(state.systemConfig.carrier, 65, y + STATUS_BAR_H / 2);
+
+    const carrierY = y + STATUS_BAR_H / 2;
+    const metrics = ctx.measureText(state.systemConfig.carrier);
+    const textTop = carrierY - (metrics.actualBoundingBoxAscent || 10);
+    const textBottom = carrierY + (metrics.actualBoundingBoxDescent || 3);
+    const textH = textBottom - textTop;
+
+    const signalH = textH;
+    const svgAspect = 27 / 17;
+    const signalW = signalH * svgAspect;
+    const signalX = 22;
+    const signalY = textTop;
+    const sx = signalW / 27;
+    const sy = signalH / 17;
+
+    ctx.save();
+    ctx.translate(signalX, signalY);
+    ctx.scale(sx, sy);
+    ctx.fillStyle = "#000000";
+
+    ctx.fill(new Path2D("M22.959 16.9531H25.332C25.9375 16.9531 26.3477 16.5234 26.3477 15.8887V1.06445C26.3477 0.429688 25.9375 0 25.332 0H22.959C22.3535 0 21.9336 0.429688 21.9336 1.06445V15.8887C21.9336 16.5234 22.3535 16.9531 22.959 16.9531Z"));
+    ctx.fill(new Path2D("M15.6543 16.9531H18.0078C18.6133 16.9531 19.0332 16.5234 19.0332 15.8887V4.92188C19.0332 4.28711 18.6133 3.85742 18.0078 3.85742H15.6543C15.0391 3.85742 14.6289 4.28711 14.6289 4.92188V15.8887C14.6289 16.5234 15.0391 16.9531 15.6543 16.9531Z"));
+    ctx.fill(new Path2D("M8.33984 16.9531H10.6934C11.3086 16.9531 11.7188 16.5234 11.7188 15.8887V8.45703C11.7188 7.82227 11.3086 7.39258 10.6934 7.39258H8.33984C7.72461 7.39258 7.31445 7.82227 7.31445 8.45703V15.8887C7.31445 16.5234 7.72461 16.9531 8.33984 16.9531Z"));
+    ctx.fill(new Path2D("M1.02539 16.9531H3.37891C3.99414 16.9531 4.4043 16.5234 4.4043 15.8887V11.5039C4.4043 10.8691 3.99414 10.4492 3.37891 10.4492H1.02539C0.410156 10.4492 0 10.8691 0 11.5039V15.8887C0 16.5234 0.410156 16.9531 1.02539 16.9531Z"));
+
+    ctx.restore();
+
+    ctx.fillStyle = "#000000";
+    ctx.fillText(state.systemConfig.carrier, signalX + signalW + 8, carrierY);
 
     ctx.font = `bold 30px ${FONT_SYSTEM}`;
     ctx.textAlign = "center";
