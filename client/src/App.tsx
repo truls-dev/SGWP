@@ -574,17 +574,6 @@ const App: React.FC = () => {
     const scriptToPlay = state.script;
     updateActiveIds([]);
     updateTypingIds([]);
-    frameStateRef.current.activeParticipantIds = [];
-    frameStateRef.current.typingParticipantIds = [];
-    if (canvasRendererRef.current) {
-      canvasRendererRef.current.resetAnimations();
-    }
-
-    for (let i = 0; i < 5; i++) {
-      frameStateRef.current.activeParticipantIds = [];
-      frameStateRef.current.typingParticipantIds = [];
-      await new Promise(r => requestAnimationFrame(r));
-    }
     if (canvasRendererRef.current) {
       canvasRendererRef.current.resetAnimations();
       canvasRendererRef.current.enablePresence();

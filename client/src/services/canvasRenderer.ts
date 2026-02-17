@@ -39,6 +39,7 @@ interface PresenceAnimState {
   arrivalStartTime: number;
   typing: boolean;
   typingStartTime: number;
+  hasEverArrived: boolean;
 }
 
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
@@ -702,14 +703,19 @@ export class CanvasRenderer {
     let anim = this.presenceAnims.get(id);
     if (!anim) {
       anim = {
-        arrived: false,
+        arrived: isArrived,
         arrivalStartTime: time,
-        typing: false,
+        typing: isTyping,
         typingStartTime: time,
+        hasEverArrived: false,
       };
       this.presenceAnims.set(id, anim);
+      return anim;
     }
     if (isArrived !== anim.arrived) {
+      if (isArrived) {
+        anim.hasEverArrived = true;
+      }
       anim.arrived = isArrived;
       anim.arrivalStartTime = time;
     }
@@ -762,6 +768,8 @@ export class CanvasRenderer {
       isTyping,
       state.time,
     );
+
+    if (!anim.hasEverArrived) return;
 
     const isShort = state.chatConfig.isShortCrop;
     const isCropped = state.chatConfig.isKeyboardCropped;
@@ -885,6 +893,8 @@ export class CanvasRenderer {
         isTyping,
         state.time,
       );
+
+      if (!anim.hasEverArrived) { px += itemW - overlap; continue; }
 
       const arrivalElapsed = state.time - anim.arrivalStartTime;
       const arrivalProgress = Math.min(arrivalElapsed / 700, 1);
