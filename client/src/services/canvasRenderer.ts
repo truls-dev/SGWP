@@ -20,6 +20,11 @@ export interface FrameState {
   suggestedCustomojiUrl?: string | null;
 }
 
+interface StickerAnimState {
+  url: string;
+  startTime: number;
+}
+
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
 const FONT_HEADER = "'Avenir Black', sans-serif";
 const FONT_SYSTEM = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -54,6 +59,7 @@ export class CanvasRenderer {
   private W = 1080;
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
+  private stickerAnim: StickerAnimState | null = null;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -712,6 +718,7 @@ export class CanvasRenderer {
       }
     }
 
+    const iconSize = Math.round(22 * S);
     const smileySlotW = Math.round(28 * S);
     const actionSlotW = hasText ? 0 : Math.round(60 * S);
     const iconAreaW = smileySlotW + actionSlotW + Math.round(4 * S);
@@ -748,9 +755,9 @@ export class CanvasRenderer {
 
       const updownImg = this.images.get('updown');
       if (updownImg) {
-        const iconS = Math.round(24 * S);
-        const iconX = cx + pillW - textPadR - iconS / 2 + Math.round(6 * S);
-        ctx.drawImage(updownImg, iconX, pillY + (pillH - iconS) / 2, iconS, iconS);
+        const upS = iconSize;
+        const iconPillX = cx + pillW - textPadR - upS / 2 + Math.round(6 * S);
+        ctx.drawImage(updownImg, iconPillX, pillY + (pillH - upS) / 2, upS, upS);
       }
     } else {
       ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
@@ -766,7 +773,7 @@ export class CanvasRenderer {
       ctx.lineJoin = 'round';
       const micX = cx + pillW - Math.round(18 * S);
       const micY = pillY + pillH / 2;
-      const ms = S * 0.9;
+      const ms = S * 0.55;
       ctx.beginPath();
       ctx.arc(micX, micY - 6 * ms, 7 * ms, Math.PI, 0);
       ctx.lineTo(micX + 7 * ms, micY + 6 * ms);
@@ -786,15 +793,54 @@ export class CanvasRenderer {
     let iconX = cx + pillW + Math.round(2 * S);
     const iconCenterY = y + INPUT_H / 2;
 
-    const stickerImg = state.suggestedCustomojiUrl ? this.images.get(`sticker_${state.suggestedCustomojiUrl}`) : null;
-    if (stickerImg) {
-      const stickerH = Math.round(46 * S * 1.65);
-      const stickerW = stickerImg.width * (stickerH / stickerImg.height);
-      ctx.drawImage(stickerImg, iconX + smileySlotW / 2 - stickerW / 2, iconCenterY - stickerH / 2, stickerW, stickerH);
+    const curStickerUrl = state.suggestedCustomojiUrl || null;
+    if (curStickerUrl && (!this.stickerAnim || this.stickerAnim.url !== curStickerUrl)) {
+      this.stickerAnim = { url: curStickerUrl, startTime: state.time };
+    } else if (!curStickerUrl) {
+      this.stickerAnim = null;
+    }
+
+    const stickerImg = curStickerUrl ? this.images.get(`sticker_${curStickerUrl}`) : null;
+    if (stickerImg && this.stickerAnim) {
+      const animDuration = 380;
+      const elapsed = state.time - this.stickerAnim.startTime;
+      const progress = Math.min(elapsed / animDuration, 1);
+
+      const easeOutBack = (t: number) => {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+      };
+
+      const easedScale = easeOutBack(progress);
+      const targetScale = 0.4 + 0.6 * easedScale;
+      const scale = Math.min(targetScale, 1.0);
+      const alpha = Math.min(progress * 2.5, 1.0);
+      const translateY = (1 - progress) * Math.round(8 * S);
+
+      const maxStickerH = INPUT_H - Math.round(8 * S);
+      const maxStickerW = smileySlotW + Math.round(20 * S);
+      const rawH = Math.round(46 * S * 1.65);
+      const stickerH = Math.min(rawH, maxStickerH);
+      const rawW = stickerImg.width * (stickerH / stickerImg.height);
+      const stickerW = Math.min(rawW, maxStickerW);
+      const finalH = stickerH * scale;
+      const finalW = stickerW * (finalH / stickerH);
+
+      const drawX = iconX + smileySlotW / 2 - finalW / 2;
+      const drawY = iconCenterY - finalH / 2 + translateY;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.rect(iconX - Math.round(10 * S), y, smileySlotW + Math.round(20 * S), INPUT_H);
+      ctx.clip();
+      ctx.drawImage(stickerImg, drawX, drawY, finalW, finalH);
+      ctx.restore();
     } else {
       const smileyImg = this.images.get('smiley');
       if (smileyImg) {
-        const s = Math.round(17 * S);
+        const s = iconSize;
         ctx.drawImage(smileyImg, iconX + (smileySlotW - s) / 2, iconCenterY - s / 2, s, s);
       }
     }
@@ -803,7 +849,7 @@ export class CanvasRenderer {
     if (!hasText && !isCropped) {
       const actionImg = this.images.get('actionIcons');
       if (actionImg) {
-        const ah = Math.round(24 * S);
+        const ah = iconSize;
         const aw = actionImg.width * (ah / actionImg.height);
         iconX += Math.round(12 * S);
         ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
