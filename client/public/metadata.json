@@ -1,0 +1,9 @@
+{
+  "name": "SnapGen v6 - workfloor",
+  "description": "A high-fidelity Snapchat chat simulator for iOS that allows users to create realistic chat exchanges and export them as vertical videos for TikTok.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ]
+}
