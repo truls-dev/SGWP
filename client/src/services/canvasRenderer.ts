@@ -607,7 +607,8 @@ export class CanvasRenderer {
       layouts.push({ msg, h, isGrouped, lines, sender, color });
     }
 
-    let drawY = areaY + areaH - 120;
+    const presenceGap = this.presenceEnabled ? 200 : 120;
+    let drawY = areaY + areaH - presenceGap;
 
     for (let i = layouts.length - 1; i >= 0; i--) {
       const item = layouts[i];
@@ -868,9 +869,9 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.rect(
         avatarCenterX - containerW * 1.5,
-        bottom - 600,
+        bottom - imgH,
         containerW * 3,
-        600,
+        imgH,
       );
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
@@ -976,7 +977,7 @@ export class CanvasRenderer {
           ctx.save();
           ctx.globalAlpha = alpha;
           ctx.beginPath();
-          ctx.rect(px - 60, bottom - 600, itemW + 120, 600);
+          ctx.rect(px - 60, bottom - imgH, itemW + 120, imgH);
           ctx.clip();
           ctx.drawImage(
             avatarImg,
