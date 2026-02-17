@@ -779,6 +779,25 @@ export class CanvasRenderer {
     return 1 - Math.pow(1 - t, 3);
   }
 
+  private cubicBezier(p1x: number, p1y: number, p2x: number, p2y: number, t: number): number {
+    const cx = 3 * p1x;
+    const bx = 3 * (p2x - p1x) - cx;
+    const ax = 1 - cx - bx;
+    const cy = 3 * p1y;
+    const by = 3 * (p2y - p1y) - cy;
+    const ay = 1 - cy - by;
+
+    let guessT = t;
+    for (let i = 0; i < 8; i++) {
+      const currentX = ((ax * guessT + bx) * guessT + cx) * guessT;
+      const currentSlope = (3 * ax * guessT + 2 * bx) * guessT + cx;
+      if (Math.abs(currentSlope) < 1e-6) break;
+      guessT -= (currentX - t) / currentSlope;
+    }
+    guessT = Math.max(0, Math.min(1, guessT));
+    return ((ay * guessT + by) * guessT + cy) * guessT;
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // MANUAL ADJUSTMENT: Single-person presence (1-on-1 chat)
   // Change these values to reposition the bitmoji & typing bubble.
@@ -841,7 +860,7 @@ export class CanvasRenderer {
 
     if (alpha <= 0.01) return;
 
-    const typingDuration = 500;
+    const typingDuration = isTyping ? 450 : 300;
     const typingElapsed = state.time - anim.typingStartTime;
     const typingProgress = Math.min(typingElapsed / typingDuration, 1);
     const typingEased = this.easeOut(typingProgress);
@@ -885,24 +904,44 @@ export class CanvasRenderer {
       ? SP.BUBBLE_BOTTOM_GAP_SHORT
       : SP.BUBBLE_BOTTOM_GAP;
 
+    const bubbleY =
+      bottom -
+      (bubbleGap + SP.BUBBLE_SIZE) +
+      totalSlideY +
+      SP.BUBBLE_OFFSET_Y;
+
     if (isTyping && typingEased > 0) {
-      const bubbleY =
-        bottom -
-        (bubbleGap + SP.BUBBLE_SIZE) +
-        totalSlideY +
-        SP.BUBBLE_OFFSET_Y;
+      const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
+      const bScale = 0.6 + 0.4 * t;
+      const bRotate = -5 * (1 - t) * (Math.PI / 180);
+      const bTranslateY = (1 - t) * 10;
+      const bAlpha = alpha * t;
+
       ctx.save();
-      ctx.globalAlpha = alpha * typingEased;
+      ctx.globalAlpha = bAlpha;
+      const originX = bubbleCenterX;
+      const originY = bubbleY + SP.BUBBLE_SIZE;
+      ctx.translate(originX, originY);
+      ctx.rotate(bRotate);
+      ctx.scale(bScale, bScale);
+      ctx.translate(-originX, -originY + bTranslateY);
       this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
-      const bubbleY =
-        bottom -
-        (bubbleGap + SP.BUBBLE_SIZE) +
-        totalSlideY +
-        SP.BUBBLE_OFFSET_Y;
+      const rawT = typingEased;
+      const t = this.cubicBezier(0.4, 0, 1, 1, rawT);
+      const bScale = 1 - 0.6 * t;
+      const bRotate = t * 10 * (Math.PI / 180);
+      const bAlpha = alpha * (1 - t);
+
       ctx.save();
-      ctx.globalAlpha = alpha * (1 - typingEased);
+      ctx.globalAlpha = bAlpha;
+      const originX = bubbleCenterX;
+      const originY = bubbleY + SP.BUBBLE_SIZE;
+      ctx.translate(originX, originY);
+      ctx.rotate(bRotate);
+      ctx.scale(bScale, bScale);
+      ctx.translate(-originX, -originY);
       this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     }
@@ -949,8 +988,9 @@ export class CanvasRenderer {
       const arrivalProgress = Math.min(arrivalElapsed / 700, 1);
       const arrivalEased = this.easeOut(arrivalProgress);
 
+      const grpTypingDuration = isTyping ? 450 : 300;
       const typingElapsed = state.time - anim.typingStartTime;
-      const typingProgress = Math.min(typingElapsed / 500, 1);
+      const typingProgress = Math.min(typingElapsed / grpTypingDuration, 1);
       const typingEased = this.easeOut(typingProgress);
 
       const alpha = hasArrived ? arrivalEased : 1 - arrivalEased;
@@ -991,27 +1031,42 @@ export class CanvasRenderer {
           ctx.restore();
         }
 
+        const grpBubbleSize = 85;
+        const grpBubbleX = px + itemW * 0.5;
+        const grpBubbleY = bottom - 60 - grpBubbleSize + totalSlideY;
+
         if (isTyping && typingEased > 0) {
-          const bubbleSize = 85;
+          const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
+          const bScale = 0.6 + 0.4 * t;
+          const bRotate = -5 * (1 - t) * (Math.PI / 180);
+          const bTranslateY = (1 - t) * 10;
+          const bAlpha = alpha * t;
+
           ctx.save();
-          ctx.globalAlpha = alpha * typingEased;
-          this.drawTypingBubble(
-            ctx,
-            state.time,
-            px + itemW * 0.5,
-            bottom - 60 - bubbleSize + totalSlideY,
-          );
+          ctx.globalAlpha = bAlpha;
+          const ox = grpBubbleX;
+          const oy = grpBubbleY + grpBubbleSize;
+          ctx.translate(ox, oy);
+          ctx.rotate(bRotate);
+          ctx.scale(bScale, bScale);
+          ctx.translate(-ox, -oy + bTranslateY);
+          this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY);
           ctx.restore();
         } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
-          const bubbleSize = 85;
+          const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
+          const bScale = 1 - 0.6 * t;
+          const bRotate = t * 10 * (Math.PI / 180);
+          const bAlpha = alpha * (1 - t);
+
           ctx.save();
-          ctx.globalAlpha = alpha * (1 - typingEased);
-          this.drawTypingBubble(
-            ctx,
-            state.time,
-            px + itemW * 0.5,
-            bottom - 60 - bubbleSize + totalSlideY,
-          );
+          ctx.globalAlpha = bAlpha;
+          const ox = grpBubbleX;
+          const oy = grpBubbleY + grpBubbleSize;
+          ctx.translate(ox, oy);
+          ctx.rotate(bRotate);
+          ctx.scale(bScale, bScale);
+          ctx.translate(-ox, -oy);
+          this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY);
           ctx.restore();
         }
       }
