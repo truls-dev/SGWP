@@ -587,7 +587,28 @@ export class CanvasRenderer {
     return 1 - Math.pow(1 - t, 3);
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // MANUAL ADJUSTMENT: Single-person presence (1-on-1 chat)
+  // Change these values to reposition the bitmoji & typing bubble.
+  // Positive X = move right, Negative X = move left.
+  // Positive Y = move down, Negative Y = move up.
+  // ═══════════════════════════════════════════════════════════════
+  private static readonly SINGLE_PRESENCE = {
+    AVATAR_OFFSET_X: 0,        // Shift bitmoji left/right (px)
+    AVATAR_OFFSET_Y: 0,        // Shift bitmoji up/down (px)
+    BUBBLE_OFFSET_X: 0,        // Shift typing bubble left/right (px)
+    BUBBLE_OFFSET_Y: 0,        // Shift typing bubble up/down (px)
+    AVATAR_WIDTH: 188,         // Bitmoji container width (standard mode)
+    AVATAR_WIDTH_SHORT: 105,   // Bitmoji container width (short crop mode)
+    TYPING_NUDGE_Y: -8,       // How far bitmoji nudges up when typing
+    TYPING_SCALE: 0.1,        // How much bitmoji scales up when typing (0.1 = 10%)
+    BUBBLE_SIZE: 85,           // Typing bubble diameter
+    BUBBLE_BOTTOM_GAP: 78,    // Distance from bottom to bubble (standard)
+    BUBBLE_BOTTOM_GAP_SHORT: 25, // Distance from bottom to bubble (short crop)
+  };
+
   private drawSinglePresence(ctx: CanvasRenderingContext2D, state: FrameState, bottom: number, padLeft: number): void {
+    const SP = CanvasRenderer.SINGLE_PRESENCE;
     const partner = state.cast.find(c => !c.isMe);
     if (!partner) return;
 
@@ -597,12 +618,12 @@ export class CanvasRenderer {
 
     const isShort = state.chatConfig.isShortCrop;
     const isCropped = state.chatConfig.isKeyboardCropped;
-    const containerW = isShort ? 105 : 188;
+    const containerW = isShort ? SP.AVATAR_WIDTH_SHORT : SP.AVATAR_WIDTH;
     const S = 2.77;
 
     const cameraBtnW = Math.round(34 * S);
     const cameraBtnX = isCropped ? Math.round(12 * S) : padLeft;
-    const avatarCenterX = cameraBtnX + cameraBtnW / 2;
+    const avatarCenterX = cameraBtnX + cameraBtnW / 2 + SP.AVATAR_OFFSET_X;
 
     const arrivalDuration = 700;
     const arrivalElapsed = state.time - anim.arrivalStartTime;
@@ -619,15 +640,14 @@ export class CanvasRenderer {
     const typingProgress = Math.min(typingElapsed / typingDuration, 1);
     const typingEased = this.easeOut(typingProgress);
 
-    const typingNudge = -8;
     const typingNudgeY = isTyping
-      ? typingEased * typingNudge
-      : (1 - typingEased) * typingNudge;
+      ? typingEased * SP.TYPING_NUDGE_Y
+      : (1 - typingEased) * SP.TYPING_NUDGE_Y;
     const typingScale = isTyping
-      ? 1.0 + typingEased * 0.1
-      : 1.0 + (1 - typingEased) * 0.1;
+      ? 1.0 + typingEased * SP.TYPING_SCALE
+      : 1.0 + (1 - typingEased) * SP.TYPING_SCALE;
 
-    const totalSlideY = arrivalSlideY + typingNudgeY;
+    const totalSlideY = arrivalSlideY + typingNudgeY + SP.AVATAR_OFFSET_Y;
 
     const avatarKey = isTyping ? `selfie_${partner.bitmojiAvatarId}` : `peeking_${partner.bitmojiAvatarId}`;
     const avatarImg = this.images.get(avatarKey);
@@ -647,21 +667,20 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
+    const bubbleCenterX = avatarCenterX + SP.BUBBLE_OFFSET_X;
+    const bubbleGap = isShort ? SP.BUBBLE_BOTTOM_GAP_SHORT : SP.BUBBLE_BOTTOM_GAP;
+
     if (isTyping && typingEased > 0) {
-      const bubbleSize = 85;
-      const bubbleX = avatarCenterX;
-      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + totalSlideY;
+      const bubbleY = bottom - (bubbleGap + SP.BUBBLE_SIZE) + totalSlideY + SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * typingEased;
-      this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
       ctx.restore();
     } else if (!isTyping && typingEased < 1) {
-      const bubbleSize = 85;
-      const bubbleX = avatarCenterX;
-      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + totalSlideY;
+      const bubbleY = bottom - (bubbleGap + SP.BUBBLE_SIZE) + totalSlideY + SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * (1 - typingEased);
-      this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
       ctx.restore();
     }
   }
