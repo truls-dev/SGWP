@@ -81,6 +81,8 @@ export class CanvasRenderer {
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
   private presenceEnabled = false;
+  private actionIconsVisible = true;
+  private actionIconsTransitionTime = 0;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
@@ -1193,7 +1195,7 @@ export class CanvasRenderer {
     ctx.fillRect(0, y, this.W, 1);
 
     const layout = this.getInputLayout(state);
-    const { S, isCropped, hasText, rowH, iconSize, iconGap, smileySlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW } = layout;
+    const { S, isCropped, hasText, rowH, iconSize, iconGap, smileySlotW, iconAreaW, textPadL, textPadR } = layout;
 
     let cx = isCropped ? 183 : Math.round(12 * S);
     const bottomRowCenterY = y + totalH - INPUT_H / 2;
@@ -1207,6 +1209,21 @@ export class CanvasRenderer {
         cx += s + Math.round(10 * S);
       }
     }
+
+    const slideDuration = 250;
+    const slideElapsed = state.time - this.actionIconsTransitionTime;
+    const slideProgress = Math.min(slideElapsed / slideDuration, 1);
+    const eased = 1 - Math.pow(1 - slideProgress, 3);
+
+    const actionSlotFull = iconSize * 2 + iconGap * 2;
+    const visibleFraction = this.actionIconsVisible ? eased : 1 - eased;
+    const currentActionSlot = actionSlotFull * visibleFraction;
+
+    const pillToIconGap = layout.pillToIconGap;
+    const rightPad = layout.rightPad;
+    const animIconAreaW = pillToIconGap + smileySlotW + currentActionSlot;
+    const pillW = this.W - cx - animIconAreaW - rightPad;
+    const textAreaW = pillW - textPadL - textPadR;
 
     const fontSize = Math.round(17 * S);
     ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
@@ -1374,16 +1391,32 @@ export class CanvasRenderer {
     }
     iconX += smileySlotW;
 
-    if (!hasText && !isCropped) {
-      iconX += iconGap;
-      const galleryImg = this.images.get("galleryIcon");
-      if (galleryImg) {
-        ctx.drawImage(galleryImg, iconX, iconCenterY - iconSize / 2, iconSize, iconSize);
+    if (!isCropped) {
+      const wantVisible = !hasText;
+      if (wantVisible !== this.actionIconsVisible) {
+        this.actionIconsVisible = wantVisible;
+        this.actionIconsTransitionTime = state.time;
       }
-      iconX += iconSize + iconGap;
-      const plusImg = this.images.get("plusIcon");
-      if (plusImg) {
-        ctx.drawImage(plusImg, iconX, iconCenterY - iconSize / 2, iconSize, iconSize);
+
+      if (visibleFraction > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = visibleFraction;
+        ctx.beginPath();
+        ctx.rect(0, y, this.W, totalH);
+        ctx.clip();
+
+        let actionX = iconX + iconGap;
+        const galleryImg = this.images.get("galleryIcon");
+        if (galleryImg) {
+          ctx.drawImage(galleryImg, actionX, iconCenterY - iconSize / 2, iconSize, iconSize);
+        }
+        actionX += iconSize + iconGap;
+        const plusImg = this.images.get("plusIcon");
+        if (plusImg) {
+          ctx.drawImage(plusImg, actionX, iconCenterY - iconSize / 2, iconSize, iconSize);
+        }
+
+        ctx.restore();
       }
     }
   }
