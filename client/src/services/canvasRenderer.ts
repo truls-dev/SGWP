@@ -1114,8 +1114,8 @@ export class CanvasRenderer {
 
     const iconSize = Math.round(22 * S);
     const smileySlotW = Math.round(28 * S);
-    const actionSlotW = hasText ? 0 : Math.round(46 * S);
-    const iconAreaW = smileySlotW + actionSlotW + Math.round(2 * S);
+    const actionSlotW = hasText ? 0 : Math.round(40 * S);
+    const iconAreaW = smileySlotW + actionSlotW + Math.round(1 * S);
     const pillW = this.W - cx - iconAreaW - rightPad;
     const pillH = Math.round(32 * S);
     const pillY = y + (INPUT_H - pillH) / 2;
@@ -1273,7 +1273,7 @@ export class CanvasRenderer {
       if (actionImg) {
         const ah = iconSize;
         const aw = actionImg.width * (ah / actionImg.height);
-        iconX += Math.round(4 * S);
+        iconX += Math.round(1 * S);
         ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
       }
     }
