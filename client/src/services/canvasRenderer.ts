@@ -51,7 +51,7 @@ const STATUS_BAR_H = 42;
 const HEADER_H = 116;
 const INPUT_H = 133;
 const KEYBOARD_H = 640;
-const KEYBOARD_SHORT_H = 388;
+const KEYBOARD_SHORT_H = 460;
 
 const MSG_FONT_SIZE = 56;
 const MSG_LINE_H = 68;
@@ -355,11 +355,11 @@ export class CanvasRenderer {
 
     const signalImg = this.images.get("signal");
     if (signalImg) {
-      const ih = 22;
+      const ih = 16;
       const iw = signalImg.width * (ih / signalImg.height);
       ctx.save();
       ctx.filter = "brightness(0)";
-      ctx.drawImage(signalImg, 22, y + (STATUS_BAR_H - ih) / 2 + 2, iw, ih);
+      ctx.drawImage(signalImg, 22, y + (STATUS_BAR_H - ih) / 2 + 1, iw, ih);
       ctx.restore();
     }
 
@@ -1095,7 +1095,7 @@ export class CanvasRenderer {
 
     const iconSize = Math.round(22 * S);
     const smileySlotW = Math.round(28 * S);
-    const actionSlotW = hasText ? 0 : Math.round(60 * S);
+    const actionSlotW = hasText ? 0 : Math.round(50 * S);
     const iconAreaW = smileySlotW + actionSlotW + Math.round(4 * S);
     const pillW = this.W - cx - iconAreaW - rightPad;
     const pillH = Math.round(32 * S);
@@ -1254,7 +1254,7 @@ export class CanvasRenderer {
       if (actionImg) {
         const ah = iconSize;
         const aw = actionImg.width * (ah / actionImg.height);
-        iconX += Math.round(12 * S);
+        iconX += Math.round(6 * S);
         ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
       }
     }
@@ -1429,25 +1429,27 @@ export class CanvasRenderer {
     cy: number,
     active: boolean,
   ): void {
-    const s = 1.5;
+    const s = 1.8;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(s, s);
+    ctx.translate(-13, -12);
     ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.lineTo(-9, 0);
-    ctx.lineTo(-4.5, 0);
-    ctx.lineTo(-4.5, 7);
-    ctx.lineTo(4.5, 7);
-    ctx.lineTo(4.5, 0);
-    ctx.lineTo(9, 0);
+    ctx.moveTo(13, 2.5);
+    ctx.lineTo(3.5, 12);
+    ctx.lineTo(8.5, 12);
+    ctx.lineTo(8.5, 21.5);
+    ctx.lineTo(17.5, 21.5);
+    ctx.lineTo(17.5, 12);
+    ctx.lineTo(22.5, 12);
     ctx.closePath();
     if (active) {
       ctx.fillStyle = "#000000";
       ctx.fill();
     } else {
       ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.4;
+      ctx.lineJoin = "round";
       ctx.stroke();
     }
     ctx.restore();
@@ -1462,23 +1464,26 @@ export class CanvasRenderer {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(s, s);
+    ctx.translate(-16.5, -12);
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.4;
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.moveTo(-6, -8);
-    ctx.lineTo(-12, 0);
-    ctx.lineTo(-6, 8);
-    ctx.lineTo(10, 8);
-    ctx.lineTo(10, -8);
+    ctx.moveTo(11, 3);
+    ctx.lineTo(2.5, 12);
+    ctx.lineTo(11, 21);
+    ctx.lineTo(28.5, 21);
+    ctx.quadraticCurveTo(30.5, 21, 30.5, 19);
+    ctx.lineTo(30.5, 5);
+    ctx.quadraticCurveTo(30.5, 3, 28.5, 3);
     ctx.closePath();
     ctx.stroke();
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(-1, -3);
-    ctx.lineTo(5, 3);
-    ctx.moveTo(5, -3);
-    ctx.lineTo(-1, 3);
+    ctx.moveTo(17.5, 8.5);
+    ctx.lineTo(23.5, 14.5);
+    ctx.moveTo(23.5, 8.5);
+    ctx.lineTo(17.5, 14.5);
     ctx.stroke();
     ctx.restore();
   }
