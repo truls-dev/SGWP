@@ -25,9 +25,9 @@ const FONT_SYSTEM = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helv
 
 const STATUS_BAR_H = 42;
 const HEADER_H = 116;
-const INPUT_H = 100;
-const KEYBOARD_H = 520;
-const KEYBOARD_SHORT_H = 390;
+const INPUT_H = 133;
+const KEYBOARD_H = 640;
+const KEYBOARD_SHORT_H = 388;
 
 const MSG_FONT_SIZE = 56;
 const MSG_LINE_H = 68;
@@ -559,18 +559,19 @@ export class CanvasRenderer {
       const imgW = containerW;
       const imgH = avatarImg.height * (imgW / avatarImg.width);
       const ax = padLeft;
-      const ay = bottom - imgH * 0.55;
+      const ay = bottom - imgH;
 
       ctx.save();
       ctx.beginPath();
-      ctx.rect(padLeft - 10, bottom - 120, containerW + 60, 125);
+      ctx.rect(padLeft - 60, bottom - 200, containerW + 120, 200);
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
       ctx.restore();
     }
 
     if (isTyping) {
-      this.drawTypingBubble(ctx, state.time, padLeft + (isShort ? 36 : 88), bottom - (isShort ? 25 : 77));
+      const bubbleSize = 105;
+      this.drawTypingBubble(ctx, state.time, padLeft + (isShort ? 36 : 89), bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize));
     }
   }
 
@@ -602,14 +603,15 @@ export class CanvasRenderer {
           const imgH = avatarImg.height * (imgW / avatarImg.width);
           ctx.save();
           ctx.beginPath();
-          ctx.rect(px - 5, bottom - 120, itemW + 10, 90);
+          ctx.rect(px - 60, bottom - 200, itemW + 120, 200);
           ctx.clip();
-          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH * 0.55 - 30, imgW, imgH);
+          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH, imgW, imgH);
           ctx.restore();
         }
 
         if (isTyping) {
-          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60);
+          const bubbleSize = 105;
+          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize);
         }
       }
 
@@ -637,26 +639,46 @@ export class CanvasRenderer {
   }
 
   private drawTypingBubble(ctx: CanvasRenderingContext2D, time: number, x: number, y: number): void {
-    const w = 80;
-    const h = 56;
+    const bubbleSize = 105;
+    const svgScale = bubbleSize / 32;
 
-    ctx.fillStyle = '#F5F6F8';
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(svgScale, svgScale);
+
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 0.9;
+
+    const bubblePath = new Path2D("M13.92 2.333c1.248 0 2.424.52 3.32 1.443l.21.217.286-.103a4.45 4.45 0 0 1 1.514-.264c2.206 0 4.13 1.636 4.695 3.962l.053.22.208.095c1.804.817 3.013 2.756 3.013 4.948 0 1.945-.951 3.702-2.454 4.647l-.206.13-.012.243c-.133 2.842-2.274 5.067-4.853 5.067a4.477 4.477 0 0 1-2.068-.506l-.296-.153-.243.229c-.877.83-1.99 1.292-3.167 1.292-1.639 0-3.144-.901-4.042-2.38l-.152-.249-.291.027a4.496 4.496 0 0 1-.4.017c-2.674 0-4.86-2.385-4.86-5.348 0-.705.123-1.39.36-2.026l.076-.202-.106-.189a5.722 5.722 0 0 1-.724-2.808c0-2.963 2.186-5.35 4.86-5.35.188 0 .374.013.557.036l.328.041.15-.293c.855-1.684 2.468-2.743 4.244-2.743Z");
+
+    const grad = ctx.createLinearGradient(5.9, 8.3, 20.3, 21.2);
+    grad.addColorStop(0, '#FFFFFF');
+    grad.addColorStop(1, '#E9EDF2');
+    ctx.fillStyle = grad;
+    ctx.fill(bubblePath);
+
+    ctx.shadowColor = 'transparent';
     ctx.strokeStyle = '#474A4F';
-    ctx.lineWidth = 2.5;
-    this.drawPillRect(ctx, x, y, w, h, h / 2, '#F5F6F8');
-    ctx.beginPath();
-    this.pillPath(ctx, x, y, w, h, h / 2);
-    ctx.stroke();
+    ctx.lineWidth = 0.933;
+    ctx.stroke(bubblePath);
+
+    ctx.restore();
+
+    const dotCX = x + bubbleSize * 0.46;
+    const dotCY = y + bubbleSize * 0.44;
+    const dotGap = 15;
+    const dotR = 3.6;
 
     for (let i = 0; i < 3; i++) {
       const phase = ((time / 1200) * Math.PI * 2 + i * 0.8) % (Math.PI * 2);
       const opacity = 0.3 + 0.7 * Math.max(0, Math.sin(phase));
-      const scale = 1 + 0.2 * Math.max(0, Math.sin(phase));
+      const scale = 1 + 0.25 * Math.max(0, Math.sin(phase));
 
       ctx.globalAlpha = opacity;
       ctx.fillStyle = '#474A4F';
       ctx.beginPath();
-      ctx.arc(x + 20 + i * 15, y + h / 2, 5 * scale, 0, Math.PI * 2);
+      ctx.arc(dotCX + (i - 1) * dotGap, dotCY, dotR * scale, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -787,16 +809,16 @@ export class CanvasRenderer {
     if (layout === 'NUMERIC') rows = numericRows;
     if (layout === 'SYMBOLS') rows = symbolRows;
 
-    const keyH = isShort ? 90 : 100;
-    const rowGap = isShort ? 16 : 20;
-    const keyGap = 10;
-    const sidePad = isShort ? 16 : 22;
+    const keyH = 122;
+    const rowGap = 33;
+    const keyGap = 17;
+    const sidePad = 17;
     let ky = y + (isShort ? 14 : 22);
 
     for (let ri = 0; ri < rows.length; ri++) {
       const row = rows[ri];
       const rowPad = ri === 1 ? 44 : 0;
-      const modifierW = 110;
+      const modifierW = 125;
       const modifiers = row.filter(k => this.isModifierKey(k));
       const charKeys = row.filter(k => !this.isModifierKey(k));
       const totalModW = modifiers.length * modifierW + modifiers.length * keyGap;
@@ -814,11 +836,11 @@ export class CanvasRenderer {
         if (isPressed) bgColor = '#D1D3D9';
         if (key === 'shift' && state.isShiftActive && !isPressed) bgColor = '#FFFFFF';
 
-        this.drawPillRect(ctx, kx, ky, w, keyH, 16, bgColor);
+        this.drawPillRect(ctx, kx, ky, w, keyH, 17, bgColor);
 
         if (!isPressed) {
-          ctx.fillStyle = 'rgba(0,0,0,0.30)';
-          ctx.fillRect(kx + 4, ky + keyH - 3, w - 8, 3);
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.fillRect(kx + 2, ky + keyH, w - 4, 3);
         }
 
         if (key === 'shift') {
@@ -827,7 +849,7 @@ export class CanvasRenderer {
           this.drawBackspaceIcon(ctx, kx + w / 2, ky + keyH / 2);
         } else {
           ctx.fillStyle = '#000000';
-          ctx.font = isModifier ? `500 36px ${FONT_SYSTEM}` : `400 56px ${FONT_SYSTEM}`;
+          ctx.font = isModifier ? `500 39px ${FONT_SYSTEM}` : `400 61px ${FONT_SYSTEM}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           let displayKey = key;
@@ -844,42 +866,42 @@ export class CanvasRenderer {
 
     if (!isShort) {
       const spaceRowY = ky;
-      const modW = 210;
+      const modW = 236;
 
-      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, 16, '#ACB0B8');
+      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, 17, '#ACB0B8');
       ctx.fillStyle = '#000000';
-      ctx.font = `500 40px ${FONT_SYSTEM}`;
+      ctx.font = `500 44px ${FONT_SYSTEM}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(layout === 'ALPHA' ? '123' : 'ABC', sidePad + modW / 2, spaceRowY + keyH / 2);
 
-      ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      ctx.fillRect(sidePad + 4, spaceRowY + keyH - 3, modW - 8, 3);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(sidePad + 2, spaceRowY + keyH, modW - 4, 3);
 
       const spaceX = sidePad + modW + keyGap;
       const sendW = modW;
       const spaceW = this.W - sidePad * 2 - modW * 2 - keyGap * 2;
       const isSpacePressed = state.activeKey === ' ';
-      this.drawPillRect(ctx, spaceX, spaceRowY, spaceW, keyH, 16, isSpacePressed ? '#ACB0B8' : '#FFFFFF');
+      this.drawPillRect(ctx, spaceX, spaceRowY, spaceW, keyH, 17, isSpacePressed ? '#ACB0B8' : '#FFFFFF');
       ctx.fillStyle = '#000000';
-      ctx.font = `400 40px ${FONT_SYSTEM}`;
+      ctx.font = `400 44px ${FONT_SYSTEM}`;
       ctx.fillText('space', spaceX + spaceW / 2, spaceRowY + keyH / 2);
 
       if (!isSpacePressed) {
-        ctx.fillStyle = 'rgba(0,0,0,0.30)';
-        ctx.fillRect(spaceX + 4, spaceRowY + keyH - 3, spaceW - 8, 3);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(spaceX + 2, spaceRowY + keyH, spaceW - 4, 3);
       }
 
       const sendX = spaceX + spaceW + keyGap;
       const isSendPressed = state.activeKey === 'Enter';
-      this.drawPillRect(ctx, sendX, spaceRowY, sendW, keyH, 16, isSendPressed ? '#005FC4' : '#007AFF');
+      this.drawPillRect(ctx, sendX, spaceRowY, sendW, keyH, 17, isSendPressed ? '#005FC4' : '#007AFF');
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = `600 40px ${FONT_SYSTEM}`;
+      ctx.font = `600 44px ${FONT_SYSTEM}`;
       ctx.fillText('send', sendX + sendW / 2, spaceRowY + keyH / 2);
 
       if (!isSendPressed) {
-        ctx.fillStyle = 'rgba(0,0,0,0.30)';
-        ctx.fillRect(sendX + 4, spaceRowY + keyH - 3, sendW - 8, 3);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(sendX + 2, spaceRowY + keyH, sendW - 4, 3);
       }
     }
   }
