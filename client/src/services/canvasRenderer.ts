@@ -1414,16 +1414,17 @@ export class CanvasRenderer {
     if (layout === "NUMERIC") rows = numericRows;
     if (layout === "SYMBOLS") rows = symbolRows;
 
-    const keyH = 122;
-    const rowGap = 33;
-    const keyGap = 17;
-    const sidePad = 17;
+    const keyH = 126;
+    const rowGap = 30;
+    const keyGap = 16;
+    const sidePad = 10;
+    const keyRadius = 22;
     let ky = y + (isShort ? 14 : 22);
 
     for (let ri = 0; ri < rows.length; ri++) {
       const row = rows[ri];
       const rowPad = ri === 1 ? 44 : 0;
-      const modifierW = 125;
+      const modifierW = 130;
       const modifiers = row.filter((k) => this.isModifierKey(k));
       const charKeys = row.filter((k) => !this.isModifierKey(k));
       const totalModW =
@@ -1448,11 +1449,11 @@ export class CanvasRenderer {
         if (key === "shift" && state.isShiftActive && !isPressed)
           bgColor = "#FFFFFF";
 
-        this.drawPillRect(ctx, kx, ky, w, keyH, 17, bgColor);
+        this.drawPillRect(ctx, kx, ky, w, keyH, keyRadius, bgColor);
 
         if (!isPressed) {
-          ctx.fillStyle = "rgba(0,0,0,0.35)";
-          ctx.fillRect(kx + 2, ky + keyH, w - 4, 3);
+          ctx.fillStyle = "rgba(0,0,0,0.2)";
+          ctx.fillRect(kx + 3, ky + keyH - 1, w - 6, 2);
         }
 
         if (key === "shift") {
@@ -1487,7 +1488,7 @@ export class CanvasRenderer {
       const spaceRowY = ky;
       const modW = 236;
 
-      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, 17, "#ACB0B8");
+      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, keyRadius, "#ACB0B8");
       ctx.fillStyle = "#000000";
       ctx.font = `500 44px ${FONT_SYSTEM}`;
       ctx.textAlign = "center";
@@ -1498,8 +1499,8 @@ export class CanvasRenderer {
         spaceRowY + keyH / 2,
       );
 
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fillRect(sidePad + 2, spaceRowY + keyH, modW - 4, 3);
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.fillRect(sidePad + 3, spaceRowY + keyH - 1, modW - 6, 2);
 
       const spaceX = sidePad + modW + keyGap;
       const sendW = modW;
@@ -1511,7 +1512,7 @@ export class CanvasRenderer {
         spaceRowY,
         spaceW,
         keyH,
-        17,
+        keyRadius,
         isSpacePressed ? "#ACB0B8" : "#FFFFFF",
       );
       ctx.fillStyle = "#000000";
@@ -1519,8 +1520,8 @@ export class CanvasRenderer {
       ctx.fillText("space", spaceX + spaceW / 2, spaceRowY + keyH / 2);
 
       if (!isSpacePressed) {
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        ctx.fillRect(spaceX + 2, spaceRowY + keyH, spaceW - 4, 3);
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fillRect(spaceX + 3, spaceRowY + keyH - 1, spaceW - 6, 2);
       }
 
       const sendX = spaceX + spaceW + keyGap;
@@ -1531,7 +1532,7 @@ export class CanvasRenderer {
         spaceRowY,
         sendW,
         keyH,
-        17,
+        keyRadius,
         isSendPressed ? "#005FC4" : "#007AFF",
       );
       ctx.fillStyle = "#FFFFFF";
@@ -1539,8 +1540,8 @@ export class CanvasRenderer {
       ctx.fillText("send", sendX + sendW / 2, spaceRowY + keyH / 2);
 
       if (!isSendPressed) {
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        ctx.fillRect(sendX + 2, spaceRowY + keyH, sendW - 4, 3);
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fillRect(sendX + 3, spaceRowY + keyH - 1, sendW - 6, 2);
       }
     }
   }
