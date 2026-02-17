@@ -342,7 +342,7 @@ export class CanvasRenderer {
     (this as any).W = origW;
     (this as any).H = origH;
 
-    this.drawKeyboard(ctx, state, kbYInCanvas, origH - kbYInCanvas);
+    this.drawKeyboard(ctx, state, kbYInCanvas, kbH);
   }
 
   private drawVideoBackground(
