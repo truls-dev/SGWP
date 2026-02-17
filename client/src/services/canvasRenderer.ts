@@ -1114,7 +1114,7 @@ export class CanvasRenderer {
 
     const iconSize = Math.round(22 * S);
     const smileySlotW = Math.round(28 * S);
-    const actionSlotW = hasText ? 0 : Math.round(40 * S);
+    const actionSlotW = hasText ? 0 : Math.round(42 * S);
     const iconAreaW = smileySlotW + actionSlotW + Math.round(1 * S);
     const pillW = this.W - cx - iconAreaW - rightPad;
     const pillH = Math.round(32 * S);

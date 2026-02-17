@@ -189,7 +189,7 @@ const ChatInput: React.FC<Props> = ({
             {/* Action Group (Gallery + Plus) - Collapse when typing to allow pill expansion */}
             {!isKeyboardCropped && (
               <div 
-                className={`flex items-center transition-all duration-400 ease-in-out overflow-hidden ${hasText ? 'opacity-0 w-0' : 'opacity-100 w-[60px] pl-3'}`}
+                className={`flex items-center transition-all duration-400 ease-in-out overflow-hidden ${hasText ? 'opacity-0 w-0' : 'opacity-100 w-[52px] pl-1.5'}`}
               >
                  <div className="cursor-pointer active:scale-95 transition-transform flex items-center">
                     <img 
