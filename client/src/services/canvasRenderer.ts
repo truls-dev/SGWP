@@ -1190,7 +1190,8 @@ export class CanvasRenderer {
     const { S, isCropped, hasText, rowH, iconSize, iconGap, smileySlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW } = layout;
 
     let cx = isCropped ? 183 : Math.round(12 * S);
-    const rowY = y + (totalH - rowH) / 2;
+    const bottomRowCenterY = y + totalH - INPUT_H / 2;
+    const rowY = bottomRowCenterY - rowH / 2;
 
     if (!isCropped) {
       const btnImg = this.images.get(hasText ? "sendBtn" : "cameraBtn");
@@ -1259,10 +1260,12 @@ export class CanvasRenderer {
       if (updownImg) {
         const upS = iconSize;
         const iconPillX = cx + pillW - textPadR - upS / 2 + Math.round(6 * S);
+        const singlePillH = Math.round(32 * S);
+        const updownY = pillY + pillH - singlePillH + (singlePillH - upS) / 2;
         ctx.drawImage(
           updownImg,
           iconPillX,
-          pillY + (pillH - upS) / 2,
+          updownY,
           upS,
           upS,
         );
@@ -1329,29 +1332,25 @@ export class CanvasRenderer {
       const alpha = Math.min(progress * 2.5, 1.0);
       const translateY = (1 - progress) * Math.round(8 * S);
 
-      const maxStickerH = INPUT_H - Math.round(8 * S);
-      const maxStickerW = smileySlotW + Math.round(10 * S);
+      const maxStickerH = INPUT_H - Math.round(12 * S);
+      const maxStickerW = iconAreaW - Math.round(4 * S);
       const rawH = Math.round(46 * S * 1.65);
-      const stickerH = Math.min(rawH, maxStickerH);
-      const rawW = stickerImg.width * (stickerH / stickerImg.height);
-      const stickerW = Math.min(rawW, maxStickerW);
+      const imgAspect = stickerImg.width / stickerImg.height;
+      let stickerH = Math.min(rawH, maxStickerH);
+      let stickerW = stickerH * imgAspect;
+      if (stickerW > maxStickerW) {
+        stickerW = maxStickerW;
+        stickerH = stickerW / imgAspect;
+      }
       const finalH = stickerH * scale;
-      const finalW = stickerW * (finalH / stickerH);
+      const finalW = stickerW * scale;
 
-      const stickerCenterX = iconX + smileySlotW / 2;
+      const stickerCenterX = iconX + iconAreaW / 2;
       const drawX = stickerCenterX - finalW / 2;
       const drawY = iconCenterY - finalH / 2 + translateY;
 
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.beginPath();
-      ctx.rect(
-        iconX,
-        y,
-        iconAreaW,
-        totalH,
-      );
-      ctx.clip();
       ctx.drawImage(stickerImg, drawX, drawY, finalW, finalH);
       ctx.restore();
     } else {
