@@ -604,29 +604,30 @@ export class CanvasRenderer {
     const cameraBtnX = isCropped ? Math.round(12 * S) : padLeft;
     const avatarCenterX = cameraBtnX + cameraBtnW / 2;
 
-    if (!isArrived) return;
-
     const arrivalDuration = 700;
     const arrivalElapsed = state.time - anim.arrivalStartTime;
     const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
     const arrivalEased = this.easeOut(arrivalProgress);
-    const arrivalSlideY = (1 - arrivalEased) * 110;
-    const arrivalAlpha = arrivalEased;
+
+    const alpha = isArrived ? arrivalEased : (1 - arrivalEased);
+    const arrivalSlideY = isArrived ? (1 - arrivalEased) * 110 : arrivalEased * 110;
+
+    if (alpha <= 0.01) return;
 
     const typingDuration = 500;
     const typingElapsed = state.time - anim.typingStartTime;
     const typingProgress = Math.min(typingElapsed / typingDuration, 1);
     const typingEased = this.easeOut(typingProgress);
 
-    const typingSlideAmount = 80;
-    const typingSlideY = isTyping
-      ? (1 - typingEased) * typingSlideAmount
-      : typingEased * typingSlideAmount;
+    const typingNudge = -8;
+    const typingNudgeY = isTyping
+      ? typingEased * typingNudge
+      : (1 - typingEased) * typingNudge;
     const typingScale = isTyping
       ? 1.0 + typingEased * 0.1
       : 1.0 + (1 - typingEased) * 0.1;
 
-    const totalSlideY = arrivalSlideY + typingSlideY;
+    const totalSlideY = arrivalSlideY + typingNudgeY;
 
     const avatarKey = isTyping ? `selfie_${partner.bitmojiAvatarId}` : `peeking_${partner.bitmojiAvatarId}`;
     const avatarImg = this.images.get(avatarKey);
@@ -638,7 +639,7 @@ export class CanvasRenderer {
       const ay = bottom - imgH + totalSlideY;
 
       ctx.save();
-      ctx.globalAlpha = arrivalAlpha;
+      ctx.globalAlpha = alpha;
       ctx.beginPath();
       ctx.rect(avatarCenterX - containerW * 1.5, bottom - 600, containerW * 3, 600);
       ctx.clip();
@@ -646,12 +647,20 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
-    if (isTyping) {
+    if (isTyping && typingEased > 0) {
       const bubbleSize = 85;
       const bubbleX = avatarCenterX;
       const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + totalSlideY;
       ctx.save();
-      ctx.globalAlpha = arrivalAlpha;
+      ctx.globalAlpha = alpha * typingEased;
+      this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
+      ctx.restore();
+    } else if (!isTyping && typingEased < 1) {
+      const bubbleSize = 85;
+      const bubbleX = avatarCenterX;
+      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + totalSlideY;
+      ctx.save();
+      ctx.globalAlpha = alpha * (1 - typingEased);
       this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
       ctx.restore();
     }
@@ -686,18 +695,19 @@ export class CanvasRenderer {
       const typingProgress = Math.min(typingElapsed / 500, 1);
       const typingEased = this.easeOut(typingProgress);
 
-      if (hasArrived) {
-        const arrivalSlideY = (1 - arrivalEased) * 110;
-        const avatarAlpha = arrivalEased;
+      const alpha = hasArrived ? arrivalEased : (1 - arrivalEased);
+      const arrivalSlideY = hasArrived ? (1 - arrivalEased) * 110 : arrivalEased * 110;
 
-        const typingSlideY = isTyping
-          ? (1 - typingEased) * 80
-          : typingEased * 80;
+      if (alpha > 0.01) {
+        const typingNudge = -8;
+        const typingNudgeY = isTyping
+          ? typingEased * typingNudge
+          : (1 - typingEased) * typingNudge;
         const typingScale = isTyping
           ? 1.0 + typingEased * 0.1
           : 1.0 + (1 - typingEased) * 0.1;
 
-        const totalSlideY = arrivalSlideY + typingSlideY;
+        const totalSlideY = arrivalSlideY + typingNudgeY;
 
         const avatarKey = isTyping ? `selfie_${member.bitmojiAvatarId}` : `peeking_${member.bitmojiAvatarId}`;
         const avatarImg = this.images.get(avatarKey);
@@ -705,7 +715,7 @@ export class CanvasRenderer {
           const imgW = itemW * 0.8 * typingScale;
           const imgH = avatarImg.height * (imgW / avatarImg.width);
           ctx.save();
-          ctx.globalAlpha = avatarAlpha;
+          ctx.globalAlpha = alpha;
           ctx.beginPath();
           ctx.rect(px - 60, bottom - 600, itemW + 120, 600);
           ctx.clip();
@@ -713,10 +723,16 @@ export class CanvasRenderer {
           ctx.restore();
         }
 
-        if (isTyping) {
+        if (isTyping && typingEased > 0) {
           const bubbleSize = 85;
           ctx.save();
-          ctx.globalAlpha = avatarAlpha;
+          ctx.globalAlpha = alpha * typingEased;
+          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + totalSlideY);
+          ctx.restore();
+        } else if (!isTyping && typingEased < 1) {
+          const bubbleSize = 85;
+          ctx.save();
+          ctx.globalAlpha = alpha * (1 - typingEased);
           this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + totalSlideY);
           ctx.restore();
         }
