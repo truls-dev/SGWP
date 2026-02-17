@@ -104,6 +104,7 @@ const App: React.FC = () => {
     cast: state.cast,
     time: 0,
     backgroundVideo: null,
+    suggestedCustomojiUrl: null,
   });
 
   const groupIconInputRef = useRef<HTMLInputElement>(null);
@@ -135,6 +136,7 @@ const App: React.FC = () => {
       chatConfig: state.chat,
       cast: state.cast,
       backgroundVideo: previewVideoRef.current,
+      suggestedCustomojiUrl: suggestedUrl,
     };
   });
 

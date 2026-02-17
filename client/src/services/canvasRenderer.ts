@@ -17,6 +17,7 @@ export interface FrameState {
   cast: CastMember[];
   time: number;
   backgroundVideo?: HTMLVideoElement | null;
+  suggestedCustomojiUrl?: string | null;
 }
 
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
@@ -121,6 +122,10 @@ export class CanvasRenderer {
   }
 
   renderFrame(state: FrameState): HTMLCanvasElement {
+    if (state.suggestedCustomojiUrl && !this.images.has(`sticker_${state.suggestedCustomojiUrl}`)) {
+      this.loadImg(`sticker_${state.suggestedCustomojiUrl}`, state.suggestedCustomojiUrl);
+    }
+
     const ctx = this.ctx;
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
     const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
@@ -570,7 +575,7 @@ export class CanvasRenderer {
     }
 
     if (isTyping) {
-      const bubbleSize = 105;
+      const bubbleSize = 85;
       this.drawTypingBubble(ctx, state.time, padLeft + (isShort ? 36 : 89), bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize));
     }
   }
@@ -610,7 +615,7 @@ export class CanvasRenderer {
         }
 
         if (isTyping) {
-          const bubbleSize = 105;
+          const bubbleSize = 85;
           this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize);
         }
       }
@@ -638,8 +643,8 @@ export class CanvasRenderer {
     }
   }
 
-  private drawTypingBubble(ctx: CanvasRenderingContext2D, time: number, x: number, y: number): void {
-    const bubbleSize = 105;
+  private drawTypingBubble(ctx: CanvasRenderingContext2D, time: number, x: number, y: number, size: number = 85): void {
+    const bubbleSize = size;
     const svgScale = bubbleSize / 32;
 
     ctx.save();
@@ -690,94 +695,118 @@ export class CanvasRenderer {
     ctx.fillStyle = '#F9FAFB';
     ctx.fillRect(0, y, this.W, 1);
 
+    const S = 2.77;
     const isCropped = state.chatConfig.isKeyboardCropped;
     const hasText = state.compositionText.length > 0;
-    let cx = isCropped ? 183 : 33;
+    const rowH = Math.round(34 * S);
+    const rowY = y + (INPUT_H - rowH) / 2;
+    const rightPad = Math.round(12 * S);
+    let cx = isCropped ? 183 : Math.round(12 * S);
 
     if (!isCropped) {
       const btnImg = this.images.get(hasText ? 'sendBtn' : 'cameraBtn');
       if (btnImg) {
-        const s = 82;
-        ctx.drawImage(btnImg, cx, y + (INPUT_H - s) / 2, s, s);
-        cx += s + 16;
+        const s = rowH;
+        ctx.drawImage(btnImg, cx, rowY, s, s);
+        cx += s + Math.round(10 * S);
       }
     }
 
-    const rightPad = hasText ? 80 : 200;
-    const pillW = this.W - cx - rightPad;
-    const pillH = 76;
+    const smileySlotW = Math.round(28 * S);
+    const actionSlotW = hasText ? 0 : Math.round(60 * S);
+    const iconAreaW = smileySlotW + actionSlotW + Math.round(4 * S);
+    const pillW = this.W - cx - iconAreaW - rightPad;
+    const pillH = Math.round(32 * S);
     const pillY = y + (INPUT_H - pillH) / 2;
-    this.drawPillRect(ctx, cx, pillY, pillW, pillH, pillH / 2, '#F2F3F5');
+    const pillR = Math.round(22 * S);
+    this.drawPillRect(ctx, cx, pillY, pillW, pillH, pillR, '#F2F3F5');
+
+    const textPadL = Math.round(16 * S);
+    const textPadR = Math.round(36 * S);
 
     if (state.compositionText) {
-      ctx.font = `400 46px ${FONT_REGULAR}`;
+      ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
 
       ctx.save();
       ctx.beginPath();
-      ctx.rect(cx + 28, pillY, pillW - 56, pillH);
+      ctx.rect(cx + textPadL, pillY, pillW - textPadL - textPadR, pillH);
       ctx.clip();
-      ctx.fillText(state.compositionText, cx + 28, pillY + pillH / 2);
+      ctx.fillText(state.compositionText, cx + textPadL, pillY + pillH / 2);
 
       const textW = ctx.measureText(state.compositionText).width;
-      const cursorX = cx + 28 + textW + 3;
+      const cursorX = cx + textPadL + textW + 2;
+      const cursorH = Math.round(17.5 * S);
+      const cursorW = Math.round(2.2 * S);
       const blink = Math.floor(state.time / 500) % 2 === 0;
       if (blink || state.isMeTyping) {
-        this.drawPillRect(ctx, cursorX, pillY + 18, 6, pillH - 36, 3, '#FF0054');
+        this.drawPillRect(ctx, cursorX, pillY + (pillH - cursorH) / 2, cursorW, cursorH, cursorW / 2, '#FF0054');
       }
       ctx.restore();
+
+      const updownImg = this.images.get('updown');
+      if (updownImg) {
+        const iconS = Math.round(24 * S);
+        const iconX = cx + pillW - textPadR - iconS / 2 + Math.round(6 * S);
+        ctx.drawImage(updownImg, iconX, pillY + (pillH - iconS) / 2, iconS, iconS);
+      }
     } else {
-      ctx.font = `400 46px ${FONT_REGULAR}`;
+      ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
       ctx.fillStyle = '#9CA3AF';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('Chat', cx + 28, pillY + pillH / 2);
+      ctx.fillText('Chat', cx + textPadL, pillY + pillH / 2);
 
       ctx.save();
       ctx.strokeStyle = '#9CA3AF';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = Math.round(1.5 * S);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const micX = cx + pillW - 50;
+      const micX = cx + pillW - Math.round(18 * S);
       const micY = pillY + pillH / 2;
+      const ms = S * 0.9;
       ctx.beginPath();
-      ctx.arc(micX, micY - 6, 7, Math.PI, 0);
-      ctx.lineTo(micX + 7, micY + 6);
-      ctx.arc(micX, micY + 6, 7, 0, Math.PI);
+      ctx.arc(micX, micY - 6 * ms, 7 * ms, Math.PI, 0);
+      ctx.lineTo(micX + 7 * ms, micY + 6 * ms);
+      ctx.arc(micX, micY + 6 * ms, 7 * ms, 0, Math.PI);
       ctx.closePath();
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(micX, micY + 6, 14, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.arc(micX, micY + 6 * ms, 14 * ms, Math.PI * 0.15, Math.PI * 0.85);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(micX, micY + 20);
-      ctx.lineTo(micX, micY + 28);
+      ctx.moveTo(micX, micY + 20 * ms);
+      ctx.lineTo(micX, micY + 28 * ms);
       ctx.stroke();
       ctx.restore();
     }
 
-    if (!hasText) {
+    let iconX = cx + pillW + Math.round(2 * S);
+    const iconCenterY = y + INPUT_H / 2;
+
+    const stickerImg = state.suggestedCustomojiUrl ? this.images.get(`sticker_${state.suggestedCustomojiUrl}`) : null;
+    if (stickerImg) {
+      const stickerH = Math.round(46 * S * 1.65);
+      const stickerW = stickerImg.width * (stickerH / stickerImg.height);
+      ctx.drawImage(stickerImg, iconX + smileySlotW / 2 - stickerW / 2, iconCenterY - stickerH / 2, stickerW, stickerH);
+    } else {
       const smileyImg = this.images.get('smiley');
       if (smileyImg) {
-        const s = 46;
-        ctx.drawImage(smileyImg, this.W - 200, y + (INPUT_H - s) / 2, s, s);
+        const s = Math.round(17 * S);
+        ctx.drawImage(smileyImg, iconX + (smileySlotW - s) / 2, iconCenterY - s / 2, s, s);
       }
+    }
+    iconX += smileySlotW;
 
-      if (!isCropped) {
-        const actionImg = this.images.get('actionIcons');
-        if (actionImg) {
-          const ah = 64;
-          const aw = actionImg.width * (ah / actionImg.height);
-          ctx.drawImage(actionImg, this.W - 120, y + (INPUT_H - ah) / 2, aw, ah);
-        }
-      }
-    } else {
-      const updownImg = this.images.get('updown');
-      if (updownImg) {
-        const s = 50;
-        ctx.drawImage(updownImg, this.W - 120, y + (INPUT_H - s) / 2, s, s);
+    if (!hasText && !isCropped) {
+      const actionImg = this.images.get('actionIcons');
+      if (actionImg) {
+        const ah = Math.round(24 * S);
+        const aw = actionImg.width * (ah / actionImg.height);
+        iconX += Math.round(12 * S);
+        ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
       }
     }
   }
