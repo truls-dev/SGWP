@@ -78,9 +78,15 @@ export class CanvasRenderer {
   private images = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
+  private presenceEnabled = true;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
+    this.presenceEnabled = false;
+  }
+
+  enablePresence(): void {
+    this.presenceEnabled = true;
   }
 
   constructor() {
@@ -674,6 +680,8 @@ export class CanvasRenderer {
     state: FrameState,
     areaBottom: number,
   ): void {
+    if (!this.presenceEnabled) return;
+
     const isGroup = state.chatConfig.isGroup;
     const isCropped = state.chatConfig.isKeyboardCropped;
     const padLeft = isCropped ? 183 : 6;

@@ -581,6 +581,11 @@ const App: React.FC = () => {
       canvasRendererRef.current.resetAnimations();
     }
 
+    await new Promise(r => requestAnimationFrame(r));
+    if (canvasRendererRef.current) {
+      canvasRendererRef.current.enablePresence();
+    }
+
     for (let idx = 0; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];
       if ((runningStatusRef.current as string) === 'idle') break;
