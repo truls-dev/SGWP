@@ -511,7 +511,7 @@ export class CanvasRenderer {
         ctx.clip();
         ctx.drawImage(avatarImg, imgX, imgY, imgW, imgH);
         ctx.restore();
-        cx += containerW - 20;
+        cx += containerW + 10;
       }
     }
 
