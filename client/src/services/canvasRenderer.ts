@@ -1148,16 +1148,17 @@ export class CanvasRenderer {
     }
 
     const iconSize = Math.round(22 * S);
-    const iconGap = Math.round(7 * S);
+    const iconGap = Math.round(10 * S);
+    const pillToIconGap = Math.round(10 * S);
     const smileySlotW = iconSize;
     const actionSlotW = hasText ? 0 : (iconSize * 2 + iconGap * 2);
-    const iconAreaW = smileySlotW + actionSlotW + iconGap;
+    const iconAreaW = pillToIconGap + smileySlotW + actionSlotW;
     const pillW = this.W - cx - iconAreaW - rightPad;
     const textPadL = Math.round(16 * S);
     const textPadR = Math.round(36 * S);
     const textAreaW = pillW - textPadL - textPadR;
 
-    return { S, isCropped, hasText, rowH, rightPad, cx, iconSize, iconGap, smileySlotW, actionSlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW };
+    return { S, isCropped, hasText, rowH, rightPad, cx, iconSize, iconGap, pillToIconGap, smileySlotW, actionSlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW };
   }
 
   private computeInputHeight(
@@ -1304,7 +1305,7 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
-    let iconX = cx + pillW + Math.round(2 * S);
+    let iconX = cx + pillW + layout.pillToIconGap;
     const iconCenterY = y + totalH - INPUT_H / 2;
 
     const curStickerUrl = state.suggestedCustomojiUrl || null;
