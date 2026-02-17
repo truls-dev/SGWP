@@ -345,7 +345,7 @@ const App: React.FC = () => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DropEvent, index: number) => {
+  const handleDrop = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedItemIndex === null || draggedItemIndex === index) return;
 
