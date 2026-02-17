@@ -327,13 +327,14 @@ export class CanvasRenderer {
     this.drawHeader(ctx, state, y);
     y += HEADER_H;
 
-    const msgAreaH = this.H - y - INPUT_H - kbH;
+    const inputH = this.computeInputHeight(ctx, state);
+    const msgAreaH = this.H - y - inputH - kbH;
     this.drawMessages(ctx, state, y, msgAreaH);
     this.drawTypingIndicator(ctx, state, y + msgAreaH);
     y += msgAreaH;
 
-    this.drawInput(ctx, state, y);
-    y += INPUT_H;
+    this.drawInput(ctx, state, y, inputH);
+    y += inputH;
 
     this.drawKeyboard(ctx, state, y, kbH);
 
@@ -1107,23 +1108,88 @@ export class CanvasRenderer {
     ctx.globalAlpha = 1;
   }
 
-  private drawInput(
+  private wrapText(
     ctx: CanvasRenderingContext2D,
-    state: FrameState,
-    y: number,
-  ): void {
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, y, this.W, INPUT_H);
-    ctx.fillStyle = "#F9FAFB";
-    ctx.fillRect(0, y, this.W, 1);
+    text: string,
+    maxW: number,
+  ): string[] {
+    const lines: string[] = [];
+    let cur = "";
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const test = cur + ch;
+      if (ctx.measureText(test).width > maxW && cur.length > 0) {
+        lines.push(cur);
+        cur = ch;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [""];
+  }
 
+  private getInputLayout(state: FrameState) {
     const S = 2.77;
     const isCropped = state.chatConfig.isKeyboardCropped;
     const hasText = state.compositionText.length > 0;
     const rowH = Math.round(34 * S);
-    const rowY = y + (INPUT_H - rowH) / 2;
     const rightPad = Math.round(8 * S);
     let cx = isCropped ? 183 : Math.round(12 * S);
+
+    if (!isCropped) {
+      cx += rowH + Math.round(10 * S);
+    }
+
+    const iconSize = Math.round(22 * S);
+    const iconGap = Math.round(7 * S);
+    const smileySlotW = iconSize;
+    const actionSlotW = hasText ? 0 : (iconSize * 2 + iconGap * 2);
+    const iconAreaW = smileySlotW + actionSlotW + iconGap;
+    const pillW = this.W - cx - iconAreaW - rightPad;
+    const textPadL = Math.round(16 * S);
+    const textPadR = Math.round(36 * S);
+    const textAreaW = pillW - textPadL - textPadR;
+
+    return { S, isCropped, hasText, rowH, rightPad, cx, iconSize, iconGap, smileySlotW, actionSlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW };
+  }
+
+  private computeInputHeight(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+  ): number {
+    if (!state.compositionText) return INPUT_H;
+
+    const layout = this.getInputLayout(state);
+    const fontSize = Math.round(17 * layout.S);
+    ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
+    const lines = this.wrapText(ctx, state.compositionText, layout.textAreaW);
+    if (lines.length <= 1) return INPUT_H;
+
+    const lineH = Math.round(fontSize * 1.25);
+    const textBlockH = lines.length * lineH;
+    const vPad = Math.round(12 * layout.S);
+    const pillH = textBlockH + vPad * 2;
+    const outerPad = Math.round(10 * layout.S);
+    return Math.max(INPUT_H, pillH + outerPad * 2);
+  }
+
+  private drawInput(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+    totalH: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, y, this.W, totalH);
+    ctx.fillStyle = "#F9FAFB";
+    ctx.fillRect(0, y, this.W, 1);
+
+    const layout = this.getInputLayout(state);
+    const { S, isCropped, hasText, rowH, iconSize, iconGap, smileySlotW, iconAreaW, pillW, textPadL, textPadR, textAreaW } = layout;
+
+    let cx = isCropped ? 183 : Math.round(12 * S);
+    const rowY = y + (totalH - rowH) / 2;
 
     if (!isCropped) {
       const btnImg = this.images.get(hasText ? "sendBtn" : "cameraBtn");
@@ -1134,34 +1200,44 @@ export class CanvasRenderer {
       }
     }
 
-    const iconSize = Math.round(22 * S);
-    const iconGap = Math.round(7 * S);
-    const smileySlotW = iconSize;
-    const actionSlotW = hasText ? 0 : (iconSize * 2 + iconGap * 2);
-    const iconAreaW = smileySlotW + actionSlotW + iconGap;
-    const pillW = this.W - cx - iconAreaW - rightPad;
-    const pillH = Math.round(32 * S);
-    const pillY = y + (INPUT_H - pillH) / 2;
+    const fontSize = Math.round(17 * S);
+    ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
+    const lines = state.compositionText ? this.wrapText(ctx, state.compositionText, textAreaW) : [];
+    const lineH = Math.round(fontSize * 1.25);
+
+    let pillH: number;
+    if (lines.length > 1) {
+      const vPad = Math.round(12 * S);
+      pillH = lines.length * lineH + vPad * 2;
+    } else {
+      pillH = Math.round(32 * S);
+    }
+    const pillY = y + (totalH - pillH) / 2;
     const pillR = Math.round(22 * S);
     this.drawPillRect(ctx, cx, pillY, pillW, pillH, pillR, "#F2F3F5");
 
-    const textPadL = Math.round(16 * S);
-    const textPadR = Math.round(36 * S);
-
-    if (state.compositionText) {
-      ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
+    if (state.compositionText && lines.length > 0) {
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
+      ctx.textBaseline = "top";
+
+      const textX = cx + textPadL;
+      const vPad = lines.length > 1 ? Math.round(12 * S) : (pillH - lineH) / 2;
+      const textStartY = pillY + vPad;
 
       ctx.save();
       ctx.beginPath();
       ctx.rect(cx + textPadL, pillY, pillW - textPadL - textPadR, pillH);
       ctx.clip();
-      ctx.fillText(state.compositionText, cx + textPadL, pillY + pillH / 2);
 
-      const textW = ctx.measureText(state.compositionText).width;
-      const cursorX = cx + textPadL + textW + 2;
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], textX, textStartY + i * lineH);
+      }
+
+      const lastLine = lines[lines.length - 1];
+      const lastLineW = ctx.measureText(lastLine).width;
+      const cursorX = textX + lastLineW + 2;
+      const cursorLineY = textStartY + (lines.length - 1) * lineH;
       const cursorH = Math.round(17.5 * S);
       const cursorW = Math.round(2.2 * S);
       const blink = Math.floor(state.time / 500) % 2 === 0;
@@ -1169,7 +1245,7 @@ export class CanvasRenderer {
         this.drawPillRect(
           ctx,
           cursorX,
-          pillY + (pillH - cursorH) / 2,
+          cursorLineY + (lineH - cursorH) / 2,
           cursorW,
           cursorH,
           cursorW / 2,
@@ -1191,7 +1267,7 @@ export class CanvasRenderer {
         );
       }
     } else {
-      ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
+      ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = "#9CA3AF";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
@@ -1220,7 +1296,7 @@ export class CanvasRenderer {
     }
 
     let iconX = cx + pillW + Math.round(2 * S);
-    const iconCenterY = y + INPUT_H / 2;
+    const iconCenterY = y + totalH / 2;
 
     const curStickerUrl = state.suggestedCustomojiUrl || null;
     if (
@@ -1252,8 +1328,8 @@ export class CanvasRenderer {
       const alpha = Math.min(progress * 2.5, 1.0);
       const translateY = (1 - progress) * Math.round(8 * S);
 
-      const maxStickerH = INPUT_H - Math.round(8 * S);
-      const maxStickerW = smileySlotW + Math.round(20 * S);
+      const maxStickerH = totalH - Math.round(8 * S);
+      const maxStickerW = smileySlotW + Math.round(10 * S);
       const rawH = Math.round(46 * S * 1.65);
       const stickerH = Math.min(rawH, maxStickerH);
       const rawW = stickerImg.width * (stickerH / stickerImg.height);
@@ -1261,17 +1337,18 @@ export class CanvasRenderer {
       const finalH = stickerH * scale;
       const finalW = stickerW * (finalH / stickerH);
 
-      const drawX = iconX + smileySlotW / 2 - finalW / 2;
+      const stickerCenterX = iconX + smileySlotW / 2;
+      const drawX = stickerCenterX - finalW / 2;
       const drawY = iconCenterY - finalH / 2 + translateY;
 
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.beginPath();
       ctx.rect(
-        iconX - Math.round(10 * S),
+        iconX,
         y,
-        smileySlotW + Math.round(20 * S),
-        INPUT_H,
+        iconAreaW,
+        totalH,
       );
       ctx.clip();
       ctx.drawImage(stickerImg, drawX, drawY, finalW, finalH);
@@ -1547,28 +1624,6 @@ export class CanvasRenderer {
     if (lk === "shift" && la === "shift") return true;
     if (key === "send" && la === "enter") return true;
     return false;
-  }
-
-  private wrapText(
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxW: number,
-  ): string[] {
-    if (!text) return [""];
-    const words = text.split(" ");
-    const lines: string[] = [];
-    let line = "";
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxW && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = test;
-      }
-    }
-    if (line) lines.push(line);
-    return lines.length > 0 ? lines : [""];
   }
 
   private drawPillRect(
