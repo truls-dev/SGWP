@@ -1299,38 +1299,62 @@ export class CanvasRenderer {
     if (state.compositionText && lines.length > 0) {
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-      ctx.textBaseline = "top";
 
       const textX = cx + textPadL;
-      const vPad = lines.length > 1 ? Math.round(12 * S) : (pillH - lineH) / 2;
-      const textStartY = pillY + vPad;
 
       ctx.save();
       ctx.beginPath();
       ctx.rect(cx + textPadL, pillY, pillW - textPadL - textPadR, pillH);
       ctx.clip();
 
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], textX, textStartY + i * lineH);
-      }
+      if (lines.length === 1) {
+        ctx.textBaseline = "middle";
+        const textCenterY = pillY + pillH / 2;
+        ctx.fillText(lines[0], textX, textCenterY);
 
-      const lastLine = lines[lines.length - 1];
-      const lastLineW = ctx.measureText(lastLine).width;
-      const cursorX = textX + lastLineW + 2;
-      const cursorLineY = textStartY + (lines.length - 1) * lineH;
-      const cursorH = Math.round(17.5 * S);
-      const cursorW = Math.round(2.2 * S);
-      const blink = Math.floor(state.time / 500) % 2 === 0;
-      if (blink || state.isMeTyping) {
-        this.drawPillRect(
-          ctx,
-          cursorX,
-          cursorLineY + (lineH - cursorH) / 2,
-          cursorW,
-          cursorH,
-          cursorW / 2,
-          "#FF0054",
-        );
+        const lastLineW = ctx.measureText(lines[0]).width;
+        const cursorX = textX + lastLineW + 2;
+        const cursorH = Math.round(17.5 * S);
+        const cursorW = Math.round(2.2 * S);
+        const blink = Math.floor(state.time / 500) % 2 === 0;
+        if (blink || state.isMeTyping) {
+          this.drawPillRect(
+            ctx,
+            cursorX,
+            textCenterY - cursorH / 2,
+            cursorW,
+            cursorH,
+            cursorW / 2,
+            "#FF0054",
+          );
+        }
+      } else {
+        ctx.textBaseline = "top";
+        const vPad = Math.round(12 * S);
+        const textStartY = pillY + vPad;
+
+        for (let i = 0; i < lines.length; i++) {
+          ctx.fillText(lines[i], textX, textStartY + i * lineH);
+        }
+
+        const lastLine = lines[lines.length - 1];
+        const lastLineW = ctx.measureText(lastLine).width;
+        const cursorX = textX + lastLineW + 2;
+        const cursorLineY = textStartY + (lines.length - 1) * lineH;
+        const cursorH = Math.round(17.5 * S);
+        const cursorW = Math.round(2.2 * S);
+        const blink = Math.floor(state.time / 500) % 2 === 0;
+        if (blink || state.isMeTyping) {
+          this.drawPillRect(
+            ctx,
+            cursorX,
+            cursorLineY + (lineH - cursorH) / 2,
+            cursorW,
+            cursorH,
+            cursorW / 2,
+            "#FF0054",
+          );
+        }
       }
       ctx.restore();
 
