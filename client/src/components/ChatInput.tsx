@@ -15,7 +15,8 @@ interface Props {
 const SCCB_EMPTY = "https://raw.githubusercontent.com/truls-dev/images/main/sccb_empty.png";
 const SCCB_TEXT = "https://raw.githubusercontent.com/truls-dev/images/main/sccb_text.png";
 const UPDOWN_ICON = "https://raw.githubusercontent.com/truls-dev/images/main/updown-removebg-preview.png";
-const ACTION_ICONS = "https://raw.githubusercontent.com/truls-dev/images/main/twoicons.png";
+const GALLERY_ICON = "https://raw.githubusercontent.com/truls-dev/images/main/images.png";
+const PLUS_ICON = "https://raw.githubusercontent.com/truls-dev/images/main/plus.png";
 const SMILEY_ICON = "https://raw.githubusercontent.com/truls-dev/images/main/smiley.png";
 
 const ChatInput: React.FC<Props> = ({ 
@@ -189,15 +190,18 @@ const ChatInput: React.FC<Props> = ({
             {/* Action Group (Gallery + Plus) - Collapse when typing to allow pill expansion */}
             {!isKeyboardCropped && (
               <div 
-                className={`flex items-center transition-all duration-400 ease-in-out overflow-hidden ${hasText ? 'opacity-0 w-0' : 'opacity-100 w-[52px] pl-1.5'}`}
+                className={`flex items-center gap-[7px] transition-all duration-400 ease-in-out overflow-hidden ${hasText ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}
               >
-                 <div className="cursor-pointer active:scale-95 transition-transform flex items-center">
-                    <img 
-                      src={ACTION_ICONS} 
-                      alt="Gallery and Plus" 
-                      className="h-[24px] w-auto object-contain min-w-[50px]" 
-                    />
-                 </div>
+                 <img 
+                   src={GALLERY_ICON} 
+                   alt="Gallery" 
+                   className="h-[17px] w-[17px] object-contain cursor-pointer active:scale-90 transition-transform" 
+                 />
+                 <img 
+                   src={PLUS_ICON} 
+                   alt="Plus" 
+                   className="h-[17px] w-[17px] object-contain cursor-pointer active:scale-90 transition-transform" 
+                 />
               </div>
             )}
         </div>
