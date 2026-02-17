@@ -78,7 +78,7 @@ export class CanvasRenderer {
   private images = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
-  private presenceEnabled = true;
+  private presenceEnabled = false;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
