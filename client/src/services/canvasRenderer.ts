@@ -1147,7 +1147,7 @@ export class CanvasRenderer {
       cx += rowH + Math.round(10 * S);
     }
 
-    const iconSize = Math.round(22 * S);
+    const iconSize = Math.round(18 * S);
     const iconGap = Math.round(10 * S);
     const pillToIconGap = Math.round(10 * S);
     const smileySlotW = iconSize;
