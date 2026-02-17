@@ -1113,9 +1113,10 @@ export class CanvasRenderer {
     }
 
     const iconSize = Math.round(22 * S);
-    const smileySlotW = Math.round(28 * S);
-    const actionSlotW = hasText ? 0 : Math.round(42 * S);
-    const iconAreaW = smileySlotW + actionSlotW + Math.round(1 * S);
+    const iconGap = Math.round(7 * S);
+    const smileySlotW = iconSize;
+    const actionSlotW = hasText ? 0 : (iconSize * 2 + iconGap * 2);
+    const iconAreaW = smileySlotW + actionSlotW + iconGap;
     const pillW = this.W - cx - iconAreaW - rightPad;
     const pillH = Math.round(32 * S);
     const pillY = y + (INPUT_H - pillH) / 2;
@@ -1269,14 +1270,86 @@ export class CanvasRenderer {
     iconX += smileySlotW;
 
     if (!hasText && !isCropped) {
-      const actionImg = this.images.get("actionIcons");
-      if (actionImg) {
-        const ah = iconSize;
-        const aw = actionImg.width * (ah / actionImg.height);
-        iconX += Math.round(1 * S);
-        ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
-      }
+      iconX += iconGap;
+      this.drawGalleryIcon(ctx, iconX, iconCenterY - iconSize / 2, iconSize);
+      iconX += iconSize + iconGap;
+      this.drawPlusCircleIcon(ctx, iconX, iconCenterY - iconSize / 2, iconSize);
     }
+  }
+
+  private drawGalleryIcon(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+  ): void {
+    const s = size / 24;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.strokeStyle = "#86878B";
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.fillStyle = "none";
+
+    const r = 3;
+    ctx.beginPath();
+    ctx.moveTo(r, 2);
+    ctx.lineTo(24 - r, 2);
+    ctx.quadraticCurveTo(24, 2, 24, 2 + r);
+    ctx.lineTo(24, 22 - r);
+    ctx.quadraticCurveTo(24, 22, 24 - r, 22);
+    ctx.lineTo(r, 22);
+    ctx.quadraticCurveTo(0, 22, 0, 22 - r);
+    ctx.lineTo(0, 2 + r);
+    ctx.quadraticCurveTo(0, 2, r, 2);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(8.5, 8.5, 2.2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(24, 16);
+    ctx.lineTo(18, 11);
+    ctx.lineTo(5, 22);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  private drawPlusCircleIcon(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+  ): void {
+    const s = size / 24;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.strokeStyle = "#86878B";
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.beginPath();
+    ctx.arc(12, 12, 10, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(12, 7);
+    ctx.lineTo(12, 17);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(7, 12);
+    ctx.lineTo(17, 12);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   private drawKeyboard(
