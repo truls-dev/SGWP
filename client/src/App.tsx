@@ -580,8 +580,13 @@ const App: React.FC = () => {
       canvasRendererRef.current.resetAnimations();
     }
 
-    await new Promise(r => requestAnimationFrame(r));
+    for (let i = 0; i < 5; i++) {
+      frameStateRef.current.activeParticipantIds = [];
+      frameStateRef.current.typingParticipantIds = [];
+      await new Promise(r => requestAnimationFrame(r));
+    }
     if (canvasRendererRef.current) {
+      canvasRendererRef.current.resetAnimations();
       canvasRendererRef.current.enablePresence();
     }
 
