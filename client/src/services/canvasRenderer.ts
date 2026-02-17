@@ -320,6 +320,8 @@ export class CanvasRenderer {
     (this as any).W = Math.round(origW / uiScale);
     (this as any).H = Math.round(origH / uiScale);
 
+    const scaledKbH = Math.round(kbH / uiScale);
+
     let y = 0;
     this.drawStatusBar(ctx, state, y);
     y += STATUS_BAR_H;
@@ -328,7 +330,7 @@ export class CanvasRenderer {
     y += HEADER_H;
 
     const inputH = this.computeInputHeight(ctx, state);
-    const msgAreaH = this.H - y - inputH - kbH;
+    const msgAreaH = this.H - y - inputH - scaledKbH;
     this.drawMessages(ctx, state, y, msgAreaH);
     this.drawTypingIndicator(ctx, state, y + msgAreaH);
     y += msgAreaH;
