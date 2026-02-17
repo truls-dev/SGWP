@@ -1091,8 +1091,8 @@ export class CanvasRenderer {
 
     const dotCX = x + bubbleSize * 0.46;
     const dotCY = y + bubbleSize * 0.44;
-    const dotGap = 15;
-    const dotR = 3.6;
+    const dotGap = bubbleSize * (15 / 85);
+    const dotR = bubbleSize * (3.6 / 85);
 
     for (let i = 0; i < 3; i++) {
       const phase = ((time / 1200) * Math.PI * 2 + i * 0.8) % (Math.PI * 2);
