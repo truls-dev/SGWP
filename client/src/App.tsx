@@ -216,6 +216,13 @@ const App: React.FC = () => {
     setIsShiftActive(true);
     setSuggestedUrl(null);
     setKeyboardLayout('ALPHA');
+    frameStateRef.current.activeParticipantIds = [];
+    frameStateRef.current.typingParticipantIds = [];
+    frameStateRef.current.compositionText = '';
+    frameStateRef.current.isMeTyping = false;
+    if (canvasRendererRef.current) {
+      canvasRendererRef.current.resetAnimations();
+    }
     if (previewVideoRef.current) {
       previewVideoRef.current.currentTime = 0;
       if (playbackMode) {
@@ -551,15 +558,16 @@ const App: React.FC = () => {
     let localActiveParticipantIds: string[] = [];
     let localTypingParticipantIds: string[] = [];
     
-    // Helper to update both local and react state
     const updateActiveIds = (newIds: string[]) => {
       localActiveParticipantIds = newIds;
       setActiveParticipantIds(newIds);
+      frameStateRef.current.activeParticipantIds = newIds;
     };
     
     const updateTypingIds = (newIds: string[]) => {
       localTypingParticipantIds = newIds;
       setTypingParticipantIds(newIds);
+      frameStateRef.current.typingParticipantIds = newIds;
     };
 
     await new Promise(r => setTimeout(r, 300));
@@ -567,6 +575,8 @@ const App: React.FC = () => {
     const scriptToPlay = state.script;
     updateActiveIds([]);
     updateTypingIds([]);
+    frameStateRef.current.activeParticipantIds = [];
+    frameStateRef.current.typingParticipantIds = [];
     if (canvasRendererRef.current) {
       canvasRendererRef.current.resetAnimations();
     }
