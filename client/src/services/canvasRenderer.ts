@@ -25,6 +25,14 @@ interface StickerAnimState {
   startTime: number;
 }
 
+interface PresenceAnimState {
+  arrived: boolean;
+  arrivalStartTime: number;
+  typing: boolean;
+  typingStartTime: number;
+}
+
+
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
 const FONT_HEADER = "'Avenir Black', sans-serif";
 const FONT_SYSTEM = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -60,6 +68,7 @@ export class CanvasRenderer {
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
+  private presenceAnims = new Map<string, PresenceAnimState>();
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -136,8 +145,13 @@ export class CanvasRenderer {
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
     const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
 
-    if (isVideoMode && state.backgroundVideo) {
-      this.drawVideoBackground(ctx, state.backgroundVideo);
+    if (isVideoMode) {
+      if (state.backgroundVideo && state.backgroundVideo.videoWidth) {
+        this.drawVideoBackground(ctx, state.backgroundVideo);
+      } else {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, this.W, this.H);
+      }
       const scale = state.chatConfig.videoModeScale || 1;
       const phoneW = this.W * scale;
       const phoneH = this.H * scale;
@@ -552,29 +566,88 @@ export class CanvasRenderer {
     }
   }
 
+  private getPresenceAnim(id: string, isArrived: boolean, isTyping: boolean, time: number): PresenceAnimState {
+    let anim = this.presenceAnims.get(id);
+    if (!anim) {
+      anim = { arrived: false, arrivalStartTime: time, typing: false, typingStartTime: time };
+      this.presenceAnims.set(id, anim);
+    }
+    if (isArrived !== anim.arrived) {
+      anim.arrived = isArrived;
+      anim.arrivalStartTime = time;
+    }
+    if (isTyping !== anim.typing) {
+      anim.typing = isTyping;
+      anim.typingStartTime = time;
+    }
+    return anim;
+  }
+
+  private easeOut(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
   private drawSinglePresence(ctx: CanvasRenderingContext2D, state: FrameState, bottom: number, padLeft: number): void {
     const partner = state.cast.find(c => !c.isMe);
     if (!partner) return;
 
     const isArrived = state.activeParticipantIds.includes(partner.id);
-    if (!isArrived) return;
-
     const isTyping = state.typingParticipantIds.includes(partner.id);
+    const anim = this.getPresenceAnim(partner.id, isArrived, isTyping, state.time);
+
     const isShort = state.chatConfig.isShortCrop;
+    const isCropped = state.chatConfig.isKeyboardCropped;
     const containerW = isShort ? 105 : 188;
+    const S = 2.77;
+
+    const cameraBtnW = Math.round(34 * S);
+    const cameraBtnX = isCropped ? Math.round(12 * S) : padLeft;
+    const avatarCenterX = cameraBtnX + cameraBtnW / 2;
+
+    const arrivalDuration = 700;
+    const arrivalElapsed = state.time - anim.arrivalStartTime;
+    const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
+    const arrivalEased = this.easeOut(arrivalProgress);
+
+    let slideY: number;
+    let avatarAlpha: number;
+    if (isArrived) {
+      slideY = (1 - arrivalEased) * 110;
+      avatarAlpha = arrivalEased;
+    } else {
+      slideY = arrivalEased * 0 + (1 - arrivalEased) * 0;
+      avatarAlpha = 0;
+      return;
+    }
+
+    const typingDuration = 500;
+    const typingElapsed = state.time - anim.typingStartTime;
+    const typingProgress = Math.min(typingElapsed / typingDuration, 1);
+    const typingEased = this.easeOut(typingProgress);
+
+    let typingNudgeY = 0;
+    let typingScale = 1.0;
+    if (isTyping) {
+      typingNudgeY = typingEased * Math.round(8 * S);
+      typingScale = 1.0 + typingEased * 0.1;
+    } else {
+      typingNudgeY = (1 - typingEased) * Math.round(8 * S);
+      typingScale = 1.0 + (1 - typingEased) * 0.1;
+    }
 
     const avatarKey = isTyping ? `selfie_${partner.bitmojiAvatarId}` : `peeking_${partner.bitmojiAvatarId}`;
     const avatarImg = this.images.get(avatarKey);
 
     if (avatarImg) {
-      const imgW = containerW;
+      const imgW = containerW * typingScale;
       const imgH = avatarImg.height * (imgW / avatarImg.width);
-      const ax = padLeft;
-      const ay = bottom - imgH;
+      const ax = avatarCenterX - imgW / 2;
+      const ay = bottom - imgH + slideY + typingNudgeY;
 
       ctx.save();
+      ctx.globalAlpha = avatarAlpha;
       ctx.beginPath();
-      ctx.rect(padLeft - 60, bottom - 200, containerW + 120, 200);
+      ctx.rect(avatarCenterX - containerW, bottom - 550, containerW * 2, 550);
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
       ctx.restore();
@@ -582,7 +655,12 @@ export class CanvasRenderer {
 
     if (isTyping) {
       const bubbleSize = 85;
-      this.drawTypingBubble(ctx, state.time, padLeft + (isShort ? 36 : 89), bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize));
+      const bubbleX = avatarCenterX + (isShort ? -10 : 0);
+      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + slideY + typingNudgeY;
+      ctx.save();
+      ctx.globalAlpha = avatarAlpha;
+      this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
+      ctx.restore();
     }
   }
 
@@ -605,24 +683,50 @@ export class CanvasRenderer {
       const isTyping = state.typingParticipantIds.includes(member.id);
       const hasArrived = state.activeParticipantIds.includes(member.id);
       const pillColor = hasArrived ? (member.color || '#33B5FF') : '#CCCCCC';
+      const anim = this.getPresenceAnim(member.id, hasArrived, isTyping, state.time);
+
+      const arrivalElapsed = state.time - anim.arrivalStartTime;
+      const arrivalProgress = Math.min(arrivalElapsed / 700, 1);
+      const arrivalEased = this.easeOut(arrivalProgress);
+
+      const typingElapsed = state.time - anim.typingStartTime;
+      const typingProgress = Math.min(typingElapsed / 500, 1);
+      const typingEased = this.easeOut(typingProgress);
 
       if (hasArrived) {
+        const slideY = (1 - arrivalEased) * 110;
+        const avatarAlpha = arrivalEased;
+
+        let typingNudgeY = 0;
+        let typingScale = 1.0;
+        if (isTyping) {
+          typingNudgeY = typingEased * 22;
+          typingScale = 1.0 + typingEased * 0.1;
+        } else {
+          typingNudgeY = (1 - typingEased) * 22;
+          typingScale = 1.0 + (1 - typingEased) * 0.1;
+        }
+
         const avatarKey = isTyping ? `selfie_${member.bitmojiAvatarId}` : `peeking_${member.bitmojiAvatarId}`;
         const avatarImg = this.images.get(avatarKey);
         if (avatarImg) {
-          const imgW = itemW * 0.8;
+          const imgW = itemW * 0.8 * typingScale;
           const imgH = avatarImg.height * (imgW / avatarImg.width);
           ctx.save();
+          ctx.globalAlpha = avatarAlpha;
           ctx.beginPath();
-          ctx.rect(px - 60, bottom - 200, itemW + 120, 200);
+          ctx.rect(px - 60, bottom - 550, itemW + 120, 550);
           ctx.clip();
-          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH, imgW, imgH);
+          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH + slideY + typingNudgeY, imgW, imgH);
           ctx.restore();
         }
 
         if (isTyping) {
           const bubbleSize = 85;
-          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize);
+          ctx.save();
+          ctx.globalAlpha = avatarAlpha;
+          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + slideY + typingNudgeY);
+          ctx.restore();
         }
       }
 
@@ -766,26 +870,37 @@ export class CanvasRenderer {
       ctx.textBaseline = 'middle';
       ctx.fillText('Chat', cx + textPadL, pillY + pillH / 2);
 
+      const micS = iconSize;
+      const micDrawX = cx + pillW - textPadR + Math.round(2 * S);
+      const micDrawY = pillY + (pillH - micS) / 2;
       ctx.save();
-      ctx.strokeStyle = '#9CA3AF';
-      ctx.lineWidth = Math.round(1.5 * S);
+      ctx.translate(micDrawX, micDrawY);
+      const svgS = micS / 24;
+      ctx.strokeStyle = '#6B7280';
+      ctx.lineWidth = 1.8 * svgS;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const micX = cx + pillW - Math.round(18 * S);
-      const micY = pillY + pillH / 2;
-      const ms = S * 0.55;
       ctx.beginPath();
-      ctx.arc(micX, micY - 6 * ms, 7 * ms, Math.PI, 0);
-      ctx.lineTo(micX + 7 * ms, micY + 6 * ms);
-      ctx.arc(micX, micY + 6 * ms, 7 * ms, 0, Math.PI);
+      ctx.moveTo(9 * svgS, 1 * svgS);
+      ctx.bezierCurveTo(7.343 * svgS, 1 * svgS, 6 * svgS, 2.343 * svgS, 6 * svgS, 4 * svgS);
+      ctx.lineTo(6 * svgS, 12 * svgS);
+      ctx.bezierCurveTo(6 * svgS, 13.657 * svgS, 7.343 * svgS, 15 * svgS, 9 * svgS, 15 * svgS);
+      ctx.lineTo(15 * svgS, 15 * svgS);
+      ctx.bezierCurveTo(16.657 * svgS, 15 * svgS, 18 * svgS, 13.657 * svgS, 18 * svgS, 12 * svgS);
+      ctx.lineTo(18 * svgS, 4 * svgS);
+      ctx.bezierCurveTo(18 * svgS, 2.343 * svgS, 16.657 * svgS, 1 * svgS, 15 * svgS, 1 * svgS);
       ctx.closePath();
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(micX, micY + 6 * ms, 14 * ms, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.moveTo(19 * svgS, 10 * svgS);
+      ctx.lineTo(19 * svgS, 12 * svgS);
+      ctx.bezierCurveTo(19 * svgS, 15.866 * svgS, 15.866 * svgS, 19 * svgS, 12 * svgS, 19 * svgS);
+      ctx.bezierCurveTo(8.134 * svgS, 19 * svgS, 5 * svgS, 15.866 * svgS, 5 * svgS, 12 * svgS);
+      ctx.lineTo(5 * svgS, 10 * svgS);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(micX, micY + 20 * ms);
-      ctx.lineTo(micX, micY + 28 * ms);
+      ctx.moveTo(12 * svgS, 19 * svgS);
+      ctx.lineTo(12 * svgS, 23 * svgS);
       ctx.stroke();
       ctx.restore();
     }
