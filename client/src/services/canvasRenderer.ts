@@ -1113,20 +1113,21 @@ export class CanvasRenderer {
     text: string,
     maxW: number,
   ): string[] {
+    if (!text) return [""];
+    const words = text.split(" ");
     const lines: string[] = [];
-    let cur = "";
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const test = cur + ch;
-      if (ctx.measureText(test).width > maxW && cur.length > 0) {
-        lines.push(cur);
-        cur = ch;
+    let line = "";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > maxW && line) {
+        lines.push(line);
+        line = word;
       } else {
-        cur = test;
+        line = test;
       }
     }
-    if (cur) lines.push(cur);
-    return lines.length ? lines : [""];
+    if (line) lines.push(line);
+    return lines.length > 0 ? lines : [""];
   }
 
   private getInputLayout(state: FrameState) {
@@ -1296,7 +1297,7 @@ export class CanvasRenderer {
     }
 
     let iconX = cx + pillW + Math.round(2 * S);
-    const iconCenterY = y + totalH / 2;
+    const iconCenterY = y + totalH - INPUT_H / 2;
 
     const curStickerUrl = state.suggestedCustomojiUrl || null;
     if (
@@ -1328,7 +1329,7 @@ export class CanvasRenderer {
       const alpha = Math.min(progress * 2.5, 1.0);
       const translateY = (1 - progress) * Math.round(8 * S);
 
-      const maxStickerH = totalH - Math.round(8 * S);
+      const maxStickerH = INPUT_H - Math.round(8 * S);
       const maxStickerW = smileySlotW + Math.round(10 * S);
       const rawH = Math.round(46 * S * 1.65);
       const stickerH = Math.min(rawH, maxStickerH);
