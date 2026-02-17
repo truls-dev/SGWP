@@ -336,11 +336,13 @@ export class CanvasRenderer {
     this.drawInput(ctx, state, y, inputH);
     y += inputH;
 
-    this.drawKeyboard(ctx, state, y, kbH);
+    const kbYInCanvas = Math.round(y * uiScale);
 
     ctx.restore();
     (this as any).W = origW;
     (this as any).H = origH;
+
+    this.drawKeyboard(ctx, state, kbYInCanvas, origH - kbYInCanvas);
   }
 
   private drawVideoBackground(
