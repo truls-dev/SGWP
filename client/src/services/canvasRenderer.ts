@@ -604,36 +604,29 @@ export class CanvasRenderer {
     const cameraBtnX = isCropped ? Math.round(12 * S) : padLeft;
     const avatarCenterX = cameraBtnX + cameraBtnW / 2;
 
+    if (!isArrived) return;
+
     const arrivalDuration = 700;
     const arrivalElapsed = state.time - anim.arrivalStartTime;
     const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
     const arrivalEased = this.easeOut(arrivalProgress);
-
-    let slideY: number;
-    let avatarAlpha: number;
-    if (isArrived) {
-      slideY = (1 - arrivalEased) * 110;
-      avatarAlpha = arrivalEased;
-    } else {
-      slideY = arrivalEased * 0 + (1 - arrivalEased) * 0;
-      avatarAlpha = 0;
-      return;
-    }
+    const arrivalSlideY = (1 - arrivalEased) * 110;
+    const arrivalAlpha = arrivalEased;
 
     const typingDuration = 500;
     const typingElapsed = state.time - anim.typingStartTime;
     const typingProgress = Math.min(typingElapsed / typingDuration, 1);
     const typingEased = this.easeOut(typingProgress);
 
-    let typingNudgeY = 0;
-    let typingScale = 1.0;
-    if (isTyping) {
-      typingNudgeY = typingEased * Math.round(8 * S);
-      typingScale = 1.0 + typingEased * 0.1;
-    } else {
-      typingNudgeY = (1 - typingEased) * Math.round(8 * S);
-      typingScale = 1.0 + (1 - typingEased) * 0.1;
-    }
+    const typingSlideAmount = 80;
+    const typingSlideY = isTyping
+      ? (1 - typingEased) * typingSlideAmount
+      : typingEased * typingSlideAmount;
+    const typingScale = isTyping
+      ? 1.0 + typingEased * 0.1
+      : 1.0 + (1 - typingEased) * 0.1;
+
+    const totalSlideY = arrivalSlideY + typingSlideY;
 
     const avatarKey = isTyping ? `selfie_${partner.bitmojiAvatarId}` : `peeking_${partner.bitmojiAvatarId}`;
     const avatarImg = this.images.get(avatarKey);
@@ -642,12 +635,12 @@ export class CanvasRenderer {
       const imgW = containerW * typingScale;
       const imgH = avatarImg.height * (imgW / avatarImg.width);
       const ax = avatarCenterX - imgW / 2;
-      const ay = bottom - imgH + slideY + typingNudgeY;
+      const ay = bottom - imgH + totalSlideY;
 
       ctx.save();
-      ctx.globalAlpha = avatarAlpha;
+      ctx.globalAlpha = arrivalAlpha;
       ctx.beginPath();
-      ctx.rect(avatarCenterX - containerW, bottom - 550, containerW * 2, 550);
+      ctx.rect(avatarCenterX - containerW * 1.5, bottom - 600, containerW * 3, 600);
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
       ctx.restore();
@@ -655,10 +648,10 @@ export class CanvasRenderer {
 
     if (isTyping) {
       const bubbleSize = 85;
-      const bubbleX = avatarCenterX + (isShort ? -10 : 0);
-      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + slideY + typingNudgeY;
+      const bubbleX = avatarCenterX;
+      const bubbleY = bottom - (isShort ? 25 + bubbleSize : 78 + bubbleSize) + totalSlideY;
       ctx.save();
-      ctx.globalAlpha = avatarAlpha;
+      ctx.globalAlpha = arrivalAlpha;
       this.drawTypingBubble(ctx, state.time, bubbleX, bubbleY);
       ctx.restore();
     }
@@ -694,18 +687,17 @@ export class CanvasRenderer {
       const typingEased = this.easeOut(typingProgress);
 
       if (hasArrived) {
-        const slideY = (1 - arrivalEased) * 110;
+        const arrivalSlideY = (1 - arrivalEased) * 110;
         const avatarAlpha = arrivalEased;
 
-        let typingNudgeY = 0;
-        let typingScale = 1.0;
-        if (isTyping) {
-          typingNudgeY = typingEased * 22;
-          typingScale = 1.0 + typingEased * 0.1;
-        } else {
-          typingNudgeY = (1 - typingEased) * 22;
-          typingScale = 1.0 + (1 - typingEased) * 0.1;
-        }
+        const typingSlideY = isTyping
+          ? (1 - typingEased) * 80
+          : typingEased * 80;
+        const typingScale = isTyping
+          ? 1.0 + typingEased * 0.1
+          : 1.0 + (1 - typingEased) * 0.1;
+
+        const totalSlideY = arrivalSlideY + typingSlideY;
 
         const avatarKey = isTyping ? `selfie_${member.bitmojiAvatarId}` : `peeking_${member.bitmojiAvatarId}`;
         const avatarImg = this.images.get(avatarKey);
@@ -715,9 +707,9 @@ export class CanvasRenderer {
           ctx.save();
           ctx.globalAlpha = avatarAlpha;
           ctx.beginPath();
-          ctx.rect(px - 60, bottom - 550, itemW + 120, 550);
+          ctx.rect(px - 60, bottom - 600, itemW + 120, 600);
           ctx.clip();
-          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH + slideY + typingNudgeY, imgW, imgH);
+          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH + totalSlideY, imgW, imgH);
           ctx.restore();
         }
 
@@ -725,7 +717,7 @@ export class CanvasRenderer {
           const bubbleSize = 85;
           ctx.save();
           ctx.globalAlpha = avatarAlpha;
-          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + slideY + typingNudgeY);
+          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + totalSlideY);
           ctx.restore();
         }
       }
@@ -870,38 +862,23 @@ export class CanvasRenderer {
       ctx.textBaseline = 'middle';
       ctx.fillText('Chat', cx + textPadL, pillY + pillH / 2);
 
-      const micS = iconSize;
-      const micDrawX = cx + pillW - textPadR + Math.round(2 * S);
-      const micDrawY = pillY + (pillH - micS) / 2;
+      const micVisual = Math.round(22 * S);
+      const svgS = micVisual / 24;
+      const micDrawX = cx + pillW - Math.round(20 * S) - micVisual / 2;
+      const micDrawY = pillY + (pillH - micVisual) / 2;
       ctx.save();
       ctx.translate(micDrawX, micDrawY);
-      const svgS = micS / 24;
+      ctx.scale(svgS, svgS);
       ctx.strokeStyle = '#6B7280';
-      ctx.lineWidth = 1.8 * svgS;
+      ctx.lineWidth = 1.8;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(9 * svgS, 1 * svgS);
-      ctx.bezierCurveTo(7.343 * svgS, 1 * svgS, 6 * svgS, 2.343 * svgS, 6 * svgS, 4 * svgS);
-      ctx.lineTo(6 * svgS, 12 * svgS);
-      ctx.bezierCurveTo(6 * svgS, 13.657 * svgS, 7.343 * svgS, 15 * svgS, 9 * svgS, 15 * svgS);
-      ctx.lineTo(15 * svgS, 15 * svgS);
-      ctx.bezierCurveTo(16.657 * svgS, 15 * svgS, 18 * svgS, 13.657 * svgS, 18 * svgS, 12 * svgS);
-      ctx.lineTo(18 * svgS, 4 * svgS);
-      ctx.bezierCurveTo(18 * svgS, 2.343 * svgS, 16.657 * svgS, 1 * svgS, 15 * svgS, 1 * svgS);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(19 * svgS, 10 * svgS);
-      ctx.lineTo(19 * svgS, 12 * svgS);
-      ctx.bezierCurveTo(19 * svgS, 15.866 * svgS, 15.866 * svgS, 19 * svgS, 12 * svgS, 19 * svgS);
-      ctx.bezierCurveTo(8.134 * svgS, 19 * svgS, 5 * svgS, 15.866 * svgS, 5 * svgS, 12 * svgS);
-      ctx.lineTo(5 * svgS, 10 * svgS);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(12 * svgS, 19 * svgS);
-      ctx.lineTo(12 * svgS, 23 * svgS);
-      ctx.stroke();
+      const micBody = new Path2D('M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z');
+      ctx.stroke(micBody);
+      const micBowl = new Path2D('M19 10v2a7 7 0 0 1-14 0v-2');
+      ctx.stroke(micBowl);
+      const micStand = new Path2D('M12 19L12 23');
+      ctx.stroke(micStand);
       ctx.restore();
     }
 
