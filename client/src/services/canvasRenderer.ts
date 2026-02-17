@@ -1259,7 +1259,7 @@ export class CanvasRenderer {
       const updownImg = this.images.get("updown");
       if (updownImg) {
         const upS = iconSize;
-        const iconPillX = cx + pillW - textPadR - upS / 2 + Math.round(6 * S);
+        const iconPillX = cx + pillW - Math.round(8 * S) - upS;
         const singlePillH = Math.round(32 * S);
         const updownY = pillY + pillH - singlePillH + (singlePillH - upS) / 2;
         ctx.drawImage(
@@ -1345,7 +1345,7 @@ export class CanvasRenderer {
       const finalH = stickerH * scale;
       const finalW = stickerW * scale;
 
-      const stickerCenterX = iconX + iconAreaW / 2;
+      const stickerCenterX = iconX + smileySlotW / 2;
       const drawX = stickerCenterX - finalW / 2;
       const drawY = iconCenterY - finalH / 2 + translateY;
 
