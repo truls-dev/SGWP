@@ -565,7 +565,11 @@ const App: React.FC = () => {
     await new Promise(r => setTimeout(r, 300));
 
     const scriptToPlay = state.script;
-    updateActiveIds([]); 
+    updateActiveIds([]);
+    updateTypingIds([]);
+    if (canvasRendererRef.current) {
+      canvasRendererRef.current.resetAnimations();
+    }
 
     for (let idx = 0; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];

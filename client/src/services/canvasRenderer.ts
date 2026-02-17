@@ -1,7 +1,16 @@
-import { ScriptEvent, SystemConfig, ChatConfig, CastMember, MessageType } from '../types';
-import { KeyboardLayout } from '../components/IOSKeyboard';
-import { getSelfieUrlForAvatar, getPeekingUrlForAvatar } from './bitmojiService';
-import { SNAP_COLORS } from '../constants';
+import {
+  ScriptEvent,
+  SystemConfig,
+  ChatConfig,
+  CastMember,
+  MessageType,
+} from "../types";
+import { KeyboardLayout } from "../components/IOSKeyboard";
+import {
+  getSelfieUrlForAvatar,
+  getPeekingUrlForAvatar,
+} from "./bitmojiService";
+import { SNAP_COLORS } from "../constants";
 
 export interface FrameState {
   messages: ScriptEvent[];
@@ -32,10 +41,10 @@ interface PresenceAnimState {
   typingStartTime: number;
 }
 
-
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
 const FONT_HEADER = "'Avenir Black', sans-serif";
-const FONT_SYSTEM = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const FONT_SYSTEM =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
 const STATUS_BAR_H = 42;
 const HEADER_H = 116;
@@ -70,28 +79,63 @@ export class CanvasRenderer {
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
 
+  resetAnimations(): void {
+    this.presenceAnims.clear();
+  }
+
   constructor() {
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement("canvas");
     this.canvas.width = this.W;
     this.canvas.height = this.H;
-    this.ctx = this.canvas.getContext('2d', { alpha: false })!;
+    this.ctx = this.canvas.getContext("2d", { alpha: false })!;
   }
 
   getCanvas(): HTMLCanvasElement {
     return this.canvas;
   }
 
-  async preload(cast: CastMember[], events: ScriptEvent[], chatConfig?: ChatConfig): Promise<void> {
+  async preload(
+    cast: CastMember[],
+    events: ScriptEvent[],
+    chatConfig?: ChatConfig,
+  ): Promise<void> {
     const staticUrls: [string, string][] = [
-      ['signal', 'https://raw.githubusercontent.com/truls-dev/images/main/signalbarsblack.png'],
-      ['wifi', 'https://raw.githubusercontent.com/truls-dev/images/main/wifi.png'],
-      ['battery', 'https://raw.githubusercontent.com/truls-dev/images/main/battery.100.png'],
-      ['callIcons', 'https://raw.githubusercontent.com/truls-dev/images/main/sccicons.png'],
-      ['cameraBtn', 'https://raw.githubusercontent.com/truls-dev/images/main/sccb_empty.png'],
-      ['sendBtn', 'https://raw.githubusercontent.com/truls-dev/images/main/sccb_text.png'],
-      ['smiley', 'https://raw.githubusercontent.com/truls-dev/images/main/smiley.png'],
-      ['actionIcons', 'https://raw.githubusercontent.com/truls-dev/images/main/twoicons.png'],
-      ['updown', 'https://raw.githubusercontent.com/truls-dev/images/main/updown-removebg-preview.png'],
+      [
+        "signal",
+        "https://raw.githubusercontent.com/truls-dev/images/main/signalbarsblack.png",
+      ],
+      [
+        "wifi",
+        "https://raw.githubusercontent.com/truls-dev/images/main/wifi.png",
+      ],
+      [
+        "battery",
+        "https://raw.githubusercontent.com/truls-dev/images/main/battery.100.png",
+      ],
+      [
+        "callIcons",
+        "https://raw.githubusercontent.com/truls-dev/images/main/sccicons.png",
+      ],
+      [
+        "cameraBtn",
+        "https://raw.githubusercontent.com/truls-dev/images/main/sccb_empty.png",
+      ],
+      [
+        "sendBtn",
+        "https://raw.githubusercontent.com/truls-dev/images/main/sccb_text.png",
+      ],
+      [
+        "smiley",
+        "https://raw.githubusercontent.com/truls-dev/images/main/smiley.png",
+      ],
+      [
+        "actionIcons",
+        "https://raw.githubusercontent.com/truls-dev/images/main/twoicons.png",
+      ],
+      [
+        "updown",
+        "https://raw.githubusercontent.com/truls-dev/images/main/updown-removebg-preview.png",
+      ],
     ];
 
     const promises: Promise<void>[] = [];
@@ -100,8 +144,18 @@ export class CanvasRenderer {
     }
 
     for (const m of cast) {
-      promises.push(this.loadImg(`selfie_${m.bitmojiAvatarId}`, getSelfieUrlForAvatar(m.bitmojiAvatarId)));
-      promises.push(this.loadImg(`peeking_${m.bitmojiAvatarId}`, getPeekingUrlForAvatar(m.bitmojiAvatarId)));
+      promises.push(
+        this.loadImg(
+          `selfie_${m.bitmojiAvatarId}`,
+          getSelfieUrlForAvatar(m.bitmojiAvatarId),
+        ),
+      );
+      promises.push(
+        this.loadImg(
+          `peeking_${m.bitmojiAvatarId}`,
+          getPeekingUrlForAvatar(m.bitmojiAvatarId),
+        ),
+      );
     }
 
     for (const e of events) {
@@ -111,10 +165,10 @@ export class CanvasRenderer {
     }
 
     if (chatConfig?.exportBackgroundUrl) {
-      promises.push(this.loadImg('exportBg', chatConfig.exportBackgroundUrl));
+      promises.push(this.loadImg("exportBg", chatConfig.exportBackgroundUrl));
     }
     if (chatConfig?.groupIconUrl) {
-      promises.push(this.loadImg('groupIcon', chatConfig.groupIconUrl));
+      promises.push(this.loadImg("groupIcon", chatConfig.groupIconUrl));
     }
 
     await Promise.all(promises);
@@ -122,13 +176,19 @@ export class CanvasRenderer {
   }
 
   private loadImg(key: string, url: string): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => { this.images.set(key, img); resolve(); };
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        this.images.set(key, img);
+        resolve();
+      };
       img.onerror = () => {
         const img2 = new Image();
-        img2.onload = () => { this.images.set(key, img2); resolve(); };
+        img2.onload = () => {
+          this.images.set(key, img2);
+          resolve();
+        };
         img2.onerror = () => resolve();
         img2.src = url;
       };
@@ -137,8 +197,14 @@ export class CanvasRenderer {
   }
 
   renderFrame(state: FrameState): HTMLCanvasElement {
-    if (state.suggestedCustomojiUrl && !this.images.has(`sticker_${state.suggestedCustomojiUrl}`)) {
-      this.loadImg(`sticker_${state.suggestedCustomojiUrl}`, state.suggestedCustomojiUrl);
+    if (
+      state.suggestedCustomojiUrl &&
+      !this.images.has(`sticker_${state.suggestedCustomojiUrl}`)
+    ) {
+      this.loadImg(
+        `sticker_${state.suggestedCustomojiUrl}`,
+        state.suggestedCustomojiUrl,
+      );
     }
 
     const ctx = this.ctx;
@@ -149,7 +215,7 @@ export class CanvasRenderer {
       if (state.backgroundVideo && state.backgroundVideo.videoWidth) {
         this.drawVideoBackground(ctx, state.backgroundVideo);
       } else {
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, this.W, this.H);
       }
       const scale = state.chatConfig.videoModeScale || 1;
@@ -176,19 +242,25 @@ export class CanvasRenderer {
       this.drawPhoneUI(ctx, state, kbH);
       ctx.restore();
     } else {
-      const exportBg = this.images.get('exportBg');
+      const exportBg = this.images.get("exportBg");
       if (exportBg) {
         const imgR = exportBg.width / exportBg.height;
         const canR = this.W / this.H;
         let dw: number, dh: number, dx: number, dy: number;
         if (imgR > canR) {
-          dh = this.H; dw = this.H * imgR; dx = (this.W - dw) / 2; dy = 0;
+          dh = this.H;
+          dw = this.H * imgR;
+          dx = (this.W - dw) / 2;
+          dy = 0;
         } else {
-          dw = this.W; dh = this.W / imgR; dx = 0; dy = (this.H - dh) / 2;
+          dw = this.W;
+          dh = this.W / imgR;
+          dx = 0;
+          dy = (this.H - dh) / 2;
         }
         ctx.drawImage(exportBg, dx, dy, dw, dh);
       } else {
-        ctx.fillStyle = '#000000';
+        ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, this.W, this.H);
       }
 
@@ -218,8 +290,12 @@ export class CanvasRenderer {
     return this.canvas;
   }
 
-  private drawPhoneUI(ctx: CanvasRenderingContext2D, state: FrameState, kbH: number): void {
-    ctx.fillStyle = '#FFFFFF';
+  private drawPhoneUI(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    kbH: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, this.W, this.H);
 
     let y = 0;
@@ -240,45 +316,58 @@ export class CanvasRenderer {
     this.drawKeyboard(ctx, state, y, kbH);
   }
 
-  private drawVideoBackground(ctx: CanvasRenderingContext2D, vid: HTMLVideoElement): void {
+  private drawVideoBackground(
+    ctx: CanvasRenderingContext2D,
+    vid: HTMLVideoElement,
+  ): void {
     if (!vid.videoWidth) return;
     const vidR = vid.videoWidth / vid.videoHeight;
     const canR = this.W / this.H;
     let dw: number, dh: number, dx: number, dy: number;
     if (vidR > canR) {
-      dh = this.H; dw = this.H * vidR; dx = (this.W - dw) / 2; dy = 0;
+      dh = this.H;
+      dw = this.H * vidR;
+      dx = (this.W - dw) / 2;
+      dy = 0;
     } else {
-      dw = this.W; dh = this.W / vidR; dx = 0; dy = (this.H - dh) / 2;
+      dw = this.W;
+      dh = this.W / vidR;
+      dx = 0;
+      dy = (this.H - dh) / 2;
     }
     ctx.drawImage(vid, dx, dy, dw, dh);
   }
 
-  private drawStatusBar(ctx: CanvasRenderingContext2D, state: FrameState, y: number): void {
-    ctx.fillStyle = '#FFFFFF';
+  private drawStatusBar(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, y, this.W, STATUS_BAR_H);
 
-    const signalImg = this.images.get('signal');
+    const signalImg = this.images.get("signal");
     if (signalImg) {
       const ih = 22;
       const iw = signalImg.width * (ih / signalImg.height);
       ctx.save();
-      ctx.filter = 'brightness(0)';
+      ctx.filter = "brightness(0)";
       ctx.drawImage(signalImg, 22, y + (STATUS_BAR_H - ih) / 2 + 2, iw, ih);
       ctx.restore();
     }
 
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = "#000000";
     ctx.font = `bold 28px ${FONT_SYSTEM}`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
     ctx.fillText(state.systemConfig.carrier, 65, y + STATUS_BAR_H / 2);
 
     ctx.font = `bold 30px ${FONT_SYSTEM}`;
-    ctx.textAlign = 'center';
+    ctx.textAlign = "center";
     ctx.fillText(state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2);
 
     let rx = this.W - 22;
-    const batteryImg = this.images.get('battery');
+    const batteryImg = this.images.get("battery");
     if (batteryImg) {
       const ih = 24;
       const iw = batteryImg.width * (ih / batteryImg.height);
@@ -287,7 +376,7 @@ export class CanvasRenderer {
       rx -= 14;
     }
 
-    const wifiImg = this.images.get('wifi');
+    const wifiImg = this.images.get("wifi");
     if (wifiImg) {
       const ih = 25;
       const iw = wifiImg.width * (ih / wifiImg.height);
@@ -296,20 +385,24 @@ export class CanvasRenderer {
     }
   }
 
-  private drawHeader(ctx: CanvasRenderingContext2D, state: FrameState, y: number): void {
-    ctx.fillStyle = '#FFFFFF';
+  private drawHeader(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, y, this.W, HEADER_H);
-    ctx.fillStyle = '#F0F0F0';
+    ctx.fillStyle = "#F0F0F0";
     ctx.fillRect(0, y + HEADER_H - 1, this.W, 1);
 
     const isCropped = state.chatConfig.isKeyboardCropped;
     let cx = isCropped ? 183 : 8;
 
     if (!isCropped) {
-      ctx.strokeStyle = '#9CA3AF';
+      ctx.strokeStyle = "#9CA3AF";
       ctx.lineWidth = 5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
       ctx.beginPath();
       ctx.moveTo(cx + 38, y + HEADER_H / 2 - 16);
       ctx.lineTo(cx + 22, y + HEADER_H / 2);
@@ -318,11 +411,11 @@ export class CanvasRenderer {
       cx += 50;
     }
 
-    const others = state.cast.filter(c => !c.isMe);
+    const others = state.cast.filter((c) => !c.isMe);
     if (others[0]) {
       const avatarImg = this.images.get(`selfie_${others[0].bitmojiAvatarId}`);
       if (state.chatConfig.isGroup) {
-        const groupIconImg = this.images.get('groupIcon');
+        const groupIconImg = this.images.get("groupIcon");
         if (groupIconImg) {
           const s = 90;
           ctx.save();
@@ -372,27 +465,38 @@ export class CanvasRenderer {
     }
 
     const displayName = state.chatConfig.isGroup
-      ? (state.chatConfig.groupName || others.map(o => o.name).join(', '))
+      ? state.chatConfig.groupName || others.map((o) => o.name).join(", ")
       : state.chatConfig.contactName;
 
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = "#111827";
     ctx.font = `900 50px ${FONT_HEADER}`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
     ctx.fillText(displayName, cx, y + HEADER_H / 2);
 
     if (!isCropped) {
-      const callImg = this.images.get('callIcons');
+      const callImg = this.images.get("callIcons");
       if (callImg) {
         const ih = 90;
         const iw = callImg.width * (ih / callImg.height);
-        ctx.drawImage(callImg, this.W - iw - 40, y + (HEADER_H - ih) / 2, iw, ih);
+        ctx.drawImage(
+          callImg,
+          this.W - iw - 40,
+          y + (HEADER_H - ih) / 2,
+          iw,
+          ih,
+        );
       }
     }
   }
 
-  private drawMessages(ctx: CanvasRenderingContext2D, state: FrameState, areaY: number, areaH: number): void {
-    ctx.fillStyle = '#FFFFFF';
+  private drawMessages(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    areaY: number,
+    areaH: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, areaY, this.W, areaH);
 
     ctx.save();
@@ -404,7 +508,7 @@ export class CanvasRenderer {
     const padX = isCropped ? MSG_PAD_X_CROPPED : MSG_PAD_X;
     const maxTextW = this.W - padX - MSG_PAD_X - BAR_WIDTH - BAR_GAP;
 
-    const msgs = state.messages.filter(m => m.type !== MessageType.PRESENCE);
+    const msgs = state.messages.filter((m) => m.type !== MessageType.PRESENCE);
     const layouts: MsgLayout[] = [];
     let totalH = 80;
 
@@ -413,17 +517,22 @@ export class CanvasRenderer {
     for (let i = 0; i < msgs.length; i++) {
       const msg = msgs[i];
       const prev = i > 0 ? msgs[i - 1] : null;
-      const isGrouped = !!(prev && msg.senderId === prev.senderId &&
-        prev.type !== MessageType.NOTIFICATION && msg.type !== MessageType.NOTIFICATION);
-      const sender = state.cast.find(c => c.id === msg.senderId);
-      const color = sender?.color || (sender?.isMe ? SNAP_COLORS.ME : SNAP_COLORS.THEM);
+      const isGrouped = !!(
+        prev &&
+        msg.senderId === prev.senderId &&
+        prev.type !== MessageType.NOTIFICATION &&
+        msg.type !== MessageType.NOTIFICATION
+      );
+      const sender = state.cast.find((c) => c.id === msg.senderId);
+      const color =
+        sender?.color || (sender?.isMe ? SNAP_COLORS.ME : SNAP_COLORS.THEM);
 
       let h = 0;
       let lines: string[] = [];
 
       if (msg.type === MessageType.NOTIFICATION) {
         ctx.font = `900 ${NOTIF_FONT_SIZE}px ${FONT_REGULAR}`;
-        lines = this.wrapText(ctx, msg.text || '', this.W - padX * 4);
+        lines = this.wrapText(ctx, msg.text || "", this.W - padX * 4);
         h = 50 + lines.length * (NOTIF_FONT_SIZE + 10);
       } else {
         if (!isGrouped) h += NAME_FONT_SIZE + 14;
@@ -438,7 +547,7 @@ export class CanvasRenderer {
           h += msg.isVertical ? 420 : 300;
           if (lines.length > 0) h += 10;
         } else {
-          lines = this.wrapText(ctx, msg.text || '', maxTextW);
+          lines = this.wrapText(ctx, msg.text || "", maxTextW);
           h += lines.length * MSG_LINE_H;
         }
 
@@ -463,23 +572,29 @@ export class CanvasRenderer {
     const todayY = drawY - 60;
     if (todayY > areaY - 20) {
       ctx.font = `900 30px ${FONT_REGULAR}`;
-      ctx.fillStyle = '#D1D5DB';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('TODAY', this.W / 2, todayY + 30);
+      ctx.fillStyle = "#D1D5DB";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("TODAY", this.W / 2, todayY + 30);
     }
 
     ctx.restore();
   }
 
-  private drawMessage(ctx: CanvasRenderingContext2D, item: MsgLayout, y: number, padX: number, maxTextW: number): void {
+  private drawMessage(
+    ctx: CanvasRenderingContext2D,
+    item: MsgLayout,
+    y: number,
+    padX: number,
+    maxTextW: number,
+  ): void {
     const { msg, isGrouped, lines, sender, color } = item;
 
     if (msg.type === MessageType.NOTIFICATION) {
       ctx.font = `900 ${NOTIF_FONT_SIZE}px ${FONT_REGULAR}`;
-      ctx.fillStyle = '#9CA3AF';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
+      ctx.fillStyle = "#9CA3AF";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
       let textY = y + 25;
       for (const line of lines) {
         ctx.fillText(line, this.W / 2, textY);
@@ -493,9 +608,9 @@ export class CanvasRenderer {
     if (!isGrouped) {
       ctx.font = `700 ${NAME_FONT_SIZE}px ${FONT_REGULAR}`;
       ctx.fillStyle = color;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillText(sender?.name?.toUpperCase() || '', padX, curY);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(sender?.name?.toUpperCase() || "", padX, curY);
       curY += NAME_FONT_SIZE + 14;
     }
 
@@ -515,9 +630,9 @@ export class CanvasRenderer {
     } else if (msg.type === MessageType.IMAGE) {
       if (lines.length > 0) {
         ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
-        ctx.fillStyle = '#000000';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
+        ctx.fillStyle = "#000000";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
         for (const line of lines) {
           ctx.fillText(line, textStartX, curY);
           curY += MSG_LINE_H;
@@ -536,9 +651,9 @@ export class CanvasRenderer {
       }
     } else {
       ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
       for (const line of lines) {
         ctx.fillText(line, textStartX, curY);
         curY += MSG_LINE_H;
@@ -554,7 +669,11 @@ export class CanvasRenderer {
     }
   }
 
-  private drawTypingIndicator(ctx: CanvasRenderingContext2D, state: FrameState, areaBottom: number): void {
+  private drawTypingIndicator(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    areaBottom: number,
+  ): void {
     const isGroup = state.chatConfig.isGroup;
     const isCropped = state.chatConfig.isKeyboardCropped;
     const padLeft = isCropped ? 183 : 6;
@@ -566,10 +685,20 @@ export class CanvasRenderer {
     }
   }
 
-  private getPresenceAnim(id: string, isArrived: boolean, isTyping: boolean, time: number): PresenceAnimState {
+  private getPresenceAnim(
+    id: string,
+    isArrived: boolean,
+    isTyping: boolean,
+    time: number,
+  ): PresenceAnimState {
     let anim = this.presenceAnims.get(id);
     if (!anim) {
-      anim = { arrived: false, arrivalStartTime: time, typing: false, typingStartTime: time };
+      anim = {
+        arrived: false,
+        arrivalStartTime: time,
+        typing: false,
+        typingStartTime: time,
+      };
       this.presenceAnims.set(id, anim);
     }
     if (isArrived !== anim.arrived) {
@@ -594,27 +723,37 @@ export class CanvasRenderer {
   // Positive Y = move down, Negative Y = move up.
   // ═══════════════════════════════════════════════════════════════
   private static readonly SINGLE_PRESENCE = {
-    AVATAR_OFFSET_X: 0,        // Shift bitmoji left/right (px)
-    AVATAR_OFFSET_Y: 0,        // Shift bitmoji up/down (px)
-    BUBBLE_OFFSET_X: 0,        // Shift typing bubble left/right (px)
-    BUBBLE_OFFSET_Y: 0,        // Shift typing bubble up/down (px)
-    AVATAR_WIDTH: 188,         // Bitmoji container width (standard mode)
-    AVATAR_WIDTH_SHORT: 105,   // Bitmoji container width (short crop mode)
-    TYPING_NUDGE_Y: -8,       // How far bitmoji nudges up when typing
-    TYPING_SCALE: 0.1,        // How much bitmoji scales up when typing (0.1 = 10%)
-    BUBBLE_SIZE: 85,           // Typing bubble diameter
-    BUBBLE_BOTTOM_GAP: 78,    // Distance from bottom to bubble (standard)
+    AVATAR_OFFSET_X: 28, // Shift bitmoji left/right (px)
+    AVATAR_OFFSET_Y: 0, // Shift bitmoji up/down (px)
+    BUBBLE_OFFSET_X: 0, // Shift typing bubble left/right (px)
+    BUBBLE_OFFSET_Y: -35, // Shift typing bubble up/down (px)
+    AVATAR_WIDTH: 188, // Bitmoji container width (standard mode)
+    AVATAR_WIDTH_SHORT: 105, // Bitmoji container width (short crop mode)
+    TYPING_NUDGE_Y: -8, // How far bitmoji nudges up when typing
+    TYPING_SCALE: 0.1, // How much bitmoji scales up when typing (0.1 = 10%)
+    BUBBLE_SIZE: 70, // Typing bubble diameter
+    BUBBLE_BOTTOM_GAP: 78, // Distance from bottom to bubble (standard)
     BUBBLE_BOTTOM_GAP_SHORT: 25, // Distance from bottom to bubble (short crop)
   };
 
-  private drawSinglePresence(ctx: CanvasRenderingContext2D, state: FrameState, bottom: number, padLeft: number): void {
+  private drawSinglePresence(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    bottom: number,
+    padLeft: number,
+  ): void {
     const SP = CanvasRenderer.SINGLE_PRESENCE;
-    const partner = state.cast.find(c => !c.isMe);
+    const partner = state.cast.find((c) => !c.isMe);
     if (!partner) return;
 
     const isArrived = state.activeParticipantIds.includes(partner.id);
     const isTyping = state.typingParticipantIds.includes(partner.id);
-    const anim = this.getPresenceAnim(partner.id, isArrived, isTyping, state.time);
+    const anim = this.getPresenceAnim(
+      partner.id,
+      isArrived,
+      isTyping,
+      state.time,
+    );
 
     const isShort = state.chatConfig.isShortCrop;
     const isCropped = state.chatConfig.isKeyboardCropped;
@@ -630,8 +769,10 @@ export class CanvasRenderer {
     const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
     const arrivalEased = this.easeOut(arrivalProgress);
 
-    const alpha = isArrived ? arrivalEased : (1 - arrivalEased);
-    const arrivalSlideY = isArrived ? (1 - arrivalEased) * 110 : arrivalEased * 110;
+    const alpha = isArrived ? arrivalEased : 1 - arrivalEased;
+    const arrivalSlideY = isArrived
+      ? (1 - arrivalEased) * 110
+      : arrivalEased * 110;
 
     if (alpha <= 0.01) return;
 
@@ -649,7 +790,9 @@ export class CanvasRenderer {
 
     const totalSlideY = arrivalSlideY + typingNudgeY + SP.AVATAR_OFFSET_Y;
 
-    const avatarKey = isTyping ? `selfie_${partner.bitmojiAvatarId}` : `peeking_${partner.bitmojiAvatarId}`;
+    const avatarKey = isTyping
+      ? `selfie_${partner.bitmojiAvatarId}`
+      : `peeking_${partner.bitmojiAvatarId}`;
     const avatarImg = this.images.get(avatarKey);
 
     if (avatarImg) {
@@ -661,23 +804,38 @@ export class CanvasRenderer {
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.rect(avatarCenterX - containerW * 1.5, bottom - 600, containerW * 3, 600);
+      ctx.rect(
+        avatarCenterX - containerW * 1.5,
+        bottom - 600,
+        containerW * 3,
+        600,
+      );
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
       ctx.restore();
     }
 
     const bubbleCenterX = avatarCenterX + SP.BUBBLE_OFFSET_X;
-    const bubbleGap = isShort ? SP.BUBBLE_BOTTOM_GAP_SHORT : SP.BUBBLE_BOTTOM_GAP;
+    const bubbleGap = isShort
+      ? SP.BUBBLE_BOTTOM_GAP_SHORT
+      : SP.BUBBLE_BOTTOM_GAP;
 
     if (isTyping && typingEased > 0) {
-      const bubbleY = bottom - (bubbleGap + SP.BUBBLE_SIZE) + totalSlideY + SP.BUBBLE_OFFSET_Y;
+      const bubbleY =
+        bottom -
+        (bubbleGap + SP.BUBBLE_SIZE) +
+        totalSlideY +
+        SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * typingEased;
       this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
       ctx.restore();
     } else if (!isTyping && typingEased < 1) {
-      const bubbleY = bottom - (bubbleGap + SP.BUBBLE_SIZE) + totalSlideY + SP.BUBBLE_OFFSET_Y;
+      const bubbleY =
+        bottom -
+        (bubbleGap + SP.BUBBLE_SIZE) +
+        totalSlideY +
+        SP.BUBBLE_OFFSET_Y;
       ctx.save();
       ctx.globalAlpha = alpha * (1 - typingEased);
       this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
@@ -685,13 +843,22 @@ export class CanvasRenderer {
     }
   }
 
-  private drawGroupPresence(ctx: CanvasRenderingContext2D, state: FrameState, bottom: number, padLeft: number): void {
-    const participants = state.cast.filter(c => !c.isMe && state.messages.some(m => m.senderId === c.id));
+  private drawGroupPresence(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    bottom: number,
+    padLeft: number,
+  ): void {
+    const participants = state.cast.filter(
+      (c) => !c.isMe && state.messages.some((m) => m.senderId === c.id),
+    );
     if (participants.length === 0) return;
 
     const sorted = [
-      ...state.activeParticipantIds.filter(id => participants.some(p => p.id === id)).map(id => participants.find(p => p.id === id)!),
-      ...participants.filter(p => !state.activeParticipantIds.includes(p.id))
+      ...state.activeParticipantIds
+        .filter((id) => participants.some((p) => p.id === id))
+        .map((id) => participants.find((p) => p.id === id)!),
+      ...participants.filter((p) => !state.activeParticipantIds.includes(p.id)),
     ];
 
     const isShort = state.chatConfig.isShortCrop;
@@ -703,8 +870,13 @@ export class CanvasRenderer {
       const member = sorted[i];
       const isTyping = state.typingParticipantIds.includes(member.id);
       const hasArrived = state.activeParticipantIds.includes(member.id);
-      const pillColor = hasArrived ? (member.color || '#33B5FF') : '#CCCCCC';
-      const anim = this.getPresenceAnim(member.id, hasArrived, isTyping, state.time);
+      const pillColor = hasArrived ? member.color || "#33B5FF" : "#CCCCCC";
+      const anim = this.getPresenceAnim(
+        member.id,
+        hasArrived,
+        isTyping,
+        state.time,
+      );
 
       const arrivalElapsed = state.time - anim.arrivalStartTime;
       const arrivalProgress = Math.min(arrivalElapsed / 700, 1);
@@ -714,8 +886,10 @@ export class CanvasRenderer {
       const typingProgress = Math.min(typingElapsed / 500, 1);
       const typingEased = this.easeOut(typingProgress);
 
-      const alpha = hasArrived ? arrivalEased : (1 - arrivalEased);
-      const arrivalSlideY = hasArrived ? (1 - arrivalEased) * 110 : arrivalEased * 110;
+      const alpha = hasArrived ? arrivalEased : 1 - arrivalEased;
+      const arrivalSlideY = hasArrived
+        ? (1 - arrivalEased) * 110
+        : arrivalEased * 110;
 
       if (alpha > 0.01) {
         const typingNudge = -8;
@@ -728,7 +902,9 @@ export class CanvasRenderer {
 
         const totalSlideY = arrivalSlideY + typingNudgeY;
 
-        const avatarKey = isTyping ? `selfie_${member.bitmojiAvatarId}` : `peeking_${member.bitmojiAvatarId}`;
+        const avatarKey = isTyping
+          ? `selfie_${member.bitmojiAvatarId}`
+          : `peeking_${member.bitmojiAvatarId}`;
         const avatarImg = this.images.get(avatarKey);
         if (avatarImg) {
           const imgW = itemW * 0.8 * typingScale;
@@ -738,7 +914,13 @@ export class CanvasRenderer {
           ctx.beginPath();
           ctx.rect(px - 60, bottom - 600, itemW + 120, 600);
           ctx.clip();
-          ctx.drawImage(avatarImg, px + (itemW - imgW) / 2, bottom - imgH + totalSlideY, imgW, imgH);
+          ctx.drawImage(
+            avatarImg,
+            px + (itemW - imgW) / 2,
+            bottom - imgH + totalSlideY,
+            imgW,
+            imgH,
+          );
           ctx.restore();
         }
 
@@ -746,41 +928,79 @@ export class CanvasRenderer {
           const bubbleSize = 85;
           ctx.save();
           ctx.globalAlpha = alpha * typingEased;
-          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + totalSlideY);
+          this.drawTypingBubble(
+            ctx,
+            state.time,
+            px + itemW * 0.5,
+            bottom - 60 - bubbleSize + totalSlideY,
+          );
           ctx.restore();
         } else if (!isTyping && typingEased < 1) {
           const bubbleSize = 85;
           ctx.save();
           ctx.globalAlpha = alpha * (1 - typingEased);
-          this.drawTypingBubble(ctx, state.time, px + itemW * 0.5, bottom - 60 - bubbleSize + totalSlideY);
+          this.drawTypingBubble(
+            ctx,
+            state.time,
+            px + itemW * 0.5,
+            bottom - 60 - bubbleSize + totalSlideY,
+          );
           ctx.restore();
         }
       }
 
       const pillH = 36;
-      const pillW = Math.max(ctx.measureText(member.name.toUpperCase()).width + 24, isShort ? 138 : 188);
+      const pillW = Math.max(
+        ctx.measureText(member.name.toUpperCase()).width + 24,
+        isShort ? 138 : 188,
+      );
       const pillX = px + (itemW - Math.min(pillW, itemW)) / 2;
       const pillY = bottom - pillH - 8;
 
-      ctx.fillStyle = '#FFFFFF';
-      this.drawPillRect(ctx, pillX, pillY, Math.min(pillW, itemW), pillH, pillH / 2, '#FFFFFF');
+      ctx.fillStyle = "#FFFFFF";
+      this.drawPillRect(
+        ctx,
+        pillX,
+        pillY,
+        Math.min(pillW, itemW),
+        pillH,
+        pillH / 2,
+        "#FFFFFF",
+      );
       ctx.strokeStyle = pillColor;
       ctx.lineWidth = 4;
       ctx.beginPath();
-      this.pillPath(ctx, pillX, pillY, Math.min(pillW, itemW), pillH, pillH / 2);
+      this.pillPath(
+        ctx,
+        pillX,
+        pillY,
+        Math.min(pillW, itemW),
+        pillH,
+        pillH / 2,
+      );
       ctx.stroke();
 
       ctx.font = `900 ${isShort ? 23 : 26}px ${FONT_REGULAR}`;
       ctx.fillStyle = pillColor;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(member.name.toUpperCase(), pillX + Math.min(pillW, itemW) / 2, pillY + pillH / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        member.name.toUpperCase(),
+        pillX + Math.min(pillW, itemW) / 2,
+        pillY + pillH / 2,
+      );
 
       px += itemW - overlap;
     }
   }
 
-  private drawTypingBubble(ctx: CanvasRenderingContext2D, time: number, x: number, y: number, size: number = 85): void {
+  private drawTypingBubble(
+    ctx: CanvasRenderingContext2D,
+    time: number,
+    x: number,
+    y: number,
+    size: number = 85,
+  ): void {
     const bubbleSize = size;
     const svgScale = bubbleSize / 32;
 
@@ -788,20 +1008,22 @@ export class CanvasRenderer {
     ctx.translate(x, y);
     ctx.scale(svgScale, svgScale);
 
-    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowColor = "rgba(0,0,0,0.2)";
     ctx.shadowBlur = 4;
     ctx.shadowOffsetY = 0.9;
 
-    const bubblePath = new Path2D("M13.92 2.333c1.248 0 2.424.52 3.32 1.443l.21.217.286-.103a4.45 4.45 0 0 1 1.514-.264c2.206 0 4.13 1.636 4.695 3.962l.053.22.208.095c1.804.817 3.013 2.756 3.013 4.948 0 1.945-.951 3.702-2.454 4.647l-.206.13-.012.243c-.133 2.842-2.274 5.067-4.853 5.067a4.477 4.477 0 0 1-2.068-.506l-.296-.153-.243.229c-.877.83-1.99 1.292-3.167 1.292-1.639 0-3.144-.901-4.042-2.38l-.152-.249-.291.027a4.496 4.496 0 0 1-.4.017c-2.674 0-4.86-2.385-4.86-5.348 0-.705.123-1.39.36-2.026l.076-.202-.106-.189a5.722 5.722 0 0 1-.724-2.808c0-2.963 2.186-5.35 4.86-5.35.188 0 .374.013.557.036l.328.041.15-.293c.855-1.684 2.468-2.743 4.244-2.743Z");
+    const bubblePath = new Path2D(
+      "M13.92 2.333c1.248 0 2.424.52 3.32 1.443l.21.217.286-.103a4.45 4.45 0 0 1 1.514-.264c2.206 0 4.13 1.636 4.695 3.962l.053.22.208.095c1.804.817 3.013 2.756 3.013 4.948 0 1.945-.951 3.702-2.454 4.647l-.206.13-.012.243c-.133 2.842-2.274 5.067-4.853 5.067a4.477 4.477 0 0 1-2.068-.506l-.296-.153-.243.229c-.877.83-1.99 1.292-3.167 1.292-1.639 0-3.144-.901-4.042-2.38l-.152-.249-.291.027a4.496 4.496 0 0 1-.4.017c-2.674 0-4.86-2.385-4.86-5.348 0-.705.123-1.39.36-2.026l.076-.202-.106-.189a5.722 5.722 0 0 1-.724-2.808c0-2.963 2.186-5.35 4.86-5.35.188 0 .374.013.557.036l.328.041.15-.293c.855-1.684 2.468-2.743 4.244-2.743Z",
+    );
 
     const grad = ctx.createLinearGradient(5.9, 8.3, 20.3, 21.2);
-    grad.addColorStop(0, '#FFFFFF');
-    grad.addColorStop(1, '#E9EDF2');
+    grad.addColorStop(0, "#FFFFFF");
+    grad.addColorStop(1, "#E9EDF2");
     ctx.fillStyle = grad;
     ctx.fill(bubblePath);
 
-    ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = '#474A4F';
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = "#474A4F";
     ctx.lineWidth = 0.933;
     ctx.stroke(bubblePath);
 
@@ -818,7 +1040,7 @@ export class CanvasRenderer {
       const scale = 1 + 0.25 * Math.max(0, Math.sin(phase));
 
       ctx.globalAlpha = opacity;
-      ctx.fillStyle = '#474A4F';
+      ctx.fillStyle = "#474A4F";
       ctx.beginPath();
       ctx.arc(dotCX + (i - 1) * dotGap, dotCY, dotR * scale, 0, Math.PI * 2);
       ctx.fill();
@@ -826,10 +1048,14 @@ export class CanvasRenderer {
     ctx.globalAlpha = 1;
   }
 
-  private drawInput(ctx: CanvasRenderingContext2D, state: FrameState, y: number): void {
-    ctx.fillStyle = '#FFFFFF';
+  private drawInput(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+  ): void {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, y, this.W, INPUT_H);
-    ctx.fillStyle = '#F9FAFB';
+    ctx.fillStyle = "#F9FAFB";
     ctx.fillRect(0, y, this.W, 1);
 
     const S = 2.77;
@@ -841,7 +1067,7 @@ export class CanvasRenderer {
     let cx = isCropped ? 183 : Math.round(12 * S);
 
     if (!isCropped) {
-      const btnImg = this.images.get(hasText ? 'sendBtn' : 'cameraBtn');
+      const btnImg = this.images.get(hasText ? "sendBtn" : "cameraBtn");
       if (btnImg) {
         const s = rowH;
         ctx.drawImage(btnImg, cx, rowY, s, s);
@@ -857,16 +1083,16 @@ export class CanvasRenderer {
     const pillH = Math.round(32 * S);
     const pillY = y + (INPUT_H - pillH) / 2;
     const pillR = Math.round(22 * S);
-    this.drawPillRect(ctx, cx, pillY, pillW, pillH, pillR, '#F2F3F5');
+    this.drawPillRect(ctx, cx, pillY, pillW, pillH, pillR, "#F2F3F5");
 
     const textPadL = Math.round(16 * S);
     const textPadR = Math.round(36 * S);
 
     if (state.compositionText) {
       ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = "#000000";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
 
       ctx.save();
       ctx.beginPath();
@@ -880,22 +1106,36 @@ export class CanvasRenderer {
       const cursorW = Math.round(2.2 * S);
       const blink = Math.floor(state.time / 500) % 2 === 0;
       if (blink || state.isMeTyping) {
-        this.drawPillRect(ctx, cursorX, pillY + (pillH - cursorH) / 2, cursorW, cursorH, cursorW / 2, '#FF0054');
+        this.drawPillRect(
+          ctx,
+          cursorX,
+          pillY + (pillH - cursorH) / 2,
+          cursorW,
+          cursorH,
+          cursorW / 2,
+          "#FF0054",
+        );
       }
       ctx.restore();
 
-      const updownImg = this.images.get('updown');
+      const updownImg = this.images.get("updown");
       if (updownImg) {
         const upS = iconSize;
         const iconPillX = cx + pillW - textPadR - upS / 2 + Math.round(6 * S);
-        ctx.drawImage(updownImg, iconPillX, pillY + (pillH - upS) / 2, upS, upS);
+        ctx.drawImage(
+          updownImg,
+          iconPillX,
+          pillY + (pillH - upS) / 2,
+          upS,
+          upS,
+        );
       }
     } else {
       ctx.font = `400 ${Math.round(17 * S)}px ${FONT_REGULAR}`;
-      ctx.fillStyle = '#9CA3AF';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Chat', cx + textPadL, pillY + pillH / 2);
+      ctx.fillStyle = "#9CA3AF";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Chat", cx + textPadL, pillY + pillH / 2);
 
       const micVisual = Math.round(22 * S);
       const svgS = micVisual / 24;
@@ -904,15 +1144,17 @@ export class CanvasRenderer {
       ctx.save();
       ctx.translate(micDrawX, micDrawY);
       ctx.scale(svgS, svgS);
-      ctx.strokeStyle = '#6B7280';
+      ctx.strokeStyle = "#6B7280";
       ctx.lineWidth = 1.8;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      const micBody = new Path2D('M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z');
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      const micBody = new Path2D(
+        "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z",
+      );
       ctx.stroke(micBody);
-      const micBowl = new Path2D('M19 10v2a7 7 0 0 1-14 0v-2');
+      const micBowl = new Path2D("M19 10v2a7 7 0 0 1-14 0v-2");
       ctx.stroke(micBowl);
-      const micStand = new Path2D('M12 19L12 23');
+      const micStand = new Path2D("M12 19L12 23");
       ctx.stroke(micStand);
       ctx.restore();
     }
@@ -921,13 +1163,18 @@ export class CanvasRenderer {
     const iconCenterY = y + INPUT_H / 2;
 
     const curStickerUrl = state.suggestedCustomojiUrl || null;
-    if (curStickerUrl && (!this.stickerAnim || this.stickerAnim.url !== curStickerUrl)) {
+    if (
+      curStickerUrl &&
+      (!this.stickerAnim || this.stickerAnim.url !== curStickerUrl)
+    ) {
       this.stickerAnim = { url: curStickerUrl, startTime: state.time };
     } else if (!curStickerUrl) {
       this.stickerAnim = null;
     }
 
-    const stickerImg = curStickerUrl ? this.images.get(`sticker_${curStickerUrl}`) : null;
+    const stickerImg = curStickerUrl
+      ? this.images.get(`sticker_${curStickerUrl}`)
+      : null;
     if (stickerImg && this.stickerAnim) {
       const animDuration = 380;
       const elapsed = state.time - this.stickerAnim.startTime;
@@ -960,21 +1207,32 @@ export class CanvasRenderer {
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.rect(iconX - Math.round(10 * S), y, smileySlotW + Math.round(20 * S), INPUT_H);
+      ctx.rect(
+        iconX - Math.round(10 * S),
+        y,
+        smileySlotW + Math.round(20 * S),
+        INPUT_H,
+      );
       ctx.clip();
       ctx.drawImage(stickerImg, drawX, drawY, finalW, finalH);
       ctx.restore();
     } else {
-      const smileyImg = this.images.get('smiley');
+      const smileyImg = this.images.get("smiley");
       if (smileyImg) {
         const s = iconSize;
-        ctx.drawImage(smileyImg, iconX + (smileySlotW - s) / 2, iconCenterY - s / 2, s, s);
+        ctx.drawImage(
+          smileyImg,
+          iconX + (smileySlotW - s) / 2,
+          iconCenterY - s / 2,
+          s,
+          s,
+        );
       }
     }
     iconX += smileySlotW;
 
     if (!hasText && !isCropped) {
-      const actionImg = this.images.get('actionIcons');
+      const actionImg = this.images.get("actionIcons");
       if (actionImg) {
         const ah = iconSize;
         const aw = actionImg.width * (ah / actionImg.height);
@@ -984,32 +1242,37 @@ export class CanvasRenderer {
     }
   }
 
-  private drawKeyboard(ctx: CanvasRenderingContext2D, state: FrameState, y: number, totalH: number): void {
-    ctx.fillStyle = '#D1D3D9';
+  private drawKeyboard(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+    totalH: number,
+  ): void {
+    ctx.fillStyle = "#D1D3D9";
     ctx.fillRect(0, y, this.W, totalH);
 
     const isShort = state.chatConfig.isShortCrop;
     const layout = state.keyboardLayout;
 
     const alphaRows = [
-      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-      ['shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'backspace']
+      ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+      ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+      ["shift", "z", "x", "c", "v", "b", "n", "m", "backspace"],
     ];
     const numericRows = [
-      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-      ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"'],
-      ['#+=', '.', ',', '?', '!', "'", 'backspace']
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+      ["-", "/", ":", ";", "(", ")", "$", "&", "@", '"'],
+      ["#+=", ".", ",", "?", "!", "'", "backspace"],
     ];
     const symbolRows = [
-      ['[', ']', '{', '}', '#', '%', '^', '*', '+', '='],
-      ['_', '\\', '|', '~', '<', '>', '$', '\u00a3', '\u00a5', '\u2022'],
-      ['123', '.', ',', '?', '!', "'", 'backspace']
+      ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
+      ["_", "\\", "|", "~", "<", ">", "$", "\u00a3", "\u00a5", "\u2022"],
+      ["123", ".", ",", "?", "!", "'", "backspace"],
     ];
 
     let rows = alphaRows;
-    if (layout === 'NUMERIC') rows = numericRows;
-    if (layout === 'SYMBOLS') rows = symbolRows;
+    if (layout === "NUMERIC") rows = numericRows;
+    if (layout === "SYMBOLS") rows = symbolRows;
 
     const keyH = 122;
     const rowGap = 33;
@@ -1021,10 +1284,16 @@ export class CanvasRenderer {
       const row = rows[ri];
       const rowPad = ri === 1 ? 44 : 0;
       const modifierW = 125;
-      const modifiers = row.filter(k => this.isModifierKey(k));
-      const charKeys = row.filter(k => !this.isModifierKey(k));
-      const totalModW = modifiers.length * modifierW + modifiers.length * keyGap;
-      const availW = this.W - sidePad * 2 - rowPad * 2 - totalModW - (charKeys.length > 0 ? (charKeys.length - 1) * keyGap : 0);
+      const modifiers = row.filter((k) => this.isModifierKey(k));
+      const charKeys = row.filter((k) => !this.isModifierKey(k));
+      const totalModW =
+        modifiers.length * modifierW + modifiers.length * keyGap;
+      const availW =
+        this.W -
+        sidePad * 2 -
+        rowPad * 2 -
+        totalModW -
+        (charKeys.length > 0 ? (charKeys.length - 1) * keyGap : 0);
       const charKeyW = charKeys.length > 0 ? availW / charKeys.length : 0;
 
       let kx = sidePad + rowPad;
@@ -1034,28 +1303,36 @@ export class CanvasRenderer {
         const isPressed = this.isKeyActive(key, state.activeKey);
         const w = isModifier ? modifierW : charKeyW;
 
-        let bgColor = isModifier ? '#ACB0B8' : '#FFFFFF';
-        if (isPressed) bgColor = '#D1D3D9';
-        if (key === 'shift' && state.isShiftActive && !isPressed) bgColor = '#FFFFFF';
+        let bgColor = isModifier ? "#ACB0B8" : "#FFFFFF";
+        if (isPressed) bgColor = "#D1D3D9";
+        if (key === "shift" && state.isShiftActive && !isPressed)
+          bgColor = "#FFFFFF";
 
         this.drawPillRect(ctx, kx, ky, w, keyH, 17, bgColor);
 
         if (!isPressed) {
-          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.fillStyle = "rgba(0,0,0,0.35)";
           ctx.fillRect(kx + 2, ky + keyH, w - 4, 3);
         }
 
-        if (key === 'shift') {
-          this.drawShiftIcon(ctx, kx + w / 2, ky + keyH / 2, state.isShiftActive);
-        } else if (key === 'backspace') {
+        if (key === "shift") {
+          this.drawShiftIcon(
+            ctx,
+            kx + w / 2,
+            ky + keyH / 2,
+            state.isShiftActive,
+          );
+        } else if (key === "backspace") {
           this.drawBackspaceIcon(ctx, kx + w / 2, ky + keyH / 2);
         } else {
-          ctx.fillStyle = '#000000';
-          ctx.font = isModifier ? `500 39px ${FONT_SYSTEM}` : `400 61px ${FONT_SYSTEM}`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
+          ctx.fillStyle = "#000000";
+          ctx.font = isModifier
+            ? `500 39px ${FONT_SYSTEM}`
+            : `400 61px ${FONT_SYSTEM}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
           let displayKey = key;
-          if (state.isShiftActive && key.length === 1 && layout === 'ALPHA') {
+          if (state.isShiftActive && key.length === 1 && layout === "ALPHA") {
             displayKey = key.toUpperCase();
           }
           ctx.fillText(displayKey, kx + w / 2, ky + keyH / 2);
@@ -1070,45 +1347,70 @@ export class CanvasRenderer {
       const spaceRowY = ky;
       const modW = 236;
 
-      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, 17, '#ACB0B8');
-      ctx.fillStyle = '#000000';
+      this.drawPillRect(ctx, sidePad, spaceRowY, modW, keyH, 17, "#ACB0B8");
+      ctx.fillStyle = "#000000";
       ctx.font = `500 44px ${FONT_SYSTEM}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(layout === 'ALPHA' ? '123' : 'ABC', sidePad + modW / 2, spaceRowY + keyH / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        layout === "ALPHA" ? "123" : "ABC",
+        sidePad + modW / 2,
+        spaceRowY + keyH / 2,
+      );
 
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
       ctx.fillRect(sidePad + 2, spaceRowY + keyH, modW - 4, 3);
 
       const spaceX = sidePad + modW + keyGap;
       const sendW = modW;
       const spaceW = this.W - sidePad * 2 - modW * 2 - keyGap * 2;
-      const isSpacePressed = state.activeKey === ' ';
-      this.drawPillRect(ctx, spaceX, spaceRowY, spaceW, keyH, 17, isSpacePressed ? '#ACB0B8' : '#FFFFFF');
-      ctx.fillStyle = '#000000';
+      const isSpacePressed = state.activeKey === " ";
+      this.drawPillRect(
+        ctx,
+        spaceX,
+        spaceRowY,
+        spaceW,
+        keyH,
+        17,
+        isSpacePressed ? "#ACB0B8" : "#FFFFFF",
+      );
+      ctx.fillStyle = "#000000";
       ctx.font = `400 44px ${FONT_SYSTEM}`;
-      ctx.fillText('space', spaceX + spaceW / 2, spaceRowY + keyH / 2);
+      ctx.fillText("space", spaceX + spaceW / 2, spaceRowY + keyH / 2);
 
       if (!isSpacePressed) {
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.fillRect(spaceX + 2, spaceRowY + keyH, spaceW - 4, 3);
       }
 
       const sendX = spaceX + spaceW + keyGap;
-      const isSendPressed = state.activeKey === 'Enter';
-      this.drawPillRect(ctx, sendX, spaceRowY, sendW, keyH, 17, isSendPressed ? '#005FC4' : '#007AFF');
-      ctx.fillStyle = '#FFFFFF';
+      const isSendPressed = state.activeKey === "Enter";
+      this.drawPillRect(
+        ctx,
+        sendX,
+        spaceRowY,
+        sendW,
+        keyH,
+        17,
+        isSendPressed ? "#005FC4" : "#007AFF",
+      );
+      ctx.fillStyle = "#FFFFFF";
       ctx.font = `600 44px ${FONT_SYSTEM}`;
-      ctx.fillText('send', sendX + sendW / 2, spaceRowY + keyH / 2);
+      ctx.fillText("send", sendX + sendW / 2, spaceRowY + keyH / 2);
 
       if (!isSendPressed) {
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.fillRect(sendX + 2, spaceRowY + keyH, sendW - 4, 3);
       }
     }
   }
 
-  private drawShiftIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, active: boolean): void {
+  private drawShiftIcon(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    active: boolean,
+  ): void {
     const s = 1.5;
     ctx.save();
     ctx.translate(cx, cy);
@@ -1123,24 +1425,28 @@ export class CanvasRenderer {
     ctx.lineTo(9, 0);
     ctx.closePath();
     if (active) {
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = "#000000";
       ctx.fill();
     } else {
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = "#000000";
       ctx.lineWidth = 1;
       ctx.stroke();
     }
     ctx.restore();
   }
 
-  private drawBackspaceIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+  private drawBackspaceIcon(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+  ): void {
     const s = 1.8;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(s, s);
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
-    ctx.lineJoin = 'round';
+    ctx.lineJoin = "round";
     ctx.beginPath();
     ctx.moveTo(-6, -8);
     ctx.lineTo(-12, 0);
@@ -1149,7 +1455,7 @@ export class CanvasRenderer {
     ctx.lineTo(10, -8);
     ctx.closePath();
     ctx.stroke();
-    ctx.lineCap = 'round';
+    ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(-1, -3);
     ctx.lineTo(5, 3);
@@ -1160,7 +1466,7 @@ export class CanvasRenderer {
   }
 
   private isModifierKey(key: string): boolean {
-    return ['shift', 'backspace', '#+=', 'ABC', '123'].includes(key);
+    return ["shift", "backspace", "#+=", "ABC", "123"].includes(key);
   }
 
   private isKeyActive(key: string, activeKey: string | null): boolean {
@@ -1168,18 +1474,22 @@ export class CanvasRenderer {
     const lk = key.toLowerCase();
     const la = activeKey.toLowerCase();
     if (la === lk && key.length === 1) return true;
-    if (key === 'space' && activeKey === ' ') return true;
-    if (lk === 'backspace' && la === 'backspace') return true;
-    if (lk === 'shift' && la === 'shift') return true;
-    if (key === 'send' && la === 'enter') return true;
+    if (key === "space" && activeKey === " ") return true;
+    if (lk === "backspace" && la === "backspace") return true;
+    if (lk === "shift" && la === "shift") return true;
+    if (key === "send" && la === "enter") return true;
     return false;
   }
 
-  private wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
-    if (!text) return [''];
-    const words = text.split(' ');
+  private wrapText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxW: number,
+  ): string[] {
+    if (!text) return [""];
+    const words = text.split(" ");
     const lines: string[] = [];
-    let line = '';
+    let line = "";
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
       if (ctx.measureText(test).width > maxW && line) {
@@ -1190,10 +1500,18 @@ export class CanvasRenderer {
       }
     }
     if (line) lines.push(line);
-    return lines.length > 0 ? lines : [''];
+    return lines.length > 0 ? lines : [""];
   }
 
-  private drawPillRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string): void {
+  private drawPillRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+    fill: string,
+  ): void {
     r = Math.min(r, w / 2, h / 2);
     ctx.fillStyle = fill;
     ctx.beginPath();
@@ -1201,7 +1519,14 @@ export class CanvasRenderer {
     ctx.fill();
   }
 
-  private pillPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+  private pillPath(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ): void {
     r = Math.min(r, w / 2, h / 2);
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
@@ -1215,7 +1540,15 @@ export class CanvasRenderer {
     ctx.closePath();
   }
 
-  private drawRoundedImage(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, r: number): void {
+  private drawRoundedImage(
+    ctx: CanvasRenderingContext2D,
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number,
+  ): void {
     ctx.save();
     ctx.beginPath();
     this.pillPath(ctx, x, y, w, h, r);
@@ -1224,9 +1557,15 @@ export class CanvasRenderer {
     const boxRatio = w / h;
     let dw: number, dh: number, dx: number, dy: number;
     if (imgRatio > boxRatio) {
-      dh = h; dw = h * imgRatio; dx = x + (w - dw) / 2; dy = y;
+      dh = h;
+      dw = h * imgRatio;
+      dx = x + (w - dw) / 2;
+      dy = y;
     } else {
-      dw = w; dh = w / imgRatio; dx = x; dy = y + (h - dh) / 2;
+      dw = w;
+      dh = w / imgRatio;
+      dx = x;
+      dy = y + (h - dh) / 2;
     }
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
