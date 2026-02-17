@@ -40,6 +40,7 @@ interface PresenceAnimState {
   typing: boolean;
   typingStartTime: number;
   hasEverArrived: boolean;
+  hasEverTyped: boolean;
 }
 
 const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
@@ -302,8 +303,18 @@ export class CanvasRenderer {
     state: FrameState,
     kbH: number,
   ): void {
+    const uiScale = state.systemConfig.uiScale || 1;
+
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, this.W, this.H);
+
+    const origW = this.W;
+    const origH = this.H;
+
+    ctx.save();
+    ctx.scale(uiScale, uiScale);
+    (this as any).W = Math.round(origW / uiScale);
+    (this as any).H = Math.round(origH / uiScale);
 
     let y = 0;
     this.drawStatusBar(ctx, state, y);
@@ -321,6 +332,10 @@ export class CanvasRenderer {
     y += INPUT_H;
 
     this.drawKeyboard(ctx, state, y, kbH);
+
+    ctx.restore();
+    (this as any).W = origW;
+    (this as any).H = origH;
   }
 
   private drawVideoBackground(
@@ -708,6 +723,7 @@ export class CanvasRenderer {
         typing: isTyping,
         typingStartTime: time,
         hasEverArrived: false,
+        hasEverTyped: false,
       };
       this.presenceAnims.set(id, anim);
       return anim;
@@ -720,6 +736,9 @@ export class CanvasRenderer {
       anim.arrivalStartTime = time;
     }
     if (isTyping !== anim.typing) {
+      if (isTyping) {
+        anim.hasEverTyped = true;
+      }
       anim.typing = isTyping;
       anim.typingStartTime = time;
     }
@@ -846,7 +865,7 @@ export class CanvasRenderer {
       ctx.globalAlpha = alpha * typingEased;
       this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY);
       ctx.restore();
-    } else if (!isTyping && typingEased < 1) {
+    } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
       const bubbleY =
         bottom -
         (bubbleGap + SP.BUBBLE_SIZE) +
@@ -953,7 +972,7 @@ export class CanvasRenderer {
             bottom - 60 - bubbleSize + totalSlideY,
           );
           ctx.restore();
-        } else if (!isTyping && typingEased < 1) {
+        } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
           const bubbleSize = 85;
           ctx.save();
           ctx.globalAlpha = alpha * (1 - typingEased);
@@ -1081,7 +1100,7 @@ export class CanvasRenderer {
     const hasText = state.compositionText.length > 0;
     const rowH = Math.round(34 * S);
     const rowY = y + (INPUT_H - rowH) / 2;
-    const rightPad = Math.round(12 * S);
+    const rightPad = Math.round(8 * S);
     let cx = isCropped ? 183 : Math.round(12 * S);
 
     if (!isCropped) {
@@ -1095,8 +1114,8 @@ export class CanvasRenderer {
 
     const iconSize = Math.round(22 * S);
     const smileySlotW = Math.round(28 * S);
-    const actionSlotW = hasText ? 0 : Math.round(50 * S);
-    const iconAreaW = smileySlotW + actionSlotW + Math.round(4 * S);
+    const actionSlotW = hasText ? 0 : Math.round(46 * S);
+    const iconAreaW = smileySlotW + actionSlotW + Math.round(2 * S);
     const pillW = this.W - cx - iconAreaW - rightPad;
     const pillH = Math.round(32 * S);
     const pillY = y + (INPUT_H - pillH) / 2;
@@ -1254,7 +1273,7 @@ export class CanvasRenderer {
       if (actionImg) {
         const ah = iconSize;
         const aw = actionImg.width * (ah / actionImg.height);
-        iconX += Math.round(6 * S);
+        iconX += Math.round(4 * S);
         ctx.drawImage(actionImg, iconX, iconCenterY - ah / 2, aw, ah);
       }
     }
@@ -1429,7 +1448,7 @@ export class CanvasRenderer {
     cy: number,
     active: boolean,
   ): void {
-    const s = 1.8;
+    const s = 2.4;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(s, s);
@@ -1460,7 +1479,7 @@ export class CanvasRenderer {
     cx: number,
     cy: number,
   ): void {
-    const s = 1.8;
+    const s = 2.3;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(s, s);
