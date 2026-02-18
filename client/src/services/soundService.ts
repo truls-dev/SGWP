@@ -133,6 +133,11 @@ class SoundService {
     this._soundLog = [];
   }
 
+  public resetRecordingStartTime() {
+    this._recordingStartTime = performance.now();
+    this._soundLog = [];
+  }
+
   public stopRecordingMode(): SoundEvent[] {
     this._isRecordingMode = false;
     const log = this._soundLog;

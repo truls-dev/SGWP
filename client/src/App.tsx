@@ -951,6 +951,7 @@ const App: React.FC = () => {
 
       let isFinished = false;
 
+      soundService.resetRecordingStartTime();
       const startTime = performance.now();
       const fps = 60;
       const frameDurationUs = 1000000 / fps;
