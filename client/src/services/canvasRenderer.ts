@@ -648,14 +648,11 @@ export class CanvasRenderer {
 
       if (groupBottomY < areaY - 20 || groupTopY > areaY + areaH + 20) continue;
 
-      const barH = Math.max(groupBottomY - groupTopY, 30);
       const color = item.color;
-
       const textBlockH = groupBottomY - groupTopY;
-      const barDrawH = Math.min(barH, textBlockH * 0.85);
-      const barDrawY = groupTopY + (textBlockH - barDrawH) / 2;
+      const barDrawH = Math.max(textBlockH, 30);
 
-      this.drawPillRect(ctx, padX, barDrawY, BAR_WIDTH, barDrawH, 3, color);
+      this.drawPillRect(ctx, padX, groupTopY, BAR_WIDTH, barDrawH, 3, color);
     }
 
     const todayY = drawY - 60;
