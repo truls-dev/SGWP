@@ -885,14 +885,17 @@ export class CanvasRenderer {
       const ax = avatarCenterX - imgW / 2;
       const ay = bottom - imgH + totalSlideY;
 
+      const clipTop = Math.min(ay, bottom - imgH);
+      const clipBottom = bottom;
+
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.beginPath();
       ctx.rect(
         avatarCenterX - containerW * 1.5,
-        bottom - imgH,
+        clipTop,
         containerW * 3,
-        imgH,
+        clipBottom - clipTop,
       );
       ctx.clip();
       ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
