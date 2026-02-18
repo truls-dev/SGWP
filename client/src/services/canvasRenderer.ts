@@ -1332,18 +1332,19 @@ export class CanvasRenderer {
           );
         }
       } else {
-        ctx.textBaseline = "top";
+        ctx.textBaseline = "middle";
         const vPad = Math.round(12 * S);
         const textStartY = pillY + vPad;
 
         for (let i = 0; i < lines.length; i++) {
-          ctx.fillText(lines[i], textX, textStartY + i * lineH);
+          const lineCenterY = textStartY + i * lineH + lineH / 2;
+          ctx.fillText(lines[i], textX, lineCenterY);
         }
 
         const lastLine = lines[lines.length - 1];
         const lastLineW = ctx.measureText(lastLine).width;
         const cursorX = textX + lastLineW + 2;
-        const cursorLineY = textStartY + (lines.length - 1) * lineH;
+        const lastLineCenterY = textStartY + (lines.length - 1) * lineH + lineH / 2;
         const cursorH = Math.round(17.5 * S);
         const cursorW = Math.round(2.2 * S);
         const blink = Math.floor(state.time / 500) % 2 === 0;
@@ -1351,7 +1352,7 @@ export class CanvasRenderer {
           this.drawPillRect(
             ctx,
             cursorX,
-            cursorLineY + (lineH - cursorH) / 2,
+            lastLineCenterY - cursorH / 2,
             cursorW,
             cursorH,
             cursorW / 2,
