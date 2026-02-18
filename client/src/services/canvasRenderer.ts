@@ -813,10 +813,10 @@ export class CanvasRenderer {
     AVATAR_WIDTH_SHORT: 105, // Bitmoji container width (short crop mode)
     TYPING_NUDGE_Y: -8, // How far bitmoji nudges up when typing
     TYPING_SCALE: 0.1, // How much bitmoji scales up when typing (0.1 = 10%)
-    TYPING_SINK: 0.42, // Fraction of selfie image hidden below divider when typing (0.42 = 42%)
+    TYPING_SINK: 0.34, // Fraction of selfie image hidden below divider when typing (0.34 = 34%)
     BUBBLE_SIZE: 55, // Typing bubble diameter
-    BUBBLE_BOTTOM_GAP: 78, // Distance from bottom to bubble (standard)
-    BUBBLE_BOTTOM_GAP_SHORT: 25, // Distance from bottom to bubble (short crop)
+    BUBBLE_BOTTOM_GAP: 55, // Distance from bottom to bubble (standard)
+    BUBBLE_BOTTOM_GAP_SHORT: 10, // Distance from bottom to bubble (short crop)
   };
 
   private drawSinglePresence(
