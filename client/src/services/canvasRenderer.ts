@@ -1378,8 +1378,8 @@ export class CanvasRenderer {
 
         const lastLineW = ctx.measureText(lines[0]).width;
         const cursorX = textX + lastLineW + 2;
-        const cursorH = Math.round(17.5 * S);
-        const cursorW = Math.round(2.2 * S);
+        const cursorH = Math.round(22 * S);
+        const cursorW = Math.round(1.6 * S);
         const blink = Math.floor(state.time / 500) % 2 === 0;
         if (blink || state.isMeTyping) {
           this.drawPillRect(
@@ -1406,8 +1406,8 @@ export class CanvasRenderer {
         const lastLineW = ctx.measureText(lastLine).width;
         const cursorX = textX + lastLineW + 2;
         const lastLineCenterY = textStartY + (lines.length - 1) * lineH + lineH / 2;
-        const cursorH = Math.round(17.5 * S);
-        const cursorW = Math.round(2.2 * S);
+        const cursorH = Math.round(22 * S);
+        const cursorW = Math.round(1.6 * S);
         const blink = Math.floor(state.time / 500) % 2 === 0;
         if (blink || state.isMeTyping) {
           this.drawPillRect(
@@ -1444,8 +1444,8 @@ export class CanvasRenderer {
       ctx.textBaseline = "middle";
       ctx.fillText("Chat", cx + textPadL, pillY + pillH / 2);
 
-      const idleCursorH = Math.round(17.5 * S);
-      const idleCursorW = Math.round(2.2 * S);
+      const idleCursorH = Math.round(22 * S);
+      const idleCursorW = Math.round(1.6 * S);
       const idleBlink = Math.floor(state.time / 500) % 2 === 0;
       if (idleBlink) {
         this.drawPillRect(
