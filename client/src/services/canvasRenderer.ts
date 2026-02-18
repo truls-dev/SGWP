@@ -1018,7 +1018,7 @@ export class CanvasRenderer {
   // All values in CSS px, converted to canvas scale (S=2.77) at runtime
   // ═══════════════════════════════════════════════════════════════
   private static readonly GROUP_PRESENCE = {
-    ROW_LEFT_PADDING: 0,
+    ROW_LEFT_PADDING: 12,
     ROW_GAP: -18,
     AVATAR_CONTAINER_W: 68,
     AVATAR_CONTAINER_H: 40,
@@ -1116,120 +1116,6 @@ export class CanvasRenderer {
         state.time,
       );
 
-      if (!anim.hasEverArrived) { px += itemW + rowGap; continue; }
-
-      const arrivalDuration = 500;
-      const arrivalElapsed = state.time - anim.arrivalStartTime;
-      const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
-      const arrivalEased = this.easeOut(arrivalProgress);
-
-      const alpha = hasArrived ? arrivalEased : 1 - arrivalEased;
-      const arrivalSlideY = hasArrived
-        ? (1 - arrivalEased) * Math.round(40 * S)
-        : arrivalEased * Math.round(40 * S);
-
-      if (alpha <= 0.01) { px += itemW + rowGap; continue; }
-
-      const typingDuration = isTyping ? 450 : 300;
-      const typingElapsed = state.time - anim.typingStartTime;
-      const typingProgress = Math.min(typingElapsed / typingDuration, 1);
-      const typingEased = this.easeOut(typingProgress);
-
-      const typingFrac = isTyping
-        ? typingEased
-        : anim.hasEverTyped ? 1 - typingEased : 0;
-
-      const typingNudgeY = isTyping
-        ? typingEased * Math.round(GP.TYPING_NUDGE_Y * S)
-        : (1 - typingEased) * Math.round(GP.TYPING_NUDGE_Y * S);
-
-      const totalSlideY = arrivalSlideY + typingNudgeY;
-
-      const itemCenterX = px + itemW / 2;
-
-      const peekingKey = `peeking_${member.bitmojiAvatarId}`;
-      const selfieKey = `selfie_${member.bitmojiAvatarId}`;
-      const peekingImg = this.images.get(peekingKey);
-      const selfieImg = this.images.get(selfieKey);
-
-      const clipOverflowSide = Math.round(60 * S);
-      const clipOverflowTop = Math.round(100 * S);
-      const clipLeft = px - clipOverflowSide;
-      const clipW = itemW + clipOverflowSide * 2;
-      const clipBottom = containerBottom;
-      const clipTop = clipBottom - containerH - clipOverflowTop;
-      const clipH = clipBottom - clipTop;
-
-      if (peekingImg && typingFrac < 1) {
-        const imgW = itemW * GP.AVATAR_SCALE;
-        const imgH = peekingImg.height * (imgW / peekingImg.width);
-        const ax = itemCenterX - imgW / 2;
-        const ay = clipBottom - imgH + totalSlideY;
-
-        ctx.save();
-        ctx.globalAlpha = alpha * (1 - typingFrac);
-        ctx.beginPath();
-        ctx.rect(clipLeft, clipTop, clipW, clipH);
-        ctx.clip();
-        ctx.drawImage(peekingImg, ax, ay, imgW, imgH);
-        ctx.restore();
-      }
-
-      if (selfieImg && typingFrac > 0) {
-        const scaleUp = 1.0 + typingFrac * GP.TYPING_SCALE;
-        const imgW = itemW * GP.AVATAR_SCALE * scaleUp;
-        const imgH = selfieImg.height * (imgW / selfieImg.width);
-        const sinkOffset = GP.TYPING_SINK * imgH;
-        const ax = itemCenterX - imgW / 2;
-        const ay = clipBottom - imgH + totalSlideY + sinkOffset;
-
-        ctx.save();
-        ctx.globalAlpha = alpha * typingFrac;
-        ctx.beginPath();
-        ctx.rect(clipLeft, clipTop, clipW, clipH);
-        ctx.clip();
-        ctx.drawImage(selfieImg, ax, ay, imgW, imgH);
-        ctx.restore();
-      }
-
-      const grpBubbleX = px + bubbleX;
-      const grpBubbleY = containerBottom - bubbleY - bubbleSize;
-
-      if (isTyping && typingEased > 0) {
-        const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
-        const bScale = 0.6 + 0.4 * t;
-        const bRotate = -5 * (1 - t) * (Math.PI / 180);
-        const bTranslateY = (1 - t) * 10;
-        const bAlpha = alpha * t;
-
-        ctx.save();
-        ctx.globalAlpha = bAlpha;
-        const ox = grpBubbleX;
-        const oy = grpBubbleY + bubbleSize;
-        ctx.translate(ox, oy);
-        ctx.rotate(bRotate);
-        ctx.scale(bScale, bScale);
-        ctx.translate(-ox, -oy + bTranslateY);
-        this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
-        ctx.restore();
-      } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
-        const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
-        const bScale = 1 - 0.6 * t;
-        const bRotate = t * 10 * (Math.PI / 180);
-        const bAlpha = alpha * (1 - t);
-
-        ctx.save();
-        ctx.globalAlpha = bAlpha;
-        const ox = grpBubbleX;
-        const oy = grpBubbleY + bubbleSize;
-        ctx.translate(ox, oy);
-        ctx.rotate(bRotate);
-        ctx.scale(bScale, bScale);
-        ctx.translate(-ox, -oy);
-        this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
-        ctx.restore();
-      }
-
       ctx.font = `900 ${pillFontSize}px ${FONT_REGULAR}`;
       const textW = ctx.measureText(member.name.toUpperCase()).width;
       const pillW = Math.max(textW + pillPx * 2, pillMinW);
@@ -1249,6 +1135,120 @@ export class CanvasRenderer {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(member.name.toUpperCase(), pX + pillW / 2, pY + pillH / 2);
+
+      if (anim.hasEverArrived) {
+        const arrivalDuration = 500;
+        const arrivalElapsed = state.time - anim.arrivalStartTime;
+        const arrivalProgress = Math.min(arrivalElapsed / arrivalDuration, 1);
+        const arrivalEased = this.easeOut(arrivalProgress);
+
+        const alpha = hasArrived ? arrivalEased : 1 - arrivalEased;
+        const arrivalSlideY = hasArrived
+          ? (1 - arrivalEased) * Math.round(40 * S)
+          : arrivalEased * Math.round(40 * S);
+
+        if (alpha > 0.01) {
+          const typingDuration = isTyping ? 450 : 300;
+          const typingElapsed = state.time - anim.typingStartTime;
+          const typingProgress = Math.min(typingElapsed / typingDuration, 1);
+          const typingEased = this.easeOut(typingProgress);
+
+          const typingFrac = isTyping
+            ? typingEased
+            : anim.hasEverTyped ? 1 - typingEased : 0;
+
+          const typingNudgeY = isTyping
+            ? typingEased * Math.round(GP.TYPING_NUDGE_Y * S)
+            : (1 - typingEased) * Math.round(GP.TYPING_NUDGE_Y * S);
+
+          const totalSlideY = arrivalSlideY + typingNudgeY;
+
+          const itemCenterX = px + itemW / 2;
+
+          const peekingKey = `peeking_${member.bitmojiAvatarId}`;
+          const selfieKey = `selfie_${member.bitmojiAvatarId}`;
+          const peekingImg = this.images.get(peekingKey);
+          const selfieImg = this.images.get(selfieKey);
+
+          const clipOverflowSide = Math.round(60 * S);
+          const clipOverflowTop = Math.round(100 * S);
+          const clipLeft = px - clipOverflowSide;
+          const clipW = itemW + clipOverflowSide * 2;
+          const clipBottom = containerBottom;
+          const clipTop = clipBottom - containerH - clipOverflowTop;
+          const clipH = clipBottom - clipTop;
+
+          if (peekingImg && typingFrac < 1) {
+            const imgW = itemW * GP.AVATAR_SCALE;
+            const imgH = peekingImg.height * (imgW / peekingImg.width);
+            const ax = itemCenterX - imgW / 2;
+            const ay = clipBottom - imgH + totalSlideY;
+
+            ctx.save();
+            ctx.globalAlpha = alpha * (1 - typingFrac);
+            ctx.beginPath();
+            ctx.rect(clipLeft, clipTop, clipW, clipH);
+            ctx.clip();
+            ctx.drawImage(peekingImg, ax, ay, imgW, imgH);
+            ctx.restore();
+          }
+
+          if (selfieImg && typingFrac > 0) {
+            const scaleUp = 1.0 + typingFrac * GP.TYPING_SCALE;
+            const imgW = itemW * GP.AVATAR_SCALE * scaleUp;
+            const imgH = selfieImg.height * (imgW / selfieImg.width);
+            const sinkOffset = GP.TYPING_SINK * imgH;
+            const ax = itemCenterX - imgW / 2;
+            const ay = clipBottom - imgH + totalSlideY + sinkOffset;
+
+            ctx.save();
+            ctx.globalAlpha = alpha * typingFrac;
+            ctx.beginPath();
+            ctx.rect(clipLeft, clipTop, clipW, clipH);
+            ctx.clip();
+            ctx.drawImage(selfieImg, ax, ay, imgW, imgH);
+            ctx.restore();
+          }
+
+          const grpBubbleX = px + bubbleX;
+          const grpBubbleY = containerBottom - bubbleY - bubbleSize;
+
+          if (isTyping && typingEased > 0) {
+            const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
+            const bScale = 0.6 + 0.4 * t;
+            const bRotate = -5 * (1 - t) * (Math.PI / 180);
+            const bTranslateY = (1 - t) * 10;
+            const bAlpha = alpha * t;
+
+            ctx.save();
+            ctx.globalAlpha = bAlpha;
+            const ox = grpBubbleX;
+            const oy = grpBubbleY + bubbleSize;
+            ctx.translate(ox, oy);
+            ctx.rotate(bRotate);
+            ctx.scale(bScale, bScale);
+            ctx.translate(-ox, -oy + bTranslateY);
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
+            ctx.restore();
+          } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
+            const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
+            const bScale = 1 - 0.6 * t;
+            const bRotate = t * 10 * (Math.PI / 180);
+            const bAlpha = alpha * (1 - t);
+
+            ctx.save();
+            ctx.globalAlpha = bAlpha;
+            const ox = grpBubbleX;
+            const oy = grpBubbleY + bubbleSize;
+            ctx.translate(ox, oy);
+            ctx.rotate(bRotate);
+            ctx.scale(bScale, bScale);
+            ctx.translate(-ox, -oy);
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
+            ctx.restore();
+          }
+        }
+      }
 
       px += itemW + rowGap;
     }
