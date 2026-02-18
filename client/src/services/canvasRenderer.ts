@@ -722,9 +722,9 @@ export class CanvasRenderer {
         ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
         ctx.fillStyle = "#000000";
         ctx.textAlign = "left";
-        ctx.textBaseline = "top";
+        ctx.textBaseline = "middle";
         for (const line of lines) {
-          ctx.fillText(line, textStartX, curY);
+          ctx.fillText(line, textStartX, curY + MSG_LINE_H / 2);
           curY += MSG_LINE_H;
         }
         curY += 10;
@@ -743,9 +743,9 @@ export class CanvasRenderer {
       ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-      ctx.textBaseline = "top";
+      ctx.textBaseline = "middle";
       for (const line of lines) {
-        ctx.fillText(line, textStartX, curY);
+        ctx.fillText(line, textStartX, curY + MSG_LINE_H / 2);
         curY += MSG_LINE_H;
       }
     }
