@@ -1083,37 +1083,63 @@ export class CanvasRenderer {
 
     const pillFontSize = Math.round((isShort ? GP.SHORT_CROP.PILL_FONT_SIZE : GP.PILL_FONT_SIZE) * S);
     const pillMinW = Math.round((isShort ? GP.SHORT_CROP.PILL_MIN_W : GP.PILL_MIN_W) * S);
-    const pillBorderW = GP.PILL_BORDER * S;
-    const pillPx = Math.round(GP.PILL_PX * S);
-    const pillPy = Math.round(GP.PILL_PY * S);
-    const pillGap = Math.round(GP.PILL_GAP * S);
+    const pillGapBase = Math.round(GP.PILL_GAP * S);
 
-    const bubbleX = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_X : GP.BUBBLE_X) * S);
-    const bubbleY = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_Y : GP.BUBBLE_Y) * S);
-    const bubbleScale = isShort ? GP.SHORT_CROP.BUBBLE_SCALE : GP.BUBBLE_SCALE;
+    const bubbleScaleBase = isShort ? GP.SHORT_CROP.BUBBLE_SCALE : GP.BUBBLE_SCALE;
     const baseBubbleSize = 85;
-    const bubbleSize = Math.round(baseBubbleSize * bubbleScale);
 
-    ctx.font = `900 ${pillFontSize}px ${FONT_REGULAR}`;
-    const pillH = pillFontSize + pillPy * 2;
+    const pillFontSizeBase = pillFontSize;
+    const pillPxBase = Math.round(GP.PILL_PX * S);
+    const pillPyBase = Math.round(GP.PILL_PY * S);
+    const pillMinWBase = pillMinW;
+    const pillBorderWBase = GP.PILL_BORDER * S;
 
-    const pillBottomEdge = bottom - rowBottomMargin;
-    const pillTopY = pillBottomEdge - pillH;
-    const containerBottom = pillTopY;
+    ctx.font = `900 ${pillFontSizeBase}px ${FONT_REGULAR}`;
+    const pillWidthsBase: number[] = [];
+    for (let i = 0; i < sorted.length; i++) {
+      const textW = ctx.measureText(sorted[i].name.toUpperCase()).width;
+      pillWidthsBase.push(Math.max(textW + pillPxBase * 2, pillMinWBase));
+    }
+
+    const totalBaseWidth = pillWidthsBase.reduce((a, b) => a + b, 0) + pillGapBase * Math.max(0, sorted.length - 1);
+    const availableWidth = W - rowLeftPad - rowLeftPad;
+    let scaleFactor = 1;
+    if (totalBaseWidth > availableWidth && sorted.length > 1) {
+      scaleFactor = Math.max(0.55, availableWidth / totalBaseWidth);
+    }
+
+    const sPillFontSize = Math.round(pillFontSizeBase * scaleFactor);
+    const sPillPx = Math.round(pillPxBase * scaleFactor);
+    const sPillPy = Math.round(pillPyBase * scaleFactor);
+    const sPillMinW = Math.round(pillMinWBase * scaleFactor);
+    const sPillBorderW = pillBorderWBase * scaleFactor;
+    const sPillGap = Math.round(pillGapBase * scaleFactor);
+    const sItemW = Math.round(itemW * scaleFactor);
+    const sContainerH = Math.round(containerH * scaleFactor);
+    const sBubbleX = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_X : GP.BUBBLE_X) * S * scaleFactor);
+    const sBubbleY = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_Y : GP.BUBBLE_Y) * S * scaleFactor);
+    const sBubbleSize = Math.round(baseBubbleSize * bubbleScaleBase * scaleFactor);
+
+    ctx.font = `900 ${sPillFontSize}px ${FONT_REGULAR}`;
+    const sPillH = sPillFontSize + sPillPy * 2;
 
     const pillWidths: number[] = [];
     for (let i = 0; i < sorted.length; i++) {
-      ctx.font = `900 ${pillFontSize}px ${FONT_REGULAR}`;
+      ctx.font = `900 ${sPillFontSize}px ${FONT_REGULAR}`;
       const textW = ctx.measureText(sorted[i].name.toUpperCase()).width;
-      pillWidths.push(Math.max(textW + pillPx * 2, pillMinW));
+      pillWidths.push(Math.max(textW + sPillPx * 2, sPillMinW));
     }
+
+    const pillBottomEdge = bottom - rowBottomMargin;
+    const pillTopY = pillBottomEdge - sPillH;
+    const containerBottom = pillTopY;
 
     const pillXs: number[] = [];
     let curX = rowLeftPad;
     for (let i = 0; i < sorted.length; i++) {
       pillXs.push(curX);
       if (i < sorted.length - 1) {
-        curX += pillWidths[i] + pillGap;
+        curX += pillWidths[i] + sPillGap;
       }
     }
 
@@ -1136,23 +1162,23 @@ export class CanvasRenderer {
 
       ctx.save();
       ctx.shadowColor = "rgba(0,0,0,0.08)";
-      ctx.shadowBlur = Math.round(4 * S);
-      ctx.shadowOffsetY = Math.round(1 * S);
+      ctx.shadowBlur = Math.round(4 * S * scaleFactor);
+      ctx.shadowOffsetY = Math.round(1 * S * scaleFactor);
       ctx.fillStyle = "#FFFFFF";
-      this.drawPillRect(ctx, pX, pY, pillW, pillH, pillH / 2, "#FFFFFF");
+      this.drawPillRect(ctx, pX, pY, pillW, sPillH, sPillH / 2, "#FFFFFF");
       ctx.restore();
 
       ctx.strokeStyle = pillColor;
-      ctx.lineWidth = pillBorderW;
+      ctx.lineWidth = sPillBorderW;
       ctx.beginPath();
-      this.pillPath(ctx, pX, pY, pillW, pillH, pillH / 2);
+      this.pillPath(ctx, pX, pY, pillW, sPillH, sPillH / 2);
       ctx.stroke();
 
-      ctx.font = `900 ${pillFontSize}px ${FONT_REGULAR}`;
+      ctx.font = `900 ${sPillFontSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = pillColor;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(member.name.toUpperCase(), pillCenterX, pY + pillH / 2);
+      ctx.fillText(member.name.toUpperCase(), pillCenterX, pY + sPillH / 2);
 
       if (anim.hasEverArrived) {
         const arrivalDuration = 500;
@@ -1162,8 +1188,8 @@ export class CanvasRenderer {
 
         const alpha = hasArrived ? arrivalEased : 1 - arrivalEased;
         const arrivalSlideY = hasArrived
-          ? (1 - arrivalEased) * Math.round(40 * S)
-          : arrivalEased * Math.round(40 * S);
+          ? (1 - arrivalEased) * Math.round(40 * S * scaleFactor)
+          : arrivalEased * Math.round(40 * S * scaleFactor);
 
         if (alpha > 0.01) {
           const peekingKey = `peeking_${member.bitmojiAvatarId}`;
@@ -1174,16 +1200,16 @@ export class CanvasRenderer {
           const activeImg = isTyping ? selfieImg : peekingImg;
 
           if (activeImg) {
-            const imgW = itemW * GP.AVATAR_SCALE;
+            const imgW = sItemW * GP.AVATAR_SCALE;
             const imgH = activeImg.height * (imgW / activeImg.width);
             const ax = pillCenterX - imgW / 2;
             const ay = containerBottom - imgH + arrivalSlideY;
 
-            const clipOverflowSide = Math.round(60 * S);
-            const clipOverflowTop = Math.round(100 * S);
-            const clipLeft = pillCenterX - itemW / 2 - clipOverflowSide;
-            const clipW = itemW + clipOverflowSide * 2;
-            const clipTop = containerBottom - containerH - clipOverflowTop;
+            const clipOverflowSide = Math.round(60 * S * scaleFactor);
+            const clipOverflowTop = Math.round(100 * S * scaleFactor);
+            const clipLeft = pillCenterX - sItemW / 2 - clipOverflowSide;
+            const clipW = sItemW + clipOverflowSide * 2;
+            const clipTop = containerBottom - sContainerH - clipOverflowTop;
             const clipH = containerBottom - clipTop;
 
             ctx.save();
@@ -1195,8 +1221,8 @@ export class CanvasRenderer {
             ctx.restore();
           }
 
-          const grpBubbleX = pillCenterX - itemW / 2 + bubbleX;
-          const grpBubbleY = containerBottom - bubbleY - bubbleSize;
+          const grpBubbleX = pillCenterX - sItemW / 2 + sBubbleX;
+          const grpBubbleY = containerBottom - sBubbleY - sBubbleSize;
 
           const typingDuration = isTyping ? 450 : 300;
           const typingElapsed = state.time - anim.typingStartTime;
@@ -1213,12 +1239,12 @@ export class CanvasRenderer {
             ctx.save();
             ctx.globalAlpha = bAlpha;
             const ox = grpBubbleX;
-            const oy = grpBubbleY + bubbleSize;
+            const oy = grpBubbleY + sBubbleSize;
             ctx.translate(ox, oy);
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy + bTranslateY);
-            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
             ctx.restore();
           } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
             const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
@@ -1229,12 +1255,12 @@ export class CanvasRenderer {
             ctx.save();
             ctx.globalAlpha = bAlpha;
             const ox = grpBubbleX;
-            const oy = grpBubbleY + bubbleSize;
+            const oy = grpBubbleY + sBubbleSize;
             ctx.translate(ox, oy);
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy);
-            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, bubbleSize);
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
             ctx.restore();
           }
         }
@@ -1920,14 +1946,10 @@ export class CanvasRenderer {
   ): void {
     r = Math.min(r, w / 2, h / 2);
     ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.arcTo(x, y, x + r, y, r);
     ctx.closePath();
   }
 
