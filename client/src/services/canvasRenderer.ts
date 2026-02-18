@@ -82,7 +82,7 @@ export class CanvasRenderer {
   private presenceAnims = new Map<string, PresenceAnimState>();
   private presenceEnabled = false;
   private actionIconsVisible = true;
-  private actionIconsTransitionTime = 0;
+  private actionIconsTransitionTime = -Infinity;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
@@ -1302,7 +1302,6 @@ export class CanvasRenderer {
     if (state.compositionText && lines.length > 0) {
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
-
       const textX = cx + textPadL;
 
       ctx.save();
@@ -1382,6 +1381,21 @@ export class CanvasRenderer {
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText("Chat", cx + textPadL, pillY + pillH / 2);
+
+      const idleCursorH = Math.round(17.5 * S);
+      const idleCursorW = Math.round(2.2 * S);
+      const idleBlink = Math.floor(state.time / 500) % 2 === 0;
+      if (idleBlink) {
+        this.drawPillRect(
+          ctx,
+          cx + textPadL,
+          pillY + pillH / 2 - idleCursorH / 2,
+          idleCursorW,
+          idleCursorH,
+          idleCursorW / 2,
+          "#FF0054",
+        );
+      }
 
       const micVisual = Math.round(22 * S);
       const svgS = micVisual / 24;
