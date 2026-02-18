@@ -612,13 +612,50 @@ export class CanvasRenderer {
     const presenceGap = this.presenceEnabled ? 200 : 120;
     let drawY = areaY + areaH - presenceGap;
 
+    const drawYs: number[] = new Array(layouts.length);
     for (let i = layouts.length - 1; i >= 0; i--) {
+      drawY -= layouts[i].h;
+      drawYs[i] = drawY;
+    }
+
+    for (let i = 0; i < layouts.length; i++) {
       const item = layouts[i];
-      drawY -= item.h;
-      if (drawY + item.h < areaY - 20) break;
-      if (drawY < areaY + areaH + 20) {
-        this.drawMessage(ctx, item, drawY, padX, maxTextW);
+      const y = drawYs[i];
+      if (y + item.h < areaY - 20) continue;
+      if (y > areaY + areaH + 20) continue;
+      this.drawMessage(ctx, item, y, padX, maxTextW, false);
+    }
+
+    for (let i = 0; i < layouts.length; i++) {
+      const item = layouts[i];
+      if (item.msg.type === MessageType.NOTIFICATION) continue;
+
+      if (item.isGrouped) continue;
+
+      let groupEndIdx = i;
+      while (
+        groupEndIdx + 1 < layouts.length &&
+        layouts[groupEndIdx + 1].isGrouped
+      ) {
+        groupEndIdx++;
       }
+
+      const firstY = drawYs[i];
+      const lastItem = layouts[groupEndIdx];
+      const lastY = drawYs[groupEndIdx];
+      const groupTopY = firstY + 10 + (NAME_FONT_SIZE + 14);
+      const groupBottomY = lastY + lastItem.h;
+
+      if (groupBottomY < areaY - 20 || groupTopY > areaY + areaH + 20) continue;
+
+      const barH = Math.max(groupBottomY - groupTopY, 30);
+      const color = item.color;
+
+      const textBlockH = groupBottomY - groupTopY;
+      const barDrawH = Math.min(barH, textBlockH * 0.85);
+      const barDrawY = groupTopY + (textBlockH - barDrawH) / 2;
+
+      this.drawPillRect(ctx, padX, barDrawY, BAR_WIDTH, barDrawH, 3, color);
     }
 
     const todayY = drawY - 60;
@@ -639,6 +676,7 @@ export class CanvasRenderer {
     y: number,
     padX: number,
     maxTextW: number,
+    drawBar: boolean = true,
   ): void {
     const { msg, isGrouped, lines, sender, color } = item;
 
@@ -712,12 +750,14 @@ export class CanvasRenderer {
       }
     }
 
-    const barH = Math.max(curY - barStartY, 30);
-    if (!isGrouped) {
-      this.drawPillRect(ctx, padX, barStartY, BAR_WIDTH, barH, 3, color);
-    } else {
-      ctx.fillStyle = color;
-      ctx.fillRect(padX, barStartY, BAR_WIDTH, barH);
+    if (drawBar) {
+      const barH = Math.max(curY - barStartY, 30);
+      if (!isGrouped) {
+        this.drawPillRect(ctx, padX, barStartY, BAR_WIDTH, barH, 3, color);
+      } else {
+        ctx.fillStyle = color;
+        ctx.fillRect(padX, barStartY, BAR_WIDTH, barH);
+      }
     }
   }
 
