@@ -90,6 +90,8 @@ const App: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   const canvasRendererRef = useRef<CanvasRenderer | null>(null);
+  const previewCanvasContainerRef = useRef<HTMLDivElement>(null);
+  const previewAnimFrameRef = useRef<number | null>(null);
   const frameStateRef = useRef<FrameState>({
     messages: [],
     compositionText: '',
@@ -785,6 +787,14 @@ const App: React.FC = () => {
       await new Promise(r => setTimeout(r, 3000));
       stopRecordingSession();
     } else {
+      if (previewAnimFrameRef.current) {
+        cancelAnimationFrame(previewAnimFrameRef.current);
+        previewAnimFrameRef.current = null;
+      }
+      if (previewCanvasContainerRef.current) {
+        previewCanvasContainerRef.current.innerHTML = '';
+      }
+      canvasRendererRef.current = null;
       setPlaybackMode(false);
       runningStatusRef.current = 'idle';
       setIsShiftActive(true); 
@@ -805,6 +815,39 @@ const App: React.FC = () => {
         runningStatusRef.current = 'previewing';
         await soundService.prepare();
         soundService.setRecordingSyncDelay(0);
+
+        if (previewAnimFrameRef.current) {
+          cancelAnimationFrame(previewAnimFrameRef.current);
+          previewAnimFrameRef.current = null;
+        }
+
+        const renderer = new CanvasRenderer();
+        canvasRendererRef.current = renderer;
+        await renderer.preload(state.cast, state.script, state.chat);
+
+        const canvasEl = renderer.getCanvas();
+        canvasEl.style.width = '100%';
+        canvasEl.style.height = '100%';
+        canvasEl.style.objectFit = 'contain';
+
+        if (previewCanvasContainerRef.current) {
+          previewCanvasContainerRef.current.innerHTML = '';
+          previewCanvasContainerRef.current.appendChild(canvasEl);
+        }
+
+        const startTime = performance.now();
+        const previewRenderLoop = () => {
+          if (runningStatusRef.current !== 'previewing') return;
+          const now = performance.now();
+          const currentFrameState: FrameState = {
+            ...frameStateRef.current,
+            time: now - startTime,
+          };
+          renderer.renderFrame(currentFrameState);
+          previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
+        };
+        previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
+
         runPlaybackLoop(false);
     }
   };
@@ -814,6 +857,14 @@ const App: React.FC = () => {
     setPlaybackMode(false);
     setIsRecording(false);
     resetSimulationState();
+    
+    if (previewAnimFrameRef.current) {
+      cancelAnimationFrame(previewAnimFrameRef.current);
+      previewAnimFrameRef.current = null;
+    }
+    if (previewCanvasContainerRef.current) {
+      previewCanvasContainerRef.current.innerHTML = '';
+    }
     
     if (videoEncoderRef.current) { try { videoEncoderRef.current.close(); } catch(e){} videoEncoderRef.current = null; }
     if (audioEncoderRef.current) { try { audioEncoderRef.current.close(); } catch(e){} audioEncoderRef.current = null; }
@@ -1621,6 +1672,14 @@ const App: React.FC = () => {
               borderTopLeftRadius: `${state.chat.topCornerRadius}px`,
               borderTopRightRadius: `${state.chat.topCornerRadius}px`,
           }}>
+            <div
+              ref={previewCanvasContainerRef}
+              className="absolute inset-0 z-50"
+              style={{ 
+                background: 'black',
+                display: playbackMode && !isRecording ? 'block' : 'none'
+              }}
+            />
             <div className="flex flex-col bg-white select-none absolute top-0 left-0 overflow-hidden snap-font-regular h-full w-full" style={{ transform: `scale(${scale})`, transformOrigin: '0 0', width: `${100 / scale}%`, height: `${100 / scale}%` }}>
                 <StatusBar config={state.system} />
                 <ChatHeader config={state.chat} cast={state.cast} isKeyboardCropped={state.chat.isKeyboardCropped} />
