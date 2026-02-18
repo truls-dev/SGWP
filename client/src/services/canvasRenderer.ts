@@ -1025,8 +1025,6 @@ export class CanvasRenderer {
     AVATAR_AREA_H: 120,
     AVATAR_NUDGE_Y: 0,
     AVATAR_SCALE: 1.0,
-    TYPING_NUDGE_Y: 8,
-    TYPING_SCALE: 0.10,
     BUBBLE_SCALE: 1.0,
     BUBBLE_X: 32,
     BUBBLE_Y: 15,
@@ -1035,7 +1033,7 @@ export class CanvasRenderer {
     PILL_PY: 4,
     PILL_FONT_SIZE: 9.5,
     PILL_MIN_W: 68,
-    PILL_BOTTOM_MARGIN: 7,
+    ROW_BOTTOM_MARGIN: 10,
     SHORT_CROP: {
       ROW_LEFT_PADDING: 66,
       ITEM_SCALE: 0.68,
@@ -1046,7 +1044,6 @@ export class CanvasRenderer {
       PILL_FONT_SIZE: 8.5,
       PILL_MIN_W: 50,
     },
-    TYPING_SINK: 0.10,
   };
 
   private drawGroupPresence(
@@ -1081,13 +1078,13 @@ export class CanvasRenderer {
     const rowGap = Math.round(GP.ROW_GAP * S);
     const containerH = Math.round(GP.AVATAR_CONTAINER_H * S);
     const avatarAreaH = Math.round(GP.AVATAR_AREA_H * S);
+    const rowBottomMargin = Math.round(GP.ROW_BOTTOM_MARGIN * S);
 
     const pillFontSize = Math.round((isShort ? GP.SHORT_CROP.PILL_FONT_SIZE : GP.PILL_FONT_SIZE) * S);
     const pillMinW = Math.round((isShort ? GP.SHORT_CROP.PILL_MIN_W : GP.PILL_MIN_W) * S);
-    const pillBorder = Math.round(GP.PILL_BORDER * S);
+    const pillBorderW = Math.round(GP.PILL_BORDER * S);
     const pillPx = Math.round(GP.PILL_PX * S);
     const pillPy = Math.round(GP.PILL_PY * S);
-    const pillBottomMargin = Math.round(GP.PILL_BOTTOM_MARGIN * S);
 
     const bubbleX = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_X : GP.BUBBLE_X) * S);
     const bubbleY = Math.round((isShort ? GP.SHORT_CROP.BUBBLE_Y : GP.BUBBLE_Y) * S);
@@ -1098,8 +1095,8 @@ export class CanvasRenderer {
     ctx.font = `900 ${pillFontSize}px ${FONT_REGULAR}`;
     const pillH = pillFontSize + pillPy * 2;
 
-    const pillBottom = bottom;
-    const pillTopY = pillBottom - pillH - pillBottomMargin;
+    const pillBottomEdge = bottom - rowBottomMargin;
+    const pillTopY = pillBottomEdge - pillH;
     const containerBottom = pillTopY;
 
     let px = rowLeftPad;
@@ -1123,10 +1120,16 @@ export class CanvasRenderer {
       const pX = px + (itemW - pillW) / 2;
       const pY = pillTopY;
 
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.08)";
+      ctx.shadowBlur = Math.round(4 * S);
+      ctx.shadowOffsetY = Math.round(1 * S);
       ctx.fillStyle = "#FFFFFF";
       this.drawPillRect(ctx, pX, pY, pillW, pillH, pillH / 2, "#FFFFFF");
+      ctx.restore();
+
       ctx.strokeStyle = pillColor;
-      ctx.lineWidth = pillBorder;
+      ctx.lineWidth = pillBorderW;
       ctx.beginPath();
       this.pillPath(ctx, pX, pY, pillW, pillH, pillH / 2);
       ctx.stroke();
@@ -1148,21 +1151,6 @@ export class CanvasRenderer {
           : arrivalEased * Math.round(40 * S);
 
         if (alpha > 0.01) {
-          const typingDuration = isTyping ? 450 : 300;
-          const typingElapsed = state.time - anim.typingStartTime;
-          const typingProgress = Math.min(typingElapsed / typingDuration, 1);
-          const typingEased = this.easeOut(typingProgress);
-
-          const typingFrac = isTyping
-            ? typingEased
-            : anim.hasEverTyped ? 1 - typingEased : 0;
-
-          const typingNudgeY = isTyping
-            ? typingEased * Math.round(GP.TYPING_NUDGE_Y * S)
-            : (1 - typingEased) * Math.round(GP.TYPING_NUDGE_Y * S);
-
-          const totalSlideY = arrivalSlideY + typingNudgeY;
-
           const itemCenterX = px + itemW / 2;
 
           const peekingKey = `peeking_${member.bitmojiAvatarId}`;
@@ -1170,48 +1158,37 @@ export class CanvasRenderer {
           const peekingImg = this.images.get(peekingKey);
           const selfieImg = this.images.get(selfieKey);
 
-          const clipOverflowSide = Math.round(60 * S);
-          const clipOverflowTop = Math.round(100 * S);
-          const clipLeft = px - clipOverflowSide;
-          const clipW = itemW + clipOverflowSide * 2;
-          const clipBottom = containerBottom;
-          const clipTop = clipBottom - containerH - clipOverflowTop;
-          const clipH = clipBottom - clipTop;
+          const activeImg = isTyping ? selfieImg : peekingImg;
 
-          if (peekingImg && typingFrac < 1) {
+          if (activeImg) {
             const imgW = itemW * GP.AVATAR_SCALE;
-            const imgH = peekingImg.height * (imgW / peekingImg.width);
+            const imgH = activeImg.height * (imgW / activeImg.width);
             const ax = itemCenterX - imgW / 2;
-            const ay = clipBottom - imgH + totalSlideY;
+            const ay = containerBottom - imgH + arrivalSlideY;
+
+            const clipOverflowSide = Math.round(60 * S);
+            const clipOverflowTop = Math.round(100 * S);
+            const clipLeft = px - clipOverflowSide;
+            const clipW = itemW + clipOverflowSide * 2;
+            const clipTop = containerBottom - containerH - clipOverflowTop;
+            const clipH = containerBottom - clipTop;
 
             ctx.save();
-            ctx.globalAlpha = alpha * (1 - typingFrac);
+            ctx.globalAlpha = alpha;
             ctx.beginPath();
             ctx.rect(clipLeft, clipTop, clipW, clipH);
             ctx.clip();
-            ctx.drawImage(peekingImg, ax, ay, imgW, imgH);
-            ctx.restore();
-          }
-
-          if (selfieImg && typingFrac > 0) {
-            const scaleUp = 1.0 + typingFrac * GP.TYPING_SCALE;
-            const imgW = itemW * GP.AVATAR_SCALE * scaleUp;
-            const imgH = selfieImg.height * (imgW / selfieImg.width);
-            const sinkOffset = GP.TYPING_SINK * imgH;
-            const ax = itemCenterX - imgW / 2;
-            const ay = clipBottom - imgH + totalSlideY + sinkOffset;
-
-            ctx.save();
-            ctx.globalAlpha = alpha * typingFrac;
-            ctx.beginPath();
-            ctx.rect(clipLeft, clipTop, clipW, clipH);
-            ctx.clip();
-            ctx.drawImage(selfieImg, ax, ay, imgW, imgH);
+            ctx.drawImage(activeImg, ax, ay, imgW, imgH);
             ctx.restore();
           }
 
           const grpBubbleX = px + bubbleX;
           const grpBubbleY = containerBottom - bubbleY - bubbleSize;
+
+          const typingDuration = isTyping ? 450 : 300;
+          const typingElapsed = state.time - anim.typingStartTime;
+          const typingProgress = Math.min(typingElapsed / typingDuration, 1);
+          const typingEased = this.easeOut(typingProgress);
 
           if (isTyping && typingEased > 0) {
             const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
