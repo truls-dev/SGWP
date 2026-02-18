@@ -892,6 +892,7 @@ const App: React.FC = () => {
 
       await soundService.prepare();
       soundService.setRecordingSyncDelay(0);
+      soundService.startRecordingMode();
 
       const renderer = new CanvasRenderer();
       canvasRendererRef.current = renderer;
@@ -948,22 +949,7 @@ const App: React.FC = () => {
       });
       audioEncoderRef.current = audioEncoder;
 
-      const audioTrack = soundService.getStream()!.getAudioTracks()[0];
-      const audioProcessor = new win.MediaStreamTrackProcessor({ track: audioTrack });
-      const audioReader = audioProcessor.readable.getReader();
-
       let isFinished = false;
-      const readAudio = async () => {
-        while (!isFinished) {
-          const { done, value } = await audioReader.read();
-          if (done) break;
-          if (audioEncoder.state === 'configured') {
-            audioEncoder.encode(value);
-          }
-          value.close();
-        }
-      };
-      readAudio();
 
       const startTime = performance.now();
       const fps = 60;
@@ -1003,7 +989,38 @@ const App: React.FC = () => {
         if (isFinished) return;
         isFinished = true;
         try {
+            const totalDurationMs = performance.now() - startTime;
+            const soundEvents = soundService.stopRecordingMode();
+
             await videoEncoder.flush();
+
+            const offlineAudio = await soundService.renderOffline(soundEvents, totalDurationMs);
+            const sampleRate = offlineAudio.sampleRate;
+            const numberOfChannels = offlineAudio.numberOfChannels;
+            const chunkSize = 4800;
+            const totalSamples = offlineAudio.length;
+
+            for (let offset = 0; offset < totalSamples; offset += chunkSize) {
+              const len = Math.min(chunkSize, totalSamples - offset);
+              const planarData = new Float32Array(len * numberOfChannels);
+              for (let ch = 0; ch < numberOfChannels; ch++) {
+                const channelData = offlineAudio.getChannelData(ch);
+                planarData.set(channelData.subarray(offset, offset + len), ch * len);
+              }
+              const audioData = new win.AudioData({
+                format: 'f32-planar',
+                sampleRate: sampleRate,
+                numberOfFrames: len,
+                numberOfChannels: numberOfChannels,
+                timestamp: Math.round((offset / sampleRate) * 1_000_000),
+                data: planarData,
+              });
+              if (audioEncoder.state === 'configured') {
+                audioEncoder.encode(audioData);
+              }
+              audioData.close();
+            }
+
             await audioEncoder.flush();
             muxer.finalize();
 
@@ -1025,6 +1042,7 @@ const App: React.FC = () => {
     } catch (err) {
       console.error("Recording error:", err);
       alert("Failed to start recording. Please try again.");
+      soundService.stopRecordingMode();
       stopPlayback();
     }
   };
