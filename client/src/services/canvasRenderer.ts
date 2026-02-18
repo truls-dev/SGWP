@@ -21,6 +21,7 @@ export interface FrameState {
   keyboardLayout: KeyboardLayout;
   typingParticipantIds: string[];
   activeParticipantIds: string[];
+  scriptParticipantIds: string[];
   systemConfig: SystemConfig;
   chatConfig: ChatConfig;
   cast: CastMember[];
@@ -613,9 +614,7 @@ export class CanvasRenderer {
     if (!this.presenceEnabled) {
       presenceGap = 120;
     } else if (state.chatConfig.isGroup) {
-      const hasGroupParticipants = state.cast.some(
-        (c) => !c.isMe && state.messages.some((m) => m.senderId === c.id),
-      );
+      const hasGroupParticipants = state.scriptParticipantIds.length > 0;
       presenceGap = hasGroupParticipants ? Math.round(80 * 2.77) : Math.round(45 * 2.77);
     } else {
       presenceGap = 200;
@@ -1060,7 +1059,7 @@ export class CanvasRenderer {
     const S = 2.77;
 
     const participants = state.cast.filter(
-      (c) => !c.isMe && state.messages.some((m) => m.senderId === c.id),
+      (c) => !c.isMe && state.scriptParticipantIds.includes(c.id),
     );
     if (participants.length === 0) return;
 
