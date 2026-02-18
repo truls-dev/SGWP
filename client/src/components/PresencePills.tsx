@@ -58,16 +58,40 @@ const PresencePills: React.FC<Props> = ({
     return [...active, ...inactive];
   }, [participants, activeParticipantIds]);
 
-  // Determine active layout constants
   const activePadding = isKeyboardCropped 
     ? GROUP_PRESENCE_SETTINGS.SHORT_CROP.ROW_LEFT_PADDING 
     : GROUP_PRESENCE_SETTINGS.ROW_LEFT_PADDING;
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [rowScale, setRowScale] = React.useState(1);
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const measure = () => {
+      const parentW = el.parentElement?.clientWidth ?? 390;
+      const availableW = parentW - activePadding - 12;
+      el.style.transform = 'scale(1)';
+      const naturalW = el.scrollWidth;
+      if (naturalW > availableW && sortedParticipants.length > 1) {
+        setRowScale(Math.max(0.55, availableW / naturalW));
+      } else {
+        setRowScale(1);
+      }
+    };
+    measure();
+    const timer = setTimeout(measure, 100);
+    return () => clearTimeout(timer);
+  }, [sortedParticipants, activePadding]);
+
   return (
     <div 
-      className="flex flex-wrap items-end justify-start mb-2.5 select-none pointer-events-none transition-all duration-300"
+      ref={containerRef}
+      className="flex items-end justify-start mb-2.5 select-none pointer-events-none transition-all duration-300"
       style={{ 
-        paddingLeft: `${activePadding}px`
+        paddingLeft: `${activePadding}px`,
+        transform: `scale(${rowScale})`,
+        transformOrigin: 'bottom left',
       }}
     >
       {sortedParticipants.map((member, index) => {
@@ -79,7 +103,6 @@ const PresencePills: React.FC<Props> = ({
           ? getSelfieUrlForAvatar(member.bitmojiAvatarId) 
           : getPeekingUrlForAvatar(member.bitmojiAvatarId);
 
-        // Resolve coordinates based on mode
         const itemWidth = isShortCrop ? GROUP_PRESENCE_SETTINGS.SHORT_CROP.ITEM_WIDTH : GROUP_PRESENCE_SETTINGS.AVATAR_CONTAINER_W;
         const bubbleX = isShortCrop ? GROUP_PRESENCE_SETTINGS.SHORT_CROP.BUBBLE_X : GROUP_PRESENCE_SETTINGS.BUBBLE_X;
         const bubbleY = isShortCrop ? GROUP_PRESENCE_SETTINGS.SHORT_CROP.BUBBLE_Y : GROUP_PRESENCE_SETTINGS.BUBBLE_Y;
@@ -93,8 +116,8 @@ const PresencePills: React.FC<Props> = ({
             style={{ 
               clipPath: 'inset(-100px -60px 0px -60px)',
               transform: itemScale,
-              marginLeft: index === 0 ? 0 : `${GROUP_PRESENCE_SETTINGS.ROW_GAP}px`,
-              zIndex: sortedParticipants.length - index // Ensures correct stacking order for overlapping items
+              marginLeft: index === 0 ? 0 : '4px',
+              zIndex: sortedParticipants.length - index
             }}
           >
             {/* The Peeking Container */}
@@ -139,7 +162,7 @@ const PresencePills: React.FC<Props> = ({
 
             {/* Pill */}
             <div 
-              className={`bg-white border-[2px] px-2 py-1 rounded-full z-10 flex items-center justify-center shadow-sm relative transition-colors duration-500`}
+              className={`bg-white border-[1.5px] px-2 py-1 rounded-full z-10 flex items-center justify-center shadow-sm relative transition-colors duration-500`}
               style={{ 
                 borderColor: pillColor,
                 transitionDelay: hasArrived ? '0s' : '0.2s',

@@ -1103,7 +1103,8 @@ export class CanvasRenderer {
 
     const totalBaseWidth = pillWidthsBase.reduce((a, b) => a + b, 0) + pillGapBase * Math.max(0, sorted.length - 1);
     const canvasW = Math.round(390 * S);
-    const availableWidth = canvasW - rowLeftPad - rowLeftPad;
+    const rightPad = Math.round(12 * S);
+    const availableWidth = canvasW - rowLeftPad - rightPad;
     let scaleFactor = 1;
     if (totalBaseWidth > availableWidth && sorted.length > 1) {
       scaleFactor = Math.max(0.55, availableWidth / totalBaseWidth);
