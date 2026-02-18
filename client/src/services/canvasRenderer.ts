@@ -869,43 +869,53 @@ export class CanvasRenderer {
     const typingNudgeY = isTyping
       ? typingEased * SP.TYPING_NUDGE_Y
       : (1 - typingEased) * SP.TYPING_NUDGE_Y;
-    const typingScale = isTyping
-      ? 1.0 + typingEased * SP.TYPING_SCALE
-      : 1.0 + (1 - typingEased) * SP.TYPING_SCALE;
 
     const totalSlideY = arrivalSlideY + typingNudgeY + SP.AVATAR_OFFSET_Y;
 
-    const avatarKey = isTyping
-      ? `selfie_${partner.bitmojiAvatarId}`
-      : `peeking_${partner.bitmojiAvatarId}`;
-    const avatarImg = this.images.get(avatarKey);
+    const typingFrac = isTyping
+      ? typingEased
+      : anim.hasEverTyped ? 1 - typingEased : 0;
 
-    if (avatarImg) {
-      const imgW = containerW * typingScale;
-      const imgH = avatarImg.height * (imgW / avatarImg.width);
+    const peekingKey = `peeking_${partner.bitmojiAvatarId}`;
+    const selfieKey = `selfie_${partner.bitmojiAvatarId}`;
+    const peekingImg = this.images.get(peekingKey);
+    const selfieImg = this.images.get(selfieKey);
 
-      const typingFrac = isTyping
-        ? typingEased
-        : anim.hasEverTyped ? 1 - typingEased : 0;
-      const sinkOffset = typingFrac * SP.TYPING_SINK * imgH;
+    const clipLeft = avatarCenterX - containerW * 1.5;
+    const clipW = containerW * 3;
 
+    if (peekingImg && typingFrac < 1) {
+      const imgW = containerW;
+      const imgH = peekingImg.height * (imgW / peekingImg.width);
+      const ax = avatarCenterX - imgW / 2;
+      const ay = bottom - imgH + totalSlideY;
+
+      const clipTop = Math.min(ay, bottom - imgH);
+
+      ctx.save();
+      ctx.globalAlpha = alpha * (1 - typingFrac);
+      ctx.beginPath();
+      ctx.rect(clipLeft, clipTop, clipW, bottom - clipTop);
+      ctx.clip();
+      ctx.drawImage(peekingImg, ax, ay, imgW, imgH);
+      ctx.restore();
+    }
+
+    if (selfieImg && typingFrac > 0) {
+      const imgW = containerW * (1.0 + typingFrac * SP.TYPING_SCALE);
+      const imgH = selfieImg.height * (imgW / selfieImg.width);
+      const sinkOffset = SP.TYPING_SINK * imgH;
       const ax = avatarCenterX - imgW / 2;
       const ay = bottom - imgH + totalSlideY + sinkOffset;
 
       const clipTop = Math.min(ay, bottom - imgH);
-      const clipBottom = bottom;
 
       ctx.save();
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = alpha * typingFrac;
       ctx.beginPath();
-      ctx.rect(
-        avatarCenterX - containerW * 1.5,
-        clipTop,
-        containerW * 3,
-        clipBottom - clipTop,
-      );
+      ctx.rect(clipLeft, clipTop, clipW, bottom - clipTop);
       ctx.clip();
-      ctx.drawImage(avatarImg, ax, ay, imgW, imgH);
+      ctx.drawImage(selfieImg, ax, ay, imgW, imgH);
       ctx.restore();
     }
 
