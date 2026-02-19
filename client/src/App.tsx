@@ -947,7 +947,7 @@ const App: React.FC = () => {
         codec: 'avc1.640033',
         width: canvas.width,
         height: canvas.height,
-        bitrate: 25_000_000,
+        bitrate: 10_000_000,
         framerate: 60,
         latencyMode: 'quality'
       });
