@@ -51,7 +51,7 @@ const App: React.FC = () => {
       shortCropHeight: 850,
       topCornerRadius: 10,
       exportBackgroundUrl: undefined,
-      isVideoBackgroundMode: false,
+      isVideoBackgroundMode: true,
       exportBackgroundVideoUrl: undefined,
       videoModeScale: 0.78
     }
@@ -79,7 +79,7 @@ const App: React.FC = () => {
   const [musicVolume, setMusicVolume] = useState(0.15);
   const [isMusicPreviewing, setIsMusicPreviewing] = useState(false);
   const [isMusicLoading, setIsMusicLoading] = useState(false);
-  const [sfxVolume, setSfxVolume] = useState(1.0);
+  const [sfxVolume, setSfxVolume] = useState(0.15);
 
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);
@@ -128,6 +128,7 @@ const App: React.FC = () => {
   useEffect(() => {
     initCatalog();
     soundService.prepare();
+    soundService.setSfxVolume(0.15);
   }, []);
 
   useEffect(() => {
