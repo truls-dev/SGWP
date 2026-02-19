@@ -12,11 +12,14 @@ const SOUND_EFFECTS: Record<string, string> = {
 };
 
 const MUSIC_BASE_URL = "https://raw.githubusercontent.com/truls-dev/music/main/";
+const MUSIC_BASE_URL_2 = "https://raw.githubusercontent.com/truls-dev/music2/main/";
 
-export const MUSIC_TRACKS: { name: string; filename: string }[] = [
+export const MUSIC_TRACKS: { name: string; filename: string; baseUrl?: string }[] = [
   { name: "3am Walk", filename: "3am walk.mp3" },
   { name: "As The Light Fades", filename: "As the light fades.mp3" },
+  { name: "Bad Snacks", filename: "Copyright Free Bad Snacks.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Bladerunner", filename: "Bladerunner.mp3" },
+  { name: "Dreamscaped", filename: "Copyright Free Dreamscaped.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Exploration Time", filename: "ExplorationTime.mp3" },
   { name: "Fallen Down (Slowed)", filename: "Fallen Down (slowed and reverb).mp3" },
   { name: "Fluffing Duck", filename: "FluffingDuck.mp3" },
@@ -25,6 +28,7 @@ export const MUSIC_TRACKS: { name: string; filename: string }[] = [
   { name: "Idea 22", filename: "Idea 22.mp3" },
   { name: "Innovation", filename: "Innovation.mp3" },
   { name: "Investigate", filename: "Investigate.mp3" },
+  { name: "Kawaii", filename: "Copyright Free Kawaii.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Language of Light", filename: "Language of light.mp3" },
   { name: "Let's Go", filename: "Letsgo.mp3" },
   { name: "M83 Solitude", filename: "M83 Solitude.mp3" },
@@ -34,13 +38,17 @@ export const MUSIC_TRACKS: { name: string; filename: string }[] = [
   { name: "Morning Coffee", filename: "MorningCoffee.mp3" },
   { name: "On My Way", filename: "OnMyWay.mp3" },
   { name: "Perfectly Drifting", filename: "Perfectly drifting.mp3" },
+  { name: "PowerUp", filename: "Copyright Free PowerUp.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Snowfall", filename: "Snowfall.mp3" },
   { name: "Somethings Not Right", filename: "Somethings not right.mp3" },
+  { name: "South London HiFi", filename: "Copyright Free South London HiFi.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Stranded", filename: "Stranded.mp3" },
   { name: "Sunset Lover", filename: "SunsetLover.mp3" },
   { name: "Surrender", filename: "Surrender.mp3" },
   { name: "Take Me Back", filename: "Take me back.mp3" },
+  { name: "Telecasted", filename: "Copyright Free Telecasted.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "The Long Walk", filename: "TheLongWalk.mp3" },
+  { name: "Tock Time Warp Tick", filename: "Copyright Free Tock Time Warp Tick.mp3", baseUrl: MUSIC_BASE_URL_2 },
   { name: "Warm Memories", filename: "Warm Memories.mp3" },
   { name: "Where Is My Mind", filename: "Where is my mind.mp3" },
 ];
@@ -386,7 +394,9 @@ class SoundService {
     await this.init();
     if (!this.audioCtx) return null;
     try {
-      const url = MUSIC_BASE_URL + encodeURIComponent(filename);
+      const track = MUSIC_TRACKS.find(t => t.filename === filename);
+      const base = track?.baseUrl || MUSIC_BASE_URL;
+      const url = base + encodeURIComponent(filename);
       const res = await fetch(url);
       const arr = await res.arrayBuffer();
       const buffer = await this.audioCtx.decodeAudioData(arr);
