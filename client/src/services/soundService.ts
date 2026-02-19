@@ -237,6 +237,10 @@ class SoundService {
       gain.connect(this.masterGain);
       
       source.onended = () => {
+        try {
+          source.disconnect();
+          gain.disconnect();
+        } catch (_) {}
         resolve();
       };
       
@@ -259,9 +263,8 @@ class SoundService {
     durationMs: number,
     musicFilename?: string,
     musicVolume?: number
-  ): Promise<AudioBuffer> {
+  ): Promise<{ left: Float32Array; right: Float32Array; sampleRate: number }> {
     const sampleRate = 48000;
-    const channels = 2;
 
     let maxEndMs = durationMs;
     for (const event of events) {
@@ -273,6 +276,8 @@ class SoundService {
     }
     const durationSec = (maxEndMs + 200) / 1000;
     const totalSamples = Math.ceil(durationSec * sampleRate);
+
+    console.log(`[AudioMix] Mixing ${events.length} events over ${durationSec.toFixed(1)}s (${totalSamples} samples)`);
 
     const outputL = new Float32Array(totalSamples);
     const outputR = new Float32Array(totalSamples);
@@ -333,6 +338,7 @@ class SoundService {
     if (musicFilename && musicVolume && musicVolume > 0) {
       const musicBuffer = this.musicBuffers.get(musicFilename);
       if (musicBuffer) {
+        console.log(`[AudioMix] Music: ${musicFilename}, vol=${musicVolume}, buffer SR=${musicBuffer.sampleRate}, ch=${musicBuffer.numberOfChannels}`);
         const musicChannels = getResampledChannels(musicBuffer);
         const musicLen = musicChannels[0].length;
         let offset = 0;
@@ -347,9 +353,9 @@ class SoundService {
     for (const event of events) {
       const srcBuffer = this.getBufferForEvent(event);
       if (!srcBuffer) continue;
-      const channels = getResampledChannels(srcBuffer);
+      const srcChannels = getResampledChannels(srcBuffer);
       const startSample = Math.max(0, Math.round((event.timeMs / 1000) * sampleRate));
-      mixInto(channels, startSample, event.volume);
+      mixInto(srcChannels, startSample, event.volume);
     }
 
     for (let i = 0; i < totalSamples; i++) {
@@ -357,16 +363,22 @@ class SoundService {
       outputR[i] = Math.max(-1.0, Math.min(1.0, outputR[i]));
     }
 
-    const ctx = this.audioCtx || new (
-      (window as any).AudioContext || (window as any).webkitAudioContext
-    )({ sampleRate });
-    const result = ctx.createBuffer(2, totalSamples, sampleRate);
-    result.getChannelData(0).set(outputL);
-    result.getChannelData(1).set(outputR);
+    const checkpoints = [0, 0.25, 0.5, 0.75, 1.0];
+    for (const pct of checkpoints) {
+      const sampleIdx = Math.min(Math.floor(pct * totalSamples), totalSamples - 1);
+      const windowSize = Math.min(4800, totalSamples - sampleIdx);
+      let rmsL = 0;
+      for (let i = sampleIdx; i < sampleIdx + windowSize; i++) {
+        rmsL += outputL[i] * outputL[i];
+      }
+      rmsL = Math.sqrt(rmsL / windowSize);
+      const peakL = Math.max(...Array.from(outputL.subarray(sampleIdx, sampleIdx + windowSize)).map(Math.abs));
+      console.log(`[AudioMix] @${(pct * 100).toFixed(0)}% (sample ${sampleIdx}): RMS=${rmsL.toFixed(6)}, Peak=${peakL.toFixed(6)}`);
+    }
 
     resampleCache.clear();
 
-    return result;
+    return { left: outputL, right: outputR, sampleRate };
   }
 
   public async loadMusicTrack(filename: string): Promise<AudioBuffer | null> {
@@ -442,6 +454,13 @@ class SoundService {
     
     source.connect(gain);
     gain.connect(this.masterGain);
+    
+    source.onended = () => {
+      try {
+        source.disconnect();
+        gain.disconnect();
+      } catch (_) {}
+    };
     
     source.start(0);
   }

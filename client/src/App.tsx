@@ -1021,24 +1021,24 @@ const App: React.FC = () => {
               musicTrack || undefined,
               musicVolume
             );
-            const sampleRate = offlineAudio.sampleRate;
-            const numberOfChannels = offlineAudio.numberOfChannels;
+            const { left, right, sampleRate: audioSampleRate } = offlineAudio;
+            const numberOfChannels = 2;
             const chunkSize = 4800;
-            const totalSamples = offlineAudio.length;
+            const totalSamples = left.length;
+
+            console.log(`[AudioEncode] Encoding ${totalSamples} samples at ${audioSampleRate}Hz`);
 
             for (let offset = 0; offset < totalSamples; offset += chunkSize) {
               const len = Math.min(chunkSize, totalSamples - offset);
               const planarData = new Float32Array(len * numberOfChannels);
-              for (let ch = 0; ch < numberOfChannels; ch++) {
-                const channelData = offlineAudio.getChannelData(ch);
-                planarData.set(channelData.subarray(offset, offset + len), ch * len);
-              }
+              planarData.set(left.subarray(offset, offset + len), 0);
+              planarData.set(right.subarray(offset, offset + len), len);
               const audioData = new win.AudioData({
                 format: 'f32-planar',
-                sampleRate: sampleRate,
+                sampleRate: audioSampleRate,
                 numberOfFrames: len,
                 numberOfChannels: numberOfChannels,
-                timestamp: Math.round((offset / sampleRate) * 1_000_000),
+                timestamp: Math.round((offset / audioSampleRate) * 1_000_000),
                 data: planarData,
               });
               if (audioEncoder.state === 'configured') {
