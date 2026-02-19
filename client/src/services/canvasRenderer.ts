@@ -612,12 +612,12 @@ export class CanvasRenderer {
 
     let presenceGap: number;
     if (!this.presenceEnabled) {
-      presenceGap = 120;
+      presenceGap = 40;
     } else if (state.chatConfig.isGroup) {
       const hasGroupParticipants = state.scriptParticipantIds.length > 0;
-      presenceGap = hasGroupParticipants ? Math.round(80 * 2.77) : Math.round(45 * 2.77);
+      presenceGap = hasGroupParticipants ? Math.round(55 * 2.77) : Math.round(30 * 2.77);
     } else {
-      presenceGap = 200;
+      presenceGap = 90;
     }
     let drawY = areaY + areaH - presenceGap;
 
