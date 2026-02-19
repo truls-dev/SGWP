@@ -1558,12 +1558,21 @@ const App: React.FC = () => {
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Story Timeline</h3>
-                <button 
-                  onClick={() => setShowBulkImport(!showBulkImport)} 
-                  className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border transition-all ${showBulkImport ? 'bg-white text-black border-white' : 'border-white/20 text-gray-400 hover:border-white/50'}`}
-                >
-                  {showBulkImport ? 'Manual Edit' : 'Bulk Import'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => { setScriptEvents([]); }}
+                    className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 text-gray-400 hover:border-red-500/50 hover:text-red-400 transition-all"
+                    data-testid="button-clear-script"
+                  >
+                    Clear Script
+                  </button>
+                  <button 
+                    onClick={() => setShowBulkImport(!showBulkImport)} 
+                    className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border transition-all ${showBulkImport ? 'bg-white text-black border-white' : 'border-white/20 text-gray-400 hover:border-white/50'}`}
+                  >
+                    {showBulkImport ? 'Manual Edit' : 'Bulk Import'}
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-3">
