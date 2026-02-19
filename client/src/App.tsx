@@ -669,7 +669,7 @@ const App: React.FC = () => {
 
         if (sender.isMe) {
           setIsMeTyping(true);
-          const chars = (event.text || "").split("");
+          const chars = Array.from(event.text || "");
           let currentString = "";
           let currentLayout: KeyboardLayout = 'ALPHA';
 
@@ -718,7 +718,8 @@ const App: React.FC = () => {
             }
 
             await new Promise(r => setTimeout(r, 300));
-            for (let i = currentString.length; i > 0; i--) {
+            let graphemes = Array.from(currentString);
+            for (let i = graphemes.length; i > 0; i--) {
                 if ((runningStatusRef.current as string) === 'idle') break;
                 
                 setActiveKey('backspace');
@@ -726,7 +727,8 @@ const App: React.FC = () => {
                 await new Promise(r => setTimeout(r, 70));
                 setActiveKey(null);
                 
-                currentString = currentString.slice(0, -1);
+                graphemes.pop();
+                currentString = graphemes.join('');
                 setCompositionText(currentString);
                 await new Promise(r => setTimeout(r, state.chat.typingSpeed));
             }

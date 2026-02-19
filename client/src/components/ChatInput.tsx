@@ -123,7 +123,7 @@ const ChatInput: React.FC<Props> = ({
                     autoComplete="off"
                   />
                 ) : (
-                  <div className="w-full text-[17px] text-black font-normal leading-[1.2] py-0 break-words relative min-h-[20px] whitespace-pre-wrap">
+                  <div className="w-full text-[17px] text-black font-normal leading-[1.2] py-0 break-words relative min-h-[20px] whitespace-pre-wrap" style={{ fontFamily: "'Avenir Next LT Pro', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif" }}>
                     {compositionText === '' && (
                       <span className="absolute left-0 top-[2px] text-gray-400 opacity-80 pointer-events-none">Chat</span>
                     )}
