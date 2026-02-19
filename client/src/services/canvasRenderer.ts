@@ -48,6 +48,99 @@ const FONT_REGULAR = "'Avenir Next LT Pro', sans-serif";
 const FONT_HEADER = "'Avenir Black', sans-serif";
 const FONT_SYSTEM =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const FONT_EMOJI = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
+
+function isEmojiCodePoint(code: number): boolean {
+  return (
+    (code >= 0x1F600 && code <= 0x1F64F) ||
+    (code >= 0x1F300 && code <= 0x1F5FF) ||
+    (code >= 0x1F680 && code <= 0x1F6FF) ||
+    (code >= 0x1F700 && code <= 0x1F77F) ||
+    (code >= 0x1F780 && code <= 0x1F7FF) ||
+    (code >= 0x1F800 && code <= 0x1F8FF) ||
+    (code >= 0x1F900 && code <= 0x1F9FF) ||
+    (code >= 0x1FA00 && code <= 0x1FA6F) ||
+    (code >= 0x1FA70 && code <= 0x1FAFF) ||
+    (code >= 0x2600 && code <= 0x26FF) ||
+    (code >= 0x2700 && code <= 0x27BF) ||
+    (code >= 0x2300 && code <= 0x23FF) ||
+    (code >= 0x2B50 && code <= 0x2B55) ||
+    code === 0x200D ||
+    code === 0xFE0F ||
+    code === 0xFE0E ||
+    code === 0x20E3 ||
+    code === 0x2764 ||
+    code === 0x2763 ||
+    code === 0x2665 ||
+    code === 0x2663 ||
+    code === 0x2660 ||
+    code === 0x2622 ||
+    code === 0x2623 ||
+    code === 0x263A ||
+    code === 0x203C ||
+    code === 0x2049 ||
+    code === 0x3030 ||
+    code === 0x303D ||
+    code === 0x2139 ||
+    code === 0x2934 ||
+    code === 0x2935 ||
+    (code >= 0x25AA && code <= 0x25FE) ||
+    (code >= 0x2190 && code <= 0x21AA) ||
+    (code >= 0x231A && code <= 0x231B) ||
+    (code >= 0x23E9 && code <= 0x23F3) ||
+    code === 0x23F8 || code === 0x23F9 || code === 0x23FA ||
+    (code >= 0x1F1E0 && code <= 0x1F1FF) ||
+    (code >= 0x1F3FB && code <= 0x1F3FF) ||
+    (code >= 0xE0020 && code <= 0xE007F)
+  );
+}
+
+function hasEmoji(text: string): boolean {
+  for (const ch of text) {
+    if (isEmojiCodePoint(ch.codePointAt(0)!)) return true;
+  }
+  return false;
+}
+
+function splitEmojiSegments(text: string): { text: string; isEmoji: boolean }[] {
+  const segments: { text: string; isEmoji: boolean }[] = [];
+  let current = "";
+  let currentIsEmoji = false;
+  const chars = Array.from(text);
+
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const code = ch.codePointAt(0)!;
+    const isEm = isEmojiCodePoint(code);
+
+    const isModifier = code === 0xFE0F || code === 0xFE0E || code === 0x200D ||
+      (code >= 0x1F3FB && code <= 0x1F3FF) || code === 0x20E3;
+
+    if (isModifier && segments.length > 0 && current === "") {
+      segments[segments.length - 1].text += ch;
+      continue;
+    }
+    if (isModifier && current.length > 0 && currentIsEmoji) {
+      current += ch;
+      continue;
+    }
+
+    if (current.length === 0) {
+      currentIsEmoji = isEm;
+      current = ch;
+    } else if (isEm === currentIsEmoji) {
+      current += ch;
+    } else {
+      segments.push({ text: current, isEmoji: currentIsEmoji });
+      current = ch;
+      currentIsEmoji = isEm;
+    }
+  }
+  if (current.length > 0) {
+    segments.push({ text: current, isEmoji: currentIsEmoji });
+  }
+  return segments;
+}
 
 const STATUS_BAR_H = 42;
 const HEADER_H = 116;
@@ -412,11 +505,11 @@ export class CanvasRenderer {
     ctx.restore();
 
     ctx.fillStyle = "#000000";
-    ctx.fillText(state.systemConfig.carrier, signalX + signalW + 8, carrierY);
+    this.fillTextWithEmoji(ctx, state.systemConfig.carrier, signalX + signalW + 8, carrierY, FONT_SYSTEM, 28);
 
     ctx.font = `bold 30px ${FONT_SYSTEM}`;
     ctx.textAlign = "center";
-    ctx.fillText(state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2);
+    this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
 
     let rx = this.W - 22;
     const batteryImg = this.images.get("battery");
@@ -524,7 +617,7 @@ export class CanvasRenderer {
     ctx.font = `900 50px ${FONT_HEADER}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(displayName, cx, y + HEADER_H / 2);
+    this.fillTextWithEmoji(ctx, displayName, cx, y + HEADER_H / 2, FONT_HEADER, 50);
 
     if (!isCropped) {
       const callImg = this.images.get("callIcons");
@@ -693,7 +786,7 @@ export class CanvasRenderer {
       ctx.textBaseline = "top";
       let textY = y + 25;
       for (const line of lines) {
-        ctx.fillText(line, this.W / 2, textY);
+        this.fillTextWithEmoji(ctx, line, this.W / 2, textY, FONT_REGULAR, NOTIF_FONT_SIZE);
         textY += NOTIF_FONT_SIZE + 10;
       }
       return;
@@ -706,7 +799,7 @@ export class CanvasRenderer {
       ctx.fillStyle = color;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
-      ctx.fillText(sender?.name?.toUpperCase() || "", padX, curY);
+      this.fillTextWithEmoji(ctx, sender?.name?.toUpperCase() || "", padX, curY, FONT_REGULAR, NAME_FONT_SIZE);
       curY += NAME_FONT_SIZE + 14;
     }
 
@@ -730,7 +823,7 @@ export class CanvasRenderer {
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         for (const line of lines) {
-          ctx.fillText(line, textStartX, curY + MSG_LINE_H / 2);
+          this.fillTextWithEmoji(ctx, line, textStartX, curY + MSG_LINE_H / 2, FONT_REGULAR, MSG_FONT_SIZE);
           curY += MSG_LINE_H;
         }
         curY += 10;
@@ -751,7 +844,7 @@ export class CanvasRenderer {
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       for (const line of lines) {
-        ctx.fillText(line, textStartX, curY + MSG_LINE_H / 2);
+        this.fillTextWithEmoji(ctx, line, textStartX, curY + MSG_LINE_H / 2, FONT_REGULAR, MSG_FONT_SIZE);
         curY += MSG_LINE_H;
       }
     }
@@ -1179,7 +1272,7 @@ export class CanvasRenderer {
       ctx.fillStyle = pillColor;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(member.name.toUpperCase(), pillCenterX, pY + sPillH / 2);
+      this.fillTextWithEmoji(ctx, member.name.toUpperCase(), pillCenterX, pY + sPillH / 2, FONT_REGULAR, sPillFontSize);
 
       if (anim.hasEverArrived) {
         const arrivalDuration = 500;
@@ -1331,6 +1424,71 @@ export class CanvasRenderer {
     ctx.globalAlpha = 1;
   }
 
+  private measureTextWithEmoji(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    baseFont: string,
+    fontSize: number,
+  ): number {
+    if (!hasEmoji(text)) return ctx.measureText(text).width;
+    const segments = splitEmojiSegments(text);
+    let w = 0;
+    const savedFont = ctx.font;
+    for (const seg of segments) {
+      if (seg.isEmoji) {
+        ctx.font = `${fontSize}px ${FONT_EMOJI}`;
+      } else {
+        ctx.font = savedFont;
+      }
+      w += ctx.measureText(seg.text).width;
+    }
+    ctx.font = savedFont;
+    return w;
+  }
+
+  private fillTextWithEmoji(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    baseFont: string,
+    fontSize: number,
+  ): number {
+    if (!hasEmoji(text)) {
+      ctx.fillText(text, x, y);
+      return ctx.measureText(text).width;
+    }
+    const segments = splitEmojiSegments(text);
+    const savedFont = ctx.font;
+    const savedBaseline = ctx.textBaseline;
+    const savedAlign = ctx.textAlign;
+
+    let totalW = 0;
+    for (const seg of segments) {
+      ctx.font = seg.isEmoji ? `${fontSize}px ${FONT_EMOJI}` : savedFont;
+      totalW += ctx.measureText(seg.text).width;
+    }
+
+    let startX = x;
+    if (savedAlign === "center") {
+      startX = x - totalW / 2;
+    } else if (savedAlign === "right" || savedAlign === "end") {
+      startX = x - totalW;
+    }
+
+    ctx.textAlign = "left";
+    let cx = startX;
+    for (const seg of segments) {
+      ctx.font = seg.isEmoji ? `${fontSize}px ${FONT_EMOJI}` : savedFont;
+      ctx.fillText(seg.text, cx, y);
+      cx += ctx.measureText(seg.text).width;
+    }
+    ctx.font = savedFont;
+    ctx.textBaseline = savedBaseline;
+    ctx.textAlign = savedAlign;
+    return totalW;
+  }
+
   private wrapText(
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -1340,9 +1498,15 @@ export class CanvasRenderer {
     const words = text.split(" ");
     const lines: string[] = [];
     let line = "";
+    const textHasEmoji = hasEmoji(text);
+    const fontMatch = ctx.font.match(/(\d+)px/);
+    const fontSize = fontMatch ? parseInt(fontMatch[1]) : 38;
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxW && line) {
+      const w = textHasEmoji
+        ? this.measureTextWithEmoji(ctx, test, FONT_REGULAR, fontSize)
+        : ctx.measureText(test).width;
+      if (w > maxW && line) {
         lines.push(line);
         line = word;
       } else {
@@ -1470,9 +1634,9 @@ export class CanvasRenderer {
       if (lines.length === 1) {
         ctx.textBaseline = "middle";
         const textCenterY = pillY + pillH / 2;
-        ctx.fillText(lines[0], textX, textCenterY);
+        this.fillTextWithEmoji(ctx, lines[0], textX, textCenterY, FONT_REGULAR, fontSize);
 
-        const lastLineW = ctx.measureText(lines[0]).width;
+        const lastLineW = this.measureTextWithEmoji(ctx, lines[0], FONT_REGULAR, fontSize);
         const cursorX = textX + lastLineW + 2;
         const cursorH = Math.round(22 * S);
         const cursorW = Math.round(1.6 * S);
@@ -1495,11 +1659,11 @@ export class CanvasRenderer {
 
         for (let i = 0; i < lines.length; i++) {
           const lineCenterY = textStartY + i * lineH + lineH / 2;
-          ctx.fillText(lines[i], textX, lineCenterY);
+          this.fillTextWithEmoji(ctx, lines[i], textX, lineCenterY, FONT_REGULAR, fontSize);
         }
 
         const lastLine = lines[lines.length - 1];
-        const lastLineW = ctx.measureText(lastLine).width;
+        const lastLineW = this.measureTextWithEmoji(ctx, lastLine, FONT_REGULAR, fontSize);
         const cursorX = textX + lastLineW + 2;
         const lastLineCenterY = textStartY + (lines.length - 1) * lineH + lineH / 2;
         const cursorH = Math.round(22 * S);
