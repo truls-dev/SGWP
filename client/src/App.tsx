@@ -684,12 +684,12 @@ const App: React.FC = () => {
             if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
                 setKeyboardLayout('NUMERIC');
                 currentLayout = 'NUMERIC';
-                await new Promise(r => setTimeout(r, 380));
+                await new Promise(r => setTimeout(r, 80));
             } 
             else if (isAlpha && currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
                 currentLayout = 'ALPHA';
-                await new Promise(r => setTimeout(r, 380));
+                await new Promise(r => setTimeout(r, 80));
             }
 
             if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
@@ -714,7 +714,7 @@ const App: React.FC = () => {
             if (currentLayout !== 'ALPHA') {
               setKeyboardLayout('ALPHA');
               currentLayout = 'ALPHA';
-              await new Promise(r => setTimeout(r, 380));
+              await new Promise(r => setTimeout(r, 80));
             }
 
             await new Promise(r => setTimeout(r, 300));
