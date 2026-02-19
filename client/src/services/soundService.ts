@@ -11,6 +11,40 @@ const SOUND_EFFECTS: Record<string, string> = {
   Shocking: "https://raw.githubusercontent.com/truls-dev/sounds/main/shocking.wav",
 };
 
+const MUSIC_BASE_URL = "https://raw.githubusercontent.com/truls-dev/music/main/";
+
+export const MUSIC_TRACKS: { name: string; filename: string }[] = [
+  { name: "3am Walk", filename: "3am walk.mp3" },
+  { name: "As The Light Fades", filename: "As the light fades.mp3" },
+  { name: "Bladerunner", filename: "Bladerunner.mp3" },
+  { name: "Exploration Time", filename: "ExplorationTime.mp3" },
+  { name: "Fallen Down (Slowed)", filename: "Fallen Down (slowed and reverb).mp3" },
+  { name: "Fluffing Duck", filename: "FluffingDuck.mp3" },
+  { name: "Green to Blue (Slowed)", filename: "Green to blue (slowed + reverb).mp3" },
+  { name: "I Was Only Temporary", filename: "I was only temporary.mp3" },
+  { name: "Idea 22", filename: "Idea 22.mp3" },
+  { name: "Innovation", filename: "Innovation.mp3" },
+  { name: "Investigate", filename: "Investigate.mp3" },
+  { name: "Language of Light", filename: "Language of light.mp3" },
+  { name: "Let's Go", filename: "Letsgo.mp3" },
+  { name: "M83 Solitude", filename: "M83 Solitude.mp3" },
+  { name: "Married Life", filename: "MarriedLife.mp3" },
+  { name: "Marty Plan", filename: "MartyPlan.mp3" },
+  { name: "Milk Cassette", filename: "Milk cassette.mp3" },
+  { name: "Morning Coffee", filename: "MorningCoffee.mp3" },
+  { name: "On My Way", filename: "OnMyWay.mp3" },
+  { name: "Perfectly Drifting", filename: "Perfectly drifting.mp3" },
+  { name: "Snowfall", filename: "Snowfall.mp3" },
+  { name: "Somethings Not Right", filename: "Somethings not right.mp3" },
+  { name: "Stranded", filename: "Stranded.mp3" },
+  { name: "Sunset Lover", filename: "SunsetLover.mp3" },
+  { name: "Surrender", filename: "Surrender.mp3" },
+  { name: "Take Me Back", filename: "Take me back.mp3" },
+  { name: "The Long Walk", filename: "TheLongWalk.mp3" },
+  { name: "Warm Memories", filename: "Warm Memories.mp3" },
+  { name: "Where Is My Mind", filename: "Where is my mind.mp3" },
+];
+
 export interface SoundEvent {
   type: 'click' | 'notification' | 'backspace' | 'effect';
   timeMs: number;
@@ -24,11 +58,14 @@ class SoundService {
   private notificationBuffer: AudioBuffer | null = null;
   private backspaceBuffer: AudioBuffer | null = null;
   private effectBuffers: Map<string, AudioBuffer> = new Map();
+  private musicBuffers: Map<string, AudioBuffer> = new Map();
   private streamDestination: MediaStreamAudioDestinationNode | null = null;
   private masterGain: GainNode | null = null;
   private recordingDelayNode: DelayNode | null = null;
   private keepAliveOsc: OscillatorNode | null = null;
   private isLoading: boolean = false;
+  private _previewSource: AudioBufferSourceNode | null = null;
+  private _previewGain: GainNode | null = null;
 
   private _isRecordingMode = false;
   private _recordingStartTime = 0;
@@ -204,7 +241,12 @@ class SoundService {
     }
   }
 
-  public async renderOffline(events: SoundEvent[], durationMs: number): Promise<AudioBuffer> {
+  public async renderOffline(
+    events: SoundEvent[],
+    durationMs: number,
+    musicFilename?: string,
+    musicVolume?: number
+  ): Promise<AudioBuffer> {
     const sampleRate = 48000;
     const channels = 2;
 
@@ -223,6 +265,32 @@ class SoundService {
     const masterGain = offlineCtx.createGain();
     masterGain.gain.value = 1.0;
     masterGain.connect(offlineCtx.destination);
+
+    if (musicFilename && musicVolume && musicVolume > 0) {
+      const musicBuffer = this.musicBuffers.get(musicFilename);
+      if (musicBuffer) {
+        const resampled = this.resampleBuffer(offlineCtx, musicBuffer);
+        const musicDurationSamples = resampled.length;
+        const totalNeeded = totalSamples;
+        let offset = 0;
+
+        while (offset < totalNeeded) {
+          const source = offlineCtx.createBufferSource();
+          source.buffer = resampled;
+          const gain = offlineCtx.createGain();
+          gain.gain.value = musicVolume;
+          source.connect(gain);
+          gain.connect(masterGain);
+          source.start(offset / sampleRate);
+
+          const remaining = totalNeeded - offset;
+          if (remaining < musicDurationSamples) {
+            source.stop((offset + remaining) / sampleRate);
+          }
+          offset += musicDurationSamples;
+        }
+      }
+    }
 
     for (const event of events) {
       const srcBuffer = this.getBufferForEvent(event);
@@ -262,6 +330,68 @@ class SoundService {
       }
     }
     return newBuffer;
+  }
+
+  public async loadMusicTrack(filename: string): Promise<AudioBuffer | null> {
+    if (this.musicBuffers.has(filename)) return this.musicBuffers.get(filename)!;
+    await this.init();
+    if (!this.audioCtx) return null;
+    try {
+      const url = MUSIC_BASE_URL + encodeURIComponent(filename);
+      const res = await fetch(url);
+      const arr = await res.arrayBuffer();
+      const buffer = await this.audioCtx.decodeAudioData(arr);
+      this.musicBuffers.set(filename, buffer);
+      return buffer;
+    } catch (e) {
+      console.error("Failed to load music track:", filename, e);
+      return null;
+    }
+  }
+
+  public async previewMusic(filename: string, volume: number) {
+    this.stopMusicPreview();
+    await this.init();
+    if (!this.audioCtx) return;
+    const buffer = await this.loadMusicTrack(filename);
+    if (!buffer) return;
+
+    this._previewSource = this.audioCtx.createBufferSource();
+    this._previewSource.buffer = buffer;
+    this._previewSource.loop = true;
+
+    this._previewGain = this.audioCtx.createGain();
+    this._previewGain.gain.value = volume;
+
+    this._previewSource.connect(this._previewGain);
+    this._previewGain.connect(this.audioCtx.destination);
+    this._previewSource.start(0);
+  }
+
+  public stopMusicPreview() {
+    if (this._previewSource) {
+      try { this._previewSource.stop(); } catch {}
+      this._previewSource.disconnect();
+      this._previewSource = null;
+    }
+    if (this._previewGain) {
+      this._previewGain.disconnect();
+      this._previewGain = null;
+    }
+  }
+
+  public setPreviewVolume(volume: number) {
+    if (this._previewGain) {
+      this._previewGain.gain.value = volume;
+    }
+  }
+
+  public isPreviewingMusic(): boolean {
+    return this._previewSource !== null;
+  }
+
+  public getMusicBuffer(filename: string): AudioBuffer | null {
+    return this.musicBuffers.get(filename) || null;
   }
 
   private playSound(buffer: AudioBuffer | null, volume: number) {

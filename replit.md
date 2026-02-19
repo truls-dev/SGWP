@@ -29,7 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **`geminiService.ts`**: Calls Google Gemini API directly from the client using `@google/genai`. Uses `import.meta.env.VITE_GEMINI_API_KEY` for the API key. Generates conversations and AI profile pictures.
 - **`bitmojiService.ts`**: Renders Bitmoji avatars using the Bitmoji SDK CDN. Maintains a pool of avatar IDs and generates selfie/peeking URLs.
 - **`customojiService.ts`**: Loads a sticker catalog from `templates.json` (in `client/public/`) and provides tag-based search for sticker suggestions.
-- **`soundService.ts`**: Manages keyboard click sounds, notification sounds, and sound effects using Web Audio API. Supports MediaRecorder integration for video export.
+- **`soundService.ts`**: Manages keyboard click sounds, notification sounds, sound effects, and background music using Web Audio API. Supports offline audio rendering via OfflineAudioContext for video export (bypasses system audio hardware). Background music loaded from `github.com/truls-dev/music`, with preview playback, volume control, and automatic looping for videos longer than the track.
 
 ### Key Frontend Components
 - **`App.tsx`**: Main application component containing all state (cast members, script events, system config, chat config) and the playback/recording engine
