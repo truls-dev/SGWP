@@ -70,6 +70,7 @@ class SoundService {
   private _isRecordingMode = false;
   private _recordingStartTime = 0;
   private _soundLog: SoundEvent[] = [];
+  private _sfxVolume = 1.0;
 
   public async init() {
     if (this.audioCtx) {
@@ -188,24 +189,36 @@ class SoundService {
     this._soundLog.push({ type, timeMs, volume, effectName });
   }
 
+  public setSfxVolume(volume: number) {
+    this._sfxVolume = Math.max(0, Math.min(1, volume));
+  }
+
+  public getSfxVolume(): number {
+    return this._sfxVolume;
+  }
+
   public playClick() {
-    this.logEvent('click', 0.85);
-    this.playSound(this.clickBuffer, 0.85);
+    const vol = 0.85 * this._sfxVolume;
+    this.logEvent('click', vol);
+    this.playSound(this.clickBuffer, vol);
   }
 
   public playNotification() {
-    this.logEvent('notification', 0.9);
-    this.playSound(this.notificationBuffer, 0.9);
+    const vol = 0.9 * this._sfxVolume;
+    this.logEvent('notification', vol);
+    this.playSound(this.notificationBuffer, vol);
   }
 
   public playBackspace() {
-    this.logEvent('backspace', 0.9);
-    this.playSound(this.backspaceBuffer, 0.9);
+    const vol = 0.9 * this._sfxVolume;
+    this.logEvent('backspace', vol);
+    this.playSound(this.backspaceBuffer, vol);
   }
 
   public async playEffect(name?: string): Promise<void> {
     if (!name) return Promise.resolve();
-    this.logEvent('effect', 1.0, name);
+    const vol = 1.0 * this._sfxVolume;
+    this.logEvent('effect', vol, name);
     
     return new Promise((resolve) => {
       const buffer = this.effectBuffers.get(name);
@@ -218,7 +231,7 @@ class SoundService {
       source.buffer = buffer;
       
       const gain = this.audioCtx.createGain();
-      gain.gain.value = 1.0;
+      gain.gain.value = vol;
       
       source.connect(gain);
       gain.connect(this.masterGain);

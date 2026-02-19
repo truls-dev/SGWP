@@ -79,6 +79,7 @@ const App: React.FC = () => {
   const [musicVolume, setMusicVolume] = useState(0.15);
   const [isMusicPreviewing, setIsMusicPreviewing] = useState(false);
   const [isMusicLoading, setIsMusicLoading] = useState(false);
+  const [sfxVolume, setSfxVolume] = useState(1.0);
 
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);
@@ -1163,6 +1164,24 @@ const App: React.FC = () => {
                       className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                      />
                   </div>
+                </div>
+
+                <div className="space-y-3 px-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">SFX Volume</label>
+                    <span className="text-[10px] font-black text-[#33B5FF]">{Math.round(sfxVolume * 100)}%</span>
+                  </div>
+                  <input
+                    data-testid="input-sfx-volume"
+                    type="range" min="0" max="100" step="1"
+                    value={Math.round(sfxVolume * 100)}
+                    onChange={e => {
+                      const vol = parseInt(e.target.value) / 100;
+                      setSfxVolume(vol);
+                      soundService.setSfxVolume(vol);
+                    }}
+                    className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
