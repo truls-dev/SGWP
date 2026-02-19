@@ -1560,7 +1560,7 @@ const App: React.FC = () => {
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Story Timeline</h3>
                 <div className="flex items-center gap-2">
                   <button 
-                    onClick={() => { setScriptEvents([]); }}
+                    onClick={() => { setState(prev => ({ ...prev, script: [] })); }}
                     className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20 text-gray-400 hover:border-red-500/50 hover:text-red-400 transition-all"
                     data-testid="button-clear-script"
                   >
