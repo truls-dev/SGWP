@@ -980,7 +980,9 @@ const App: React.FC = () => {
         const elapsedUs = (now - startTime) * 1000;
         const targetFrames = Math.floor(elapsedUs / frameDurationUs);
 
-        while (frameCount <= targetFrames) {
+        const maxBatch = 4;
+        let rendered = 0;
+        while (frameCount <= targetFrames && rendered < maxBatch) {
             const currentFrameState: FrameState = {
               ...frameStateRef.current,
               time: now - startTime,
@@ -991,10 +993,12 @@ const App: React.FC = () => {
             const frame = new win.VideoFrame(canvas, { timestamp: frameTimestamp });
 
             if (videoEncoder.state === 'configured') {
-                videoEncoder.encode(frame);
+                const keyFrame = frameCount % 120 === 0;
+                videoEncoder.encode(frame, { keyFrame });
             }
             frame.close();
             frameCount++;
+            rendered++;
         }
         requestAnimationFrame(renderLoop);
       };

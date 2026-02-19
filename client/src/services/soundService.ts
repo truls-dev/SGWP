@@ -274,33 +274,72 @@ class SoundService {
     const durationSec = (maxEndMs + 200) / 1000;
     const totalSamples = Math.ceil(durationSec * sampleRate);
 
-    const offlineCtx = new OfflineAudioContext(channels, totalSamples, sampleRate);
-    const masterGain = offlineCtx.createGain();
-    masterGain.gain.value = 1.0;
-    masterGain.connect(offlineCtx.destination);
+    const outputL = new Float32Array(totalSamples);
+    const outputR = new Float32Array(totalSamples);
+
+    const resampleCache = new Map<AudioBuffer, Float32Array[]>();
+
+    const getResampledChannels = (buffer: AudioBuffer): Float32Array[] => {
+      if (resampleCache.has(buffer)) return resampleCache.get(buffer)!;
+
+      const chCount = buffer.numberOfChannels;
+      if (buffer.sampleRate === sampleRate) {
+        const result: Float32Array[] = [];
+        for (let ch = 0; ch < chCount; ch++) {
+          result.push(new Float32Array(buffer.getChannelData(ch)));
+        }
+        resampleCache.set(buffer, result);
+        return result;
+      }
+
+      const ratio = buffer.sampleRate / sampleRate;
+      const newLength = Math.round(buffer.length / ratio);
+      const result: Float32Array[] = [];
+      for (let ch = 0; ch < chCount; ch++) {
+        const oldData = buffer.getChannelData(ch);
+        const newData = new Float32Array(newLength);
+        for (let i = 0; i < newLength; i++) {
+          const srcIdx = i * ratio;
+          const idx0 = Math.floor(srcIdx);
+          const idx1 = Math.min(idx0 + 1, oldData.length - 1);
+          const frac = srcIdx - idx0;
+          newData[i] = oldData[idx0] * (1 - frac) + oldData[idx1] * frac;
+        }
+        result.push(newData);
+      }
+      resampleCache.set(buffer, result);
+      return result;
+    };
+
+    const mixInto = (
+      srcChannels: Float32Array[],
+      startSample: number,
+      volume: number,
+      maxSamples?: number
+    ) => {
+      const srcLen = srcChannels[0].length;
+      const len = maxSamples !== undefined ? Math.min(srcLen, maxSamples) : srcLen;
+      const isMono = srcChannels.length === 1;
+      const srcL = srcChannels[0];
+      const srcR = isMono ? srcL : srcChannels[1];
+
+      const endSample = Math.min(startSample + len, totalSamples);
+      for (let i = startSample, si = 0; i < endSample; i++, si++) {
+        outputL[i] += srcL[si] * volume;
+        outputR[i] += srcR[si] * volume;
+      }
+    };
 
     if (musicFilename && musicVolume && musicVolume > 0) {
       const musicBuffer = this.musicBuffers.get(musicFilename);
       if (musicBuffer) {
-        const resampled = this.resampleBuffer(offlineCtx, musicBuffer);
-        const musicDurationSamples = resampled.length;
-        const totalNeeded = totalSamples;
+        const musicChannels = getResampledChannels(musicBuffer);
+        const musicLen = musicChannels[0].length;
         let offset = 0;
-
-        while (offset < totalNeeded) {
-          const source = offlineCtx.createBufferSource();
-          source.buffer = resampled;
-          const gain = offlineCtx.createGain();
-          gain.gain.value = musicVolume;
-          source.connect(gain);
-          gain.connect(masterGain);
-          source.start(offset / sampleRate);
-
-          const remaining = totalNeeded - offset;
-          if (remaining < musicDurationSamples) {
-            source.stop((offset + remaining) / sampleRate);
-          }
-          offset += musicDurationSamples;
+        while (offset < totalSamples) {
+          const remaining = totalSamples - offset;
+          mixInto(musicChannels, offset, musicVolume, remaining);
+          offset += musicLen;
         }
       }
     }
@@ -308,41 +347,26 @@ class SoundService {
     for (const event of events) {
       const srcBuffer = this.getBufferForEvent(event);
       if (!srcBuffer) continue;
-
-      const resampled = this.resampleBuffer(offlineCtx, srcBuffer);
-      const source = offlineCtx.createBufferSource();
-      source.buffer = resampled;
-
-      const gain = offlineCtx.createGain();
-      gain.gain.value = event.volume;
-
-      source.connect(gain);
-      gain.connect(masterGain);
-
-      const startTimeSec = Math.max(0, event.timeMs / 1000);
-      source.start(startTimeSec);
+      const channels = getResampledChannels(srcBuffer);
+      const startSample = Math.max(0, Math.round((event.timeMs / 1000) * sampleRate));
+      mixInto(channels, startSample, event.volume);
     }
 
-    return await offlineCtx.startRendering();
-  }
-
-  private resampleBuffer(ctx: OfflineAudioContext, buffer: AudioBuffer): AudioBuffer {
-    if (buffer.sampleRate === ctx.sampleRate) return buffer;
-    const ratio = buffer.sampleRate / ctx.sampleRate;
-    const newLength = Math.round(buffer.length / ratio);
-    const newBuffer = ctx.createBuffer(buffer.numberOfChannels, newLength, ctx.sampleRate);
-    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-      const oldData = buffer.getChannelData(ch);
-      const newData = newBuffer.getChannelData(ch);
-      for (let i = 0; i < newLength; i++) {
-        const srcIdx = i * ratio;
-        const idx0 = Math.floor(srcIdx);
-        const idx1 = Math.min(idx0 + 1, oldData.length - 1);
-        const frac = srcIdx - idx0;
-        newData[i] = oldData[idx0] * (1 - frac) + oldData[idx1] * frac;
-      }
+    for (let i = 0; i < totalSamples; i++) {
+      outputL[i] = Math.max(-1.0, Math.min(1.0, outputL[i]));
+      outputR[i] = Math.max(-1.0, Math.min(1.0, outputR[i]));
     }
-    return newBuffer;
+
+    const ctx = this.audioCtx || new (
+      (window as any).AudioContext || (window as any).webkitAudioContext
+    )({ sampleRate });
+    const result = ctx.createBuffer(2, totalSamples, sampleRate);
+    result.getChannelData(0).set(outputL);
+    result.getChannelData(1).set(outputR);
+
+    resampleCache.clear();
+
+    return result;
   }
 
   public async loadMusicTrack(filename: string): Promise<AudioBuffer | null> {
