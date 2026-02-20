@@ -256,6 +256,19 @@ export class CanvasRenderer {
     this.presenceEnabled = true;
   }
 
+  preArriveParticipants(ids: string[]): void {
+    for (const id of ids) {
+      this.presenceAnims.set(id, {
+        arrived: true,
+        arrivalStartTime: -10000,
+        typing: false,
+        typingStartTime: -10000,
+        hasEverArrived: true,
+        hasEverTyped: false,
+      });
+    }
+  }
+
   constructor() {
     this.canvas = document.createElement("canvas");
     this.canvas.width = this.W;

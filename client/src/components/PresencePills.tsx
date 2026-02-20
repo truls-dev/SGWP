@@ -39,6 +39,7 @@ interface Props {
   activeParticipantIds: string[]; // Participants who are "Arrived" and colored
   isKeyboardCropped?: boolean;
   isShortCrop?: boolean;
+  preArrivedIds?: string[];
 }
 
 const PresencePills: React.FC<Props> = ({ 
@@ -46,7 +47,8 @@ const PresencePills: React.FC<Props> = ({
   typingParticipantIds, 
   activeParticipantIds, 
   isKeyboardCropped = false,
-  isShortCrop = false 
+  isShortCrop = false,
+  preArrivedIds = []
 }) => {
   const sortedParticipants = useMemo(() => {
     const active = activeParticipantIds
@@ -97,6 +99,7 @@ const PresencePills: React.FC<Props> = ({
       {sortedParticipants.map((member, index) => {
         const isTyping = typingParticipantIds.includes(member.id);
         const hasArrived = activeParticipantIds.includes(member.id);
+        const isPreArrived = preArrivedIds.includes(member.id);
         const pillColor = hasArrived ? (member.color || '#33B5FF') : '#CCCCCC';
 
         const avatarUrl = isTyping 
@@ -124,12 +127,12 @@ const PresencePills: React.FC<Props> = ({
             <div className="relative h-[40px] overflow-visible" style={{ width: `${itemWidth}px` }}>
               
               <div 
-                className={`absolute left-0 w-full h-[120px] flex flex-col justify-end z-0 transition-all duration-500 ease-out`} 
+                className={`absolute left-0 w-full h-[120px] flex flex-col justify-end z-0 ${isPreArrived && hasArrived ? '' : 'transition-all duration-500 ease-out'}`} 
                 style={{ 
                   bottom: '0px',
                   opacity: hasArrived ? 1 : 0,
                   transform: hasArrived ? 'translateY(0)' : 'translateY(40px)',
-                  transitionDelay: hasArrived ? '0.2s' : '0s'
+                  transitionDelay: isPreArrived && hasArrived ? '0s' : (hasArrived ? '0.2s' : '0s')
                 }}
               >
                 <div 

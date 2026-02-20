@@ -70,6 +70,7 @@ const App: React.FC = () => {
   
   const [typingParticipantIds, setTypingParticipantIds] = useState<string[]>([]);
   const [activeParticipantIds, setActiveParticipantIds] = useState<string[]>([]);
+  const [preArrivedIds, setPreArrivedIds] = useState<string[]>([]);
   const [isMeTyping, setIsMeTyping] = useState(false);
   const [showRecInstructions, setShowRecInstructions] = useState(false);
 
@@ -238,6 +239,7 @@ const App: React.FC = () => {
     setCompositionText('');
     setTypingParticipantIds([]);
     setActiveParticipantIds(preShownActiveIds);
+    setPreArrivedIds([...preShownActiveIds]);
     setIsMeTyping(false);
     setActiveKey(null);
     setIsShiftActive(true);
@@ -603,6 +605,9 @@ const App: React.FC = () => {
     if (canvasRendererRef.current) {
       canvasRendererRef.current.resetAnimations();
       canvasRendererRef.current.enablePresence();
+      if (localActiveParticipantIds.length > 0) {
+        canvasRendererRef.current.preArriveParticipants(localActiveParticipantIds);
+      }
     }
 
     let startIdx = 0;
@@ -1213,6 +1218,7 @@ const App: React.FC = () => {
   const partnerMember = state.cast.find(c => !c.isMe);
   const isPartnerTyping = partnerMember && typingParticipantIds.includes(partnerMember.id);
   const isPartnerArrived = partnerMember && activeParticipantIds.includes(partnerMember.id);
+  const isPartnerPreArrived = partnerMember && preArrivedIds.includes(partnerMember.id);
   const partnerAvatarUrl = partnerMember 
     ? (isPartnerTyping ? getSelfieUrlForAvatar(partnerMember.bitmojiAvatarId) : getPeekingUrlForAvatar(partnerMember.bitmojiAvatarId))
     : null;
@@ -2081,13 +2087,13 @@ const App: React.FC = () => {
                         </div>
                         );
                     })}
-                    <div className="transition-all duration-400 ease-out shrink-0" style={{ height: (state.chat.isGroup ? (scriptParticipantIds.length > 0 ? '80px' : '45px') : (isPartnerArrived ? '70px' : '45px')) }} />
+                    <div className={`${(isPartnerPreArrived && isPartnerArrived) || state.chat.isGroup ? '' : 'transition-all duration-400 ease-out'} shrink-0`} style={{ height: (state.chat.isGroup ? (scriptParticipantIds.length > 0 ? '80px' : '45px') : (isPartnerArrived ? '70px' : '45px')) }} />
                     </div>
                 </div>
                 
                 <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
                     {state.chat.isGroup ? (
-                    <PresencePills participants={state.cast.filter(c => scriptParticipantIds.includes(c.id))} typingParticipantIds={typingParticipantIds} activeParticipantIds={activeParticipantIds} isKeyboardCropped={state.chat.isKeyboardCropped} isShortCrop={state.chat.isShortCrop} />
+                    <PresencePills participants={state.cast.filter(c => scriptParticipantIds.includes(c.id))} typingParticipantIds={typingParticipantIds} activeParticipantIds={activeParticipantIds} isKeyboardCropped={state.chat.isKeyboardCropped} isShortCrop={state.chat.isShortCrop} preArrivedIds={preArrivedIds} />
                     ) : (
                     <div className={`flex items-end transition-all duration-300 ease-out ${state.chat.isKeyboardCropped ? 'pl-[66px]' : 'pl-1.5'}`}>
                         {(() => {
@@ -2100,7 +2106,7 @@ const App: React.FC = () => {
                             <div className={`relative ${state.chat.isShortCrop ? `${SHORT_WIDTH} ${SHORT_SCALE} origin-bottom-left` : 'w-[68px]'} h-[40px]`} style={{ clipPath: 'inset(-100px -60px 0px 0px)' }}>
                               <div className="absolute left-0 w-full h-[120px] flex flex-col justify-end z-0" style={{ bottom: '0px' }}>
                                   <div 
-                                    className={`w-full transition-all duration-700 ease-out flex justify-center ${
+                                    className={`w-full ${isPartnerPreArrived && isPartnerArrived ? '' : 'transition-all duration-700 ease-out'} flex justify-center ${
                                       !isPartnerArrived ? 'translate-y-[40px] opacity-0' :
                                       isPartnerTyping ? 'translate-y-[8px] scale-110' : 'translate-y-[-1px] scale-100 opacity-100'
                                     }`}
