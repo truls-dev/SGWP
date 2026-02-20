@@ -33,6 +33,7 @@ export interface ScriptEvent {
   isVertical?: boolean; // Metadata for image orientation
   soundEffect?: string; // Assigned sound effect name
   isBackspaced?: boolean; // If true, the message is typed but then deleted instead of sent
+  isPreShown?: boolean; // If true, the message is already visible when the video starts
 }
 
 export interface SystemConfig {

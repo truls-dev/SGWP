@@ -590,7 +590,36 @@ const App: React.FC = () => {
       canvasRendererRef.current.enablePresence();
     }
 
-    for (let idx = 0; idx < scriptToPlay.length; idx++) {
+    let startIdx = 0;
+    for (let i = 0; i < scriptToPlay.length; i++) {
+      if (!scriptToPlay[i].isPreShown) break;
+      const preEvent = scriptToPlay[i];
+      startIdx = i + 1;
+
+      if (preEvent.type === MessageType.PRESENCE && preEvent.senderId) {
+        if (preEvent.presenceAction === 'ENTER') {
+          updateActiveIds(Array.from(new Set([preEvent.senderId, ...localActiveParticipantIds])));
+        } else {
+          updateActiveIds(localActiveParticipantIds.filter(id => id !== preEvent.senderId));
+        }
+      } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
+        if (!localActiveParticipantIds.includes(preEvent.senderId)) {
+          updateActiveIds(Array.from(new Set([preEvent.senderId, ...localActiveParticipantIds])));
+        }
+      }
+
+      if (preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.NOTIFICATION) {
+        if (!preEvent.isBackspaced) {
+          setPlaybackItems(prev => [...prev, { ...preEvent, instanceId: uuidv4() }]);
+        }
+      }
+    }
+
+    if (startIdx > 0) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+
+    for (let idx = startIdx; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];
       if ((runningStatusRef.current as string) === 'idle') break;
       
@@ -1092,7 +1121,14 @@ const App: React.FC = () => {
     const isGroup = chat.isGroup;
     const activeIds: string[] = [];
 
-    for (let idx = 0; idx < script.length; idx++) {
+    let estStartIdx = 0;
+    for (let i = 0; i < script.length; i++) {
+      if (!script[i].isPreShown) break;
+      estStartIdx = i + 1;
+    }
+    if (estStartIdx > 0) totalMs += 500;
+
+    for (let idx = estStartIdx; idx < script.length; idx++) {
       const event = script[idx];
       totalMs += 300;
 
@@ -1754,6 +1790,17 @@ const App: React.FC = () => {
                                     <i className="fa-solid fa-camera"></i> {item.mediaUrl ? 'Swap Image' : 'Upload'}
                                   </button>
                                )}
+                               <button
+                                 title={item.isPreShown ? "Will show at start" : "Show at start"}
+                                 onClick={() => {
+                                   const newScript = [...state.script];
+                                   newScript[idx] = { ...item, isPreShown: !item.isPreShown };
+                                   setState(prev => ({ ...prev, script: newScript }));
+                                 }}
+                                 className={`text-[10px] transition-all ${item.isPreShown ? 'text-green-400' : 'text-gray-600 hover:text-gray-400'}`}
+                               >
+                                 <i className={`fa-solid ${item.isPreShown ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                               </button>
                                <button onClick={() => removeScriptItem(item.id)} className="text-gray-600 hover:text-red-500 transition-colors"><i className="fa-solid fa-circle-xmark"></i></button>
                             </div>
                           </div>
