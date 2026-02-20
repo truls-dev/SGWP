@@ -626,7 +626,6 @@ const App: React.FC = () => {
           setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4() }]);
         }
         if (state.system.isSoundEnabled && event.soundEffect) {
-          await new Promise(r => setTimeout(r, 500));
           await soundService.playEffect(event.soundEffect);
         }
         await new Promise(r => setTimeout(r, 1000));
@@ -656,7 +655,6 @@ const App: React.FC = () => {
         
         if (state.system.isSoundEnabled) {
           if (event.soundEffect) {
-            await new Promise(r => setTimeout(r, 500));
             await soundService.playEffect(event.soundEffect);
           } else if (!sender.isMe && !event.isBackspaced) {
             soundService.playNotification();
@@ -766,7 +764,6 @@ const App: React.FC = () => {
             }
             
             if (state.system.isSoundEnabled && event.soundEffect) {
-              await new Promise(r => setTimeout(r, 500));
               await soundService.playEffect(event.soundEffect);
             }
             await new Promise(r => setTimeout(r, 400));
@@ -783,7 +780,6 @@ const App: React.FC = () => {
 
           if (state.system.isSoundEnabled) {
             if (event.soundEffect) {
-              await new Promise(r => setTimeout(r, 500));
               await soundService.playEffect(event.soundEffect);
             } else if (!event.isBackspaced) {
               soundService.playNotification();
@@ -1117,7 +1113,6 @@ const App: React.FC = () => {
       }
 
       if (event.type === MessageType.NOTIFICATION) {
-        if (event.soundEffect) totalMs += 500;
         totalMs += 1000;
       } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
         if (sender && !sender.isMe) {
@@ -1130,7 +1125,6 @@ const App: React.FC = () => {
             totalMs += 900;
           }
         }
-        if (event.soundEffect) totalMs += 500;
         totalMs += 800;
       } else if (event.type === MessageType.TEXT) {
         if (sender?.isMe) {
@@ -1168,12 +1162,10 @@ const App: React.FC = () => {
                 totalMs += 900;
               }
             }
-            if (event.soundEffect) totalMs += 500;
             totalMs += 400;
           }
         } else {
           totalMs += chat.messageDelay;
-          if (event.soundEffect) totalMs += 500;
           totalMs += 800;
         }
       }
