@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { AppState, CastMember, ScriptEvent, MessageType } from './types';
 import StatusBar from './components/StatusBar';
@@ -1090,6 +1090,105 @@ const App: React.FC = () => {
     }
   };
 
+  const estimatedDurationMs = useMemo(() => {
+    let totalMs = 0;
+    const { script, cast, chat } = state;
+    const isGroup = chat.isGroup;
+    const activeIds: string[] = [];
+
+    for (let idx = 0; idx < script.length; idx++) {
+      const event = script[idx];
+      totalMs += 300;
+
+      if (event.type === MessageType.PRESENCE) {
+        if (event.presenceAction === 'ENTER' && event.senderId) activeIds.push(event.senderId);
+        totalMs += 500;
+        continue;
+      }
+
+      const sender = cast.find(c => c.id === event.senderId);
+      if (!sender && event.type !== MessageType.NOTIFICATION) continue;
+
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
+        if (!activeIds.includes(event.senderId)) {
+          activeIds.push(event.senderId);
+          totalMs += 600;
+        }
+      }
+
+      if (event.type === MessageType.NOTIFICATION) {
+        if (event.soundEffect) totalMs += 500;
+        totalMs += 1000;
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
+        if (sender && !sender.isMe) {
+          totalMs += chat.messageDelay;
+        }
+        if (sender?.isMe && !isGroup) {
+          const them = cast.find(c => !c.isMe);
+          if (them && !activeIds.includes(them.id)) {
+            activeIds.push(them.id);
+            totalMs += 900;
+          }
+        }
+        if (event.soundEffect) totalMs += 500;
+        totalMs += 800;
+      } else if (event.type === MessageType.TEXT) {
+        if (sender?.isMe) {
+          const chars = Array.from(event.text || "");
+          let currentLayout = 'ALPHA';
+          for (let i = 0; i < chars.length; i++) {
+            const char = chars[i];
+            const isAlpha = /[a-zA-Z]/.test(char);
+            const isSpace = char === ' ';
+            const isNumericOrSymbol = !isAlpha && !isSpace;
+            if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
+              currentLayout = 'NUMERIC';
+              totalMs += 80;
+            } else if (isAlpha && currentLayout !== 'ALPHA') {
+              currentLayout = 'ALPHA';
+              totalMs += 80;
+            }
+            totalMs += 70;
+            totalMs += (i === 0 ? 0 : chat.typingSpeed);
+          }
+          if (event.isBackspaced) {
+            if (currentLayout !== 'ALPHA') totalMs += 80;
+            totalMs += 300;
+            for (let i = chars.length; i > 0; i--) {
+              totalMs += 70 + chat.typingSpeed;
+            }
+            totalMs += 400;
+          } else {
+            if (currentLayout !== 'ALPHA') totalMs += 300;
+            totalMs += 120 + 70;
+            if (!isGroup) {
+              const them = cast.find(c => !c.isMe);
+              if (them && !activeIds.includes(them.id)) {
+                activeIds.push(them.id);
+                totalMs += 900;
+              }
+            }
+            if (event.soundEffect) totalMs += 500;
+            totalMs += 400;
+          }
+        } else {
+          totalMs += chat.messageDelay;
+          if (event.soundEffect) totalMs += 500;
+          totalMs += 800;
+        }
+      }
+    }
+    totalMs += 3000;
+    return totalMs;
+  }, [state.script, state.cast, state.chat.messageDelay, state.chat.typingSpeed, state.chat.isGroup]);
+
+  const formatDuration = (ms: number) => {
+    const totalSeconds = Math.round(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+  };
+
   const scale = state.system.uiScale || 1;
   const partnerMember = state.cast.find(c => !c.isMe);
   const isPartnerTyping = partnerMember && typingParticipantIds.includes(partnerMember.id);
@@ -1781,6 +1880,11 @@ const App: React.FC = () => {
         </div>
 
         <div className="sticky bottom-0 bg-[#121212] pt-6 pb-2 border-t border-white/10 flex flex-col gap-4">
+          {state.script.length > 0 && (
+            <div data-testid="text-estimated-duration" className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+              Est. Duration: <span className="text-white/70">{formatDuration(estimatedDurationMs)}</span>
+            </div>
+          )}
           <button onClick={playbackMode ? stopPlayback : () => startPlaybackSequence(false)} className={`w-full ${playbackMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-white/5 border-white/10'} border py-4 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95`}>
             {playbackMode ? 'Terminate Simulation' : 'Preview Simulation'}
           </button>
