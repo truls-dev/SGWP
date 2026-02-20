@@ -217,16 +217,33 @@ const App: React.FC = () => {
   };
 
   const resetSimulationState = () => {
-    setPlaybackItems([]);
+    const preShownItems: ScriptEvent[] = [];
+    const preShownActiveIds: string[] = [];
+    for (let i = 0; i < state.script.length; i++) {
+      if (!state.script[i].isPreShown) break;
+      const preEvent = state.script[i];
+      if (preEvent.type === MessageType.PRESENCE && preEvent.senderId) {
+        if (preEvent.presenceAction === 'ENTER') {
+          if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
+        }
+      } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
+        if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
+      }
+      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.NOTIFICATION) && !preEvent.isBackspaced) {
+        preShownItems.push({ ...preEvent, instanceId: uuidv4() });
+      }
+    }
+
+    setPlaybackItems(preShownItems);
     setCompositionText('');
     setTypingParticipantIds([]);
-    setActiveParticipantIds([]);
+    setActiveParticipantIds(preShownActiveIds);
     setIsMeTyping(false);
     setActiveKey(null);
     setIsShiftActive(true);
     setSuggestedUrl(null);
     setKeyboardLayout('ALPHA');
-    frameStateRef.current.activeParticipantIds = [];
+    frameStateRef.current.activeParticipantIds = preShownActiveIds;
     frameStateRef.current.typingParticipantIds = [];
     frameStateRef.current.compositionText = '';
     frameStateRef.current.isMeTyping = false;
@@ -565,7 +582,7 @@ const App: React.FC = () => {
     }
 
     // TRACK STATE LOCALLY TO AVOID CLOSURE STALENESS
-    let localActiveParticipantIds: string[] = [];
+    let localActiveParticipantIds: string[] = [...frameStateRef.current.activeParticipantIds];
     let localTypingParticipantIds: string[] = [];
     
     const updateActiveIds = (newIds: string[]) => {
@@ -583,8 +600,6 @@ const App: React.FC = () => {
     await new Promise(r => setTimeout(r, 300));
 
     const scriptToPlay = state.script;
-    updateActiveIds([]);
-    updateTypingIds([]);
     if (canvasRendererRef.current) {
       canvasRendererRef.current.resetAnimations();
       canvasRendererRef.current.enablePresence();
@@ -593,30 +608,7 @@ const App: React.FC = () => {
     let startIdx = 0;
     for (let i = 0; i < scriptToPlay.length; i++) {
       if (!scriptToPlay[i].isPreShown) break;
-      const preEvent = scriptToPlay[i];
       startIdx = i + 1;
-
-      if (preEvent.type === MessageType.PRESENCE && preEvent.senderId) {
-        if (preEvent.presenceAction === 'ENTER') {
-          updateActiveIds(Array.from(new Set([preEvent.senderId, ...localActiveParticipantIds])));
-        } else {
-          updateActiveIds(localActiveParticipantIds.filter(id => id !== preEvent.senderId));
-        }
-      } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
-        if (!localActiveParticipantIds.includes(preEvent.senderId)) {
-          updateActiveIds(Array.from(new Set([preEvent.senderId, ...localActiveParticipantIds])));
-        }
-      }
-
-      if (preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.NOTIFICATION) {
-        if (!preEvent.isBackspaced) {
-          setPlaybackItems(prev => [...prev, { ...preEvent, instanceId: uuidv4() }]);
-        }
-      }
-    }
-
-    if (startIdx > 0) {
-      await new Promise(r => setTimeout(r, 500));
     }
 
     for (let idx = startIdx; idx < scriptToPlay.length; idx++) {
@@ -1126,7 +1118,7 @@ const App: React.FC = () => {
       if (!script[i].isPreShown) break;
       estStartIdx = i + 1;
     }
-    if (estStartIdx > 0) totalMs += 500;
+    
 
     for (let idx = estStartIdx; idx < script.length; idx++) {
       const event = script[idx];
