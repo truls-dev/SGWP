@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const canvasRendererRef = useRef<CanvasRenderer | null>(null);
   const previewCanvasContainerRef = useRef<HTMLDivElement>(null);
   const previewAnimFrameRef = useRef<number | null>(null);
+  const timedSfxTimeoutsRef = useRef<number[]>([]);
   const frameStateRef = useRef<FrameState>({
     messages: [],
     compositionText: '',
@@ -602,6 +603,19 @@ const App: React.FC = () => {
 
     await new Promise(r => setTimeout(r, 300));
 
+    timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
+    timedSfxTimeoutsRef.current = [];
+    if (state.system.isSoundEnabled && timedSoundEffects.length > 0) {
+      for (const tse of timedSoundEffects) {
+        const tid = window.setTimeout(() => {
+          if ((runningStatusRef.current as string) !== 'idle') {
+            soundService.playEffect(tse.effectName);
+          }
+        }, tse.timeMs);
+        timedSfxTimeoutsRef.current.push(tid);
+      }
+    }
+
     const scriptToPlay = state.script;
 
     let startIdx = 0;
@@ -892,6 +906,9 @@ const App: React.FC = () => {
     resetSimulationState();
     soundService.stopMusicPreview();
     setIsMusicPreviewing(false);
+
+    timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
+    timedSfxTimeoutsRef.current = [];
     
     if (previewAnimFrameRef.current) {
       cancelAnimationFrame(previewAnimFrameRef.current);
@@ -1324,6 +1341,66 @@ const App: React.FC = () => {
                     }}
                     className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                   />
+                </div>
+
+                <div className="space-y-3 px-1 pt-2 border-t border-white/10">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">Timed Sound Effects</label>
+                    <button
+                      data-testid="button-add-timed-sfx"
+                      onClick={() => setTimedSoundEffects(prev => [...prev, { id: uuidv4(), effectName: 'Bruh', timeMs: 0 }])}
+                      className="text-[10px] font-black text-[#33B5FF] hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <i className="fa-solid fa-plus text-[8px]"></i> Add
+                    </button>
+                  </div>
+                  {timedSoundEffects.length === 0 && (
+                    <p className="text-[9px] text-gray-600 italic">No timed effects. Add one to play a sound at a specific timestamp.</p>
+                  )}
+                  {timedSoundEffects.map((tse, idx) => (
+                    <div key={tse.id} data-testid={`timed-sfx-row-${idx}`} className="flex items-center gap-2">
+                      <select
+                        data-testid={`select-timed-sfx-effect-${idx}`}
+                        className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer focus:border-[#33B5FF]"
+                        value={tse.effectName}
+                        onChange={e => {
+                          const updated = [...timedSoundEffects];
+                          updated[idx] = { ...updated[idx], effectName: e.target.value };
+                          setTimedSoundEffects(updated);
+                        }}
+                      >
+                        <option value="Bruh">Bruh</option>
+                        <option value="Crickets">Crickets</option>
+                        <option value="Rizz">Rizz</option>
+                        <option value="Shocked">Shocked</option>
+                        <option value="Shocking">Shocking</option>
+                      </select>
+                      <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                        <span className="text-[9px] text-gray-500">@</span>
+                        <input
+                          data-testid={`input-timed-sfx-time-${idx}`}
+                          type="number"
+                          min="0"
+                          step="0.1"
+                          value={(tse.timeMs / 1000).toFixed(1)}
+                          onChange={e => {
+                            const updated = [...timedSoundEffects];
+                            updated[idx] = { ...updated[idx], timeMs: Math.max(0, parseFloat(e.target.value || '0') * 1000) };
+                            setTimedSoundEffects(updated);
+                          }}
+                          className="w-[48px] bg-transparent text-[10px] font-bold outline-none text-center"
+                        />
+                        <span className="text-[9px] text-gray-500">s</span>
+                      </div>
+                      <button
+                        data-testid={`button-remove-timed-sfx-${idx}`}
+                        onClick={() => setTimedSoundEffects(prev => prev.filter(t => t.id !== tse.id))}
+                        className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                      >
+                        <i className="fa-solid fa-xmark text-[10px]"></i>
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
