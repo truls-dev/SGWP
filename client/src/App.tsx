@@ -19,6 +19,71 @@ import { findCustomojiSuggestion, getCustomojiUrl, preloadImage, initCatalog } f
 
 const MIN_STICKER_DISPLAY_TIME = 500; 
 
+function createWorkerTimer() {
+  const blob = new Blob([`
+    const timers = {};
+    let nextId = 1;
+    self.onmessage = (e) => {
+      const { type, ms, id } = e.data;
+      if (type === 'set') {
+        const tid = nextId++;
+        timers[tid] = setTimeout(() => { delete timers[tid]; self.postMessage({ type: 'fire', id: tid }); }, ms);
+        self.postMessage({ type: 'ack', id: tid, reqId: id });
+      } else if (type === 'clear') {
+        if (timers[id]) { clearTimeout(timers[id]); delete timers[id]; }
+      } else if (type === 'clearAll') {
+        Object.keys(timers).forEach(k => { clearTimeout(timers[k]); delete timers[k]; });
+      }
+    };
+  `], { type: 'application/javascript' });
+  const worker = new Worker(URL.createObjectURL(blob));
+  const pending = new Map<number, () => void>();
+  let reqCounter = 0;
+  const ackMap = new Map<number, (timerId: number) => void>();
+
+  worker.onmessage = (e) => {
+    const { type, id, reqId } = e.data;
+    if (type === 'fire') {
+      const cb = pending.get(id);
+      if (cb) { pending.delete(id); cb(); }
+    } else if (type === 'ack') {
+      const resolver = ackMap.get(reqId);
+      if (resolver) { ackMap.delete(reqId); resolver(id); }
+    }
+  };
+
+  return {
+    delay(ms: number): Promise<void> {
+      return new Promise(resolve => {
+        const reqId = ++reqCounter;
+        ackMap.set(reqId, (timerId) => { pending.set(timerId, resolve); });
+        worker.postMessage({ type: 'set', ms, id: reqId });
+      });
+    },
+    setTimeout(cb: () => void, ms: number): Promise<number> {
+      return new Promise(resolve => {
+        const reqId = ++reqCounter;
+        ackMap.set(reqId, (timerId) => { pending.set(timerId, cb); resolve(timerId); });
+        worker.postMessage({ type: 'set', ms, id: reqId });
+      });
+    },
+    clearAll() {
+      worker.postMessage({ type: 'clearAll' });
+      pending.forEach(cb => cb());
+      pending.clear();
+      ackMap.forEach(resolver => resolver(-1));
+      ackMap.clear();
+    },
+    terminate() {
+      pending.forEach(cb => cb());
+      pending.clear();
+      ackMap.forEach(resolver => resolver(-1));
+      ackMap.clear();
+      worker.terminate();
+    }
+  };
+}
+
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
     cast: [
@@ -101,6 +166,7 @@ const App: React.FC = () => {
   const previewCanvasContainerRef = useRef<HTMLDivElement>(null);
   const previewAnimFrameRef = useRef<number | null>(null);
   const timedSfxTimeoutsRef = useRef<number[]>([]);
+  const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
   const frameStateRef = useRef<FrameState>({
     messages: [],
     compositionText: '',
@@ -585,6 +651,9 @@ const App: React.FC = () => {
       safePlayVideo(previewVideoRef.current);
     }
 
+    const wt = isRecordingMode ? workerTimerRef.current : null;
+    const delay = (ms: number) => wt ? wt.delay(ms) : new Promise<void>(r => setTimeout(r, ms));
+
     // TRACK STATE LOCALLY TO AVOID CLOSURE STALENESS
     let localActiveParticipantIds: string[] = [...frameStateRef.current.activeParticipantIds];
     let localTypingParticipantIds: string[] = [];
@@ -601,18 +670,26 @@ const App: React.FC = () => {
       frameStateRef.current.typingParticipantIds = newIds;
     };
 
-    await new Promise(r => setTimeout(r, 300));
+    await delay(300);
 
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
     if (state.system.isSoundEnabled && timedSoundEffects.length > 0) {
       for (const tse of timedSoundEffects) {
-        const tid = window.setTimeout(() => {
-          if ((runningStatusRef.current as string) !== 'idle') {
-            soundService.playEffect(tse.effectName);
-          }
-        }, tse.timeMs);
-        timedSfxTimeoutsRef.current.push(tid);
+        if (wt) {
+          wt.setTimeout(() => {
+            if ((runningStatusRef.current as string) !== 'idle') {
+              soundService.playEffect(tse.effectName);
+            }
+          }, tse.timeMs);
+        } else {
+          const tid = window.setTimeout(() => {
+            if ((runningStatusRef.current as string) !== 'idle') {
+              soundService.playEffect(tse.effectName);
+            }
+          }, tse.timeMs);
+          timedSfxTimeoutsRef.current.push(tid);
+        }
       }
     }
 
@@ -635,7 +712,7 @@ const App: React.FC = () => {
         setIsShiftActive(true);
       }
 
-      await new Promise(r => setTimeout(r, 300));
+      await delay(300);
 
       if (event.type === MessageType.PRESENCE && event.senderId) {
         if (event.presenceAction === 'ENTER') {
@@ -643,7 +720,7 @@ const App: React.FC = () => {
         } else {
           updateActiveIds(localActiveParticipantIds.filter(id => id !== event.senderId));
         }
-        await new Promise(r => setTimeout(r, 500));
+        await delay(500);
         continue; 
       }
 
@@ -651,7 +728,7 @@ const App: React.FC = () => {
       if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
         if (!localActiveParticipantIds.includes(event.senderId)) {
            updateActiveIds(Array.from(new Set([event.senderId as string, ...localActiveParticipantIds])));
-           await new Promise(r => setTimeout(r, 600)); // Entrance animation time
+           await delay(600);
         }
       }
 
@@ -662,14 +739,14 @@ const App: React.FC = () => {
         if (state.system.isSoundEnabled && event.soundEffect) {
           await soundService.playEffect(event.soundEffect);
         }
-        await new Promise(r => setTimeout(r, 1000));
+        await delay(1000);
       } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
         const sender = state.cast.find(c => c.id === event.senderId);
         if (!sender) continue;
         
         if (!sender.isMe) {
             updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
-            await new Promise(r => setTimeout(r, state.chat.messageDelay));
+            await delay(state.chat.messageDelay);
             updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
         }
 
@@ -681,9 +758,9 @@ const App: React.FC = () => {
         if (sender.isMe && !state.chat.isGroup) {
            const them = state.cast.find(c => !c.isMe);
            if (them && !localActiveParticipantIds.includes(them.id)) {
-              await new Promise(r => setTimeout(r, 500));
+              await delay(500);
               updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
-              await new Promise(r => setTimeout(r, 400)); 
+              await delay(400); 
            }
         }
         
@@ -694,7 +771,7 @@ const App: React.FC = () => {
             soundService.playNotification();
           }
         }
-        await new Promise(r => setTimeout(r, 800));
+        await delay(800);
       } else if (event.type === MessageType.TEXT) {
         const sender = state.cast.find(c => c.id === event.senderId);
         if (!sender) continue;
@@ -716,12 +793,12 @@ const App: React.FC = () => {
             if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
                 setKeyboardLayout('NUMERIC');
                 currentLayout = 'NUMERIC';
-                await new Promise(r => setTimeout(r, 80));
+                await delay(80);
             } 
             else if (isAlpha && currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
                 currentLayout = 'ALPHA';
-                await new Promise(r => setTimeout(r, 80));
+                await delay(80);
             }
 
             if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
@@ -732,12 +809,12 @@ const App: React.FC = () => {
             
             setActiveKey(char);
             if (state.system.isSoundEnabled) soundService.playClick();
-            await new Promise(r => setTimeout(r, 70));
+            await delay(70);
             setActiveKey(null);
             
             currentString += char; 
             setCompositionText(currentString);
-            await new Promise(r => setTimeout(r, i === 0 ? 0 : state.chat.typingSpeed));
+            await delay(i === 0 ? 0 : state.chat.typingSpeed);
           }
 
           if ((runningStatusRef.current as string) === 'idle') break;
@@ -746,40 +823,40 @@ const App: React.FC = () => {
             if (currentLayout !== 'ALPHA') {
               setKeyboardLayout('ALPHA');
               currentLayout = 'ALPHA';
-              await new Promise(r => setTimeout(r, 80));
+              await delay(80);
             }
 
-            await new Promise(r => setTimeout(r, 300));
+            await delay(300);
             let graphemes = Array.from(currentString);
             for (let i = graphemes.length; i > 0; i--) {
                 if ((runningStatusRef.current as string) === 'idle') break;
                 
                 setActiveKey('backspace');
                 if (state.system.isSoundEnabled) soundService.playBackspace();
-                await new Promise(r => setTimeout(r, 70));
+                await delay(70);
                 setActiveKey(null);
                 
                 graphemes.pop();
                 currentString = graphemes.join('');
                 setCompositionText(currentString);
-                await new Promise(r => setTimeout(r, state.chat.typingSpeed));
+                await delay(state.chat.typingSpeed);
             }
             setCompositionText('');
             setIsMeTyping(false);
             setIsShiftActive(true); 
-            await new Promise(r => setTimeout(r, 400));
+            await delay(400);
           } else {
             if (currentLayout !== 'ALPHA') {
               setKeyboardLayout('ALPHA');
               currentLayout = 'ALPHA';
-              await new Promise(r => setTimeout(r, 300));
+              await delay(300);
             }
 
-            await new Promise(r => setTimeout(r, 120));
+            await delay(120);
             setActiveKey('Enter');
             setIsShiftActive(false);
             if (state.system.isSoundEnabled) soundService.playClick();
-            await new Promise(r => setTimeout(r, 70));
+            await delay(70);
             setActiveKey(null);
             
             setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4() }]);
@@ -791,21 +868,21 @@ const App: React.FC = () => {
             if (!state.chat.isGroup) {
               const them = state.cast.find(c => !c.isMe);
               if (them && !localActiveParticipantIds.includes(them.id)) {
-                 await new Promise(r => setTimeout(r, 500));
+                 await delay(500);
                  updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
-                 await new Promise(r => setTimeout(r, 400));
+                 await delay(400);
               }
             }
             
             if (state.system.isSoundEnabled && event.soundEffect) {
               await soundService.playEffect(event.soundEffect);
             }
-            await new Promise(r => setTimeout(r, 400));
+            await delay(400);
           }
         } else {
           // PARTNER SENDER
           updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
-          await new Promise(r => setTimeout(r, state.chat.messageDelay));
+          await delay(state.chat.messageDelay);
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
           
           if (!event.isBackspaced) {
@@ -819,13 +896,13 @@ const App: React.FC = () => {
               soundService.playNotification();
             }
           }
-          await new Promise(r => setTimeout(r, 800));
+          await delay(800);
         }
       }
     }
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
-      await new Promise(r => setTimeout(r, 3000));
+      await delay(3000);
       stopRecordingSession();
     } else {
       if (previewAnimFrameRef.current) {
@@ -909,6 +986,11 @@ const App: React.FC = () => {
 
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
+
+    if (workerTimerRef.current) {
+      workerTimerRef.current.terminate();
+      workerTimerRef.current = null;
+    }
     
     if (previewAnimFrameRef.current) {
       cancelAnimationFrame(previewAnimFrameRef.current);
@@ -956,6 +1038,9 @@ const App: React.FC = () => {
         await soundService.loadMusicTrack(musicTrack);
       }
       soundService.startRecordingMode();
+
+      if (workerTimerRef.current) workerTimerRef.current.terminate();
+      workerTimerRef.current = createWorkerTimer();
 
       const renderer = new CanvasRenderer();
       canvasRendererRef.current = renderer;
@@ -1031,7 +1116,7 @@ const App: React.FC = () => {
         const elapsedUs = (now - startTime) * 1000;
         const targetFrames = Math.floor(elapsedUs / frameDurationUs);
 
-        const maxBatch = 4;
+        const maxBatch = 120;
         let rendered = 0;
         while (frameCount <= targetFrames && rendered < maxBatch) {
             const currentFrameState: FrameState = {
@@ -1051,10 +1136,10 @@ const App: React.FC = () => {
             frameCount++;
             rendered++;
         }
-        requestAnimationFrame(renderLoop);
+        setTimeout(renderLoop, 0);
       };
 
-      requestAnimationFrame(renderLoop);
+      setTimeout(renderLoop, 0);
       runPlaybackLoop(true);
 
       win.finishWebCodecsExport = async () => {
