@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, CastMember, ScriptEvent, MessageType } from './types';
+import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect } from './types';
 import StatusBar from './components/StatusBar';
 import ChatHeader from './components/ChatHeader';
 import ChatInput from './components/ChatInput';
@@ -81,6 +81,7 @@ const App: React.FC = () => {
   const [isMusicPreviewing, setIsMusicPreviewing] = useState(false);
   const [isMusicLoading, setIsMusicLoading] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.15);
+  const [timedSoundEffects, setTimedSoundEffects] = useState<TimedSoundEffect[]>([]);
 
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);

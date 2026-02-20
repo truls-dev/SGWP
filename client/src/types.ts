@@ -63,6 +63,12 @@ export interface ChatConfig {
   videoModeScale: number; // NEW: Manual scale for the phone in video mode
 }
 
+export interface TimedSoundEffect {
+  id: string;
+  effectName: string;
+  timeMs: number;
+}
+
 export interface AppState {
   cast: CastMember[];
   script: ScriptEvent[];
