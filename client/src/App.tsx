@@ -891,6 +891,14 @@ const App: React.FC = () => {
         streamRef.current = null;
     }
     if (previewVideoRef.current) previewVideoRef.current.pause();
+    
+    const win = window as any;
+    if (win.finishWebCodecsExport) delete win.finishWebCodecsExport;
+  };
+
+  const cancelExport = () => {
+    soundService.stopRecordingMode();
+    stopPlayback();
   };
 
   const initiateRecording = async () => {
@@ -1783,6 +1791,16 @@ const App: React.FC = () => {
       </div>
 
       <div ref={contentToRecordRef} className={`flex-1 flex items-center justify-center bg-black relative overflow-hidden transition-all duration-700 ease-in-out ${isRecording ? 'w-screen h-screen' : ''}`}>
+        {isRecording && (
+          <button
+            data-testid="button-cancel-export"
+            onClick={cancelExport}
+            className="absolute top-6 right-6 z-[9999] bg-red-600/90 hover:bg-red-500 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_4px_20px_rgba(239,68,68,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 backdrop-blur-sm"
+          >
+            <i className="fa-solid fa-xmark text-sm"></i>
+            Cancel Export
+          </button>
+        )}
         {isVideoMode && state.chat.exportBackgroundVideoUrl && (
             <div className="absolute inset-0 z-0">
                 <video 
