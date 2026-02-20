@@ -50,6 +50,74 @@ const FONT_SYSTEM =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const FONT_EMOJI = "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif";
 
+const EMOJI_CDN_BASE = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple@16.0.0/img/apple/64/";
+
+function emojiToUnified(emoji: string): string {
+  const codePoints: string[] = [];
+  for (const ch of emoji) {
+    const cp = ch.codePointAt(0)!;
+    if (cp === 0xFE0F) continue;
+    codePoints.push(cp.toString(16).toLowerCase());
+  }
+  return codePoints.join("-");
+}
+
+function collectEmojisFromText(text: string): string[] {
+  if (!hasEmoji(text)) return [];
+  const segments = splitEmojiSegments(text);
+  const emojis: string[] = [];
+  for (const seg of segments) {
+    if (seg.isEmoji) {
+      const emojiChars = splitEmojiChars(seg.text);
+      for (const ch of emojiChars) {
+        emojis.push(ch);
+      }
+    }
+  }
+  return emojis;
+}
+
+function splitEmojiChars(emojiText: string): string[] {
+  const results: string[] = [];
+  const chars = Array.from(emojiText);
+  let current = "";
+  let prevWasZWJ = false;
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const code = ch.codePointAt(0)!;
+    const isJoiner = code === 0x200D;
+    const isModifier = code === 0xFE0F || code === 0xFE0E || (code >= 0x1F3FB && code <= 0x1F3FF) || code === 0x20E3;
+    const isFlag = code >= 0x1F1E0 && code <= 0x1F1FF;
+
+    if (current === "") {
+      current = ch;
+      prevWasZWJ = false;
+    } else if (isJoiner || isModifier) {
+      current += ch;
+      prevWasZWJ = isJoiner;
+    } else if (prevWasZWJ) {
+      current += ch;
+      prevWasZWJ = false;
+    } else if (isFlag && current.length > 0) {
+      const currentChars = Array.from(current);
+      const lastCode = currentChars[currentChars.length - 1]?.codePointAt(0);
+      if (lastCode && lastCode >= 0x1F1E0 && lastCode <= 0x1F1FF && currentChars.length === 1) {
+        current += ch;
+      } else {
+        results.push(current);
+        current = ch;
+      }
+      prevWasZWJ = false;
+    } else {
+      results.push(current);
+      current = ch;
+      prevWasZWJ = false;
+    }
+  }
+  if (current.length > 0) results.push(current);
+  return results;
+}
+
 function isEmojiCodePoint(code: number): boolean {
   return (
     (code >= 0x1F600 && code <= 0x1F64F) ||
@@ -172,6 +240,7 @@ export class CanvasRenderer {
   private W = 1080;
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
+  private emojiImages = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
   private presenceEnabled = false;
@@ -279,6 +348,21 @@ export class CanvasRenderer {
       promises.push(this.loadImg("groupIcon", chatConfig.groupIconUrl));
     }
 
+    const allEmojis = new Set<string>();
+    for (const e of events) {
+      if (e.text) {
+        for (const em of collectEmojisFromText(e.text)) allEmojis.add(em);
+      }
+    }
+    for (const m of cast) {
+      if (m.name) {
+        for (const em of collectEmojisFromText(m.name)) allEmojis.add(em);
+      }
+    }
+    allEmojis.forEach(emoji => {
+      promises.push(this.loadEmojiImg(emoji));
+    });
+
     await Promise.all(promises);
     await document.fonts.ready;
   }
@@ -302,6 +386,35 @@ export class CanvasRenderer {
       };
       img.src = url;
     });
+  }
+
+  private loadEmojiImg(emoji: string): Promise<void> {
+    const unified = emojiToUnified(emoji);
+    if (this.emojiImages.has(unified)) return Promise.resolve();
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        this.emojiImages.set(unified, img);
+        resolve();
+      };
+      img.onerror = () => resolve();
+      img.src = `${EMOJI_CDN_BASE}${unified}.png`;
+    });
+  }
+
+  private getEmojiImage(emoji: string): HTMLImageElement | null {
+    const unified = emojiToUnified(emoji);
+    const cached = this.emojiImages.get(unified);
+    if (cached) return cached;
+    if (!this.emojiImages.has(unified)) {
+      this.emojiImages.set(unified, null as any);
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { this.emojiImages.set(unified, img); };
+      img.src = `${EMOJI_CDN_BASE}${unified}.png`;
+    }
+    return null;
   }
 
   renderFrame(state: FrameState): HTMLCanvasElement {
@@ -1424,6 +1537,22 @@ export class CanvasRenderer {
     ctx.globalAlpha = 1;
   }
 
+  private measureEmojiSegmentWidth(emojiText: string, fontSize: number): number {
+    const emojiChars = splitEmojiChars(emojiText);
+    let w = 0;
+    const emojiSize = fontSize * 1.15;
+    for (const ch of emojiChars) {
+      const img = this.getEmojiImage(ch);
+      if (img) {
+        w += emojiSize;
+      } else {
+        this.ctx.font = `${fontSize}px ${FONT_EMOJI}`;
+        w += this.ctx.measureText(ch).width;
+      }
+    }
+    return w;
+  }
+
   private measureTextWithEmoji(
     ctx: CanvasRenderingContext2D,
     text: string,
@@ -1436,11 +1565,11 @@ export class CanvasRenderer {
     const savedFont = ctx.font;
     for (const seg of segments) {
       if (seg.isEmoji) {
-        ctx.font = `${fontSize}px ${FONT_EMOJI}`;
+        w += this.measureEmojiSegmentWidth(seg.text, fontSize);
       } else {
         ctx.font = savedFont;
+        w += ctx.measureText(seg.text).width;
       }
-      w += ctx.measureText(seg.text).width;
     }
     ctx.font = savedFont;
     return w;
@@ -1465,8 +1594,12 @@ export class CanvasRenderer {
 
     let totalW = 0;
     for (const seg of segments) {
-      ctx.font = seg.isEmoji ? `${fontSize}px ${FONT_EMOJI}` : savedFont;
-      totalW += ctx.measureText(seg.text).width;
+      if (seg.isEmoji) {
+        totalW += this.measureEmojiSegmentWidth(seg.text, fontSize);
+      } else {
+        ctx.font = savedFont;
+        totalW += ctx.measureText(seg.text).width;
+      }
     }
 
     let startX = x;
@@ -1478,10 +1611,27 @@ export class CanvasRenderer {
 
     ctx.textAlign = "left";
     let cx = startX;
+    const emojiSize = fontSize * 1.15;
     for (const seg of segments) {
-      ctx.font = seg.isEmoji ? `${fontSize}px ${FONT_EMOJI}` : savedFont;
-      ctx.fillText(seg.text, cx, y);
-      cx += ctx.measureText(seg.text).width;
+      if (seg.isEmoji) {
+        const emojiChars = splitEmojiChars(seg.text);
+        for (const ch of emojiChars) {
+          const img = this.getEmojiImage(ch);
+          if (img) {
+            const drawY = y - emojiSize * 0.82;
+            ctx.drawImage(img, cx, drawY, emojiSize, emojiSize);
+            cx += emojiSize;
+          } else {
+            ctx.font = `${fontSize}px ${FONT_EMOJI}`;
+            ctx.fillText(ch, cx, y);
+            cx += ctx.measureText(ch).width;
+          }
+        }
+      } else {
+        ctx.font = savedFont;
+        ctx.fillText(seg.text, cx, y);
+        cx += ctx.measureText(seg.text).width;
+      }
     }
     ctx.font = savedFont;
     ctx.textBaseline = savedBaseline;
