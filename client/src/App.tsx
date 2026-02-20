@@ -602,13 +602,6 @@ const App: React.FC = () => {
     await new Promise(r => setTimeout(r, 300));
 
     const scriptToPlay = state.script;
-    if (canvasRendererRef.current) {
-      canvasRendererRef.current.resetAnimations();
-      canvasRendererRef.current.enablePresence();
-      if (localActiveParticipantIds.length > 0) {
-        canvasRendererRef.current.preArriveParticipants(localActiveParticipantIds);
-      }
-    }
 
     let startIdx = 0;
     for (let i = 0; i < scriptToPlay.length; i++) {
@@ -859,6 +852,10 @@ const App: React.FC = () => {
         const renderer = new CanvasRenderer();
         canvasRendererRef.current = renderer;
         await renderer.preload(state.cast, state.script, state.chat);
+        renderer.enablePresence();
+        if (frameStateRef.current.activeParticipantIds.length > 0) {
+          renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
+        }
 
         const canvasEl = renderer.getCanvas();
         canvasEl.style.width = '100%';
@@ -945,6 +942,10 @@ const App: React.FC = () => {
       const renderer = new CanvasRenderer();
       canvasRendererRef.current = renderer;
       await renderer.preload(state.cast, state.script, state.chat);
+      renderer.enablePresence();
+      if (frameStateRef.current.activeParticipantIds.length > 0) {
+        renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
+      }
 
       setIsRecording(true);
       await new Promise(r => setTimeout(r, 500));
