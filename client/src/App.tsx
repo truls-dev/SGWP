@@ -148,8 +148,9 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.15);
   const [timedSoundEffects, setTimedSoundEffects] = useState<TimedSoundEffect[]>([]);
 
-  const [outroVideoUrl, setOutroVideoUrl] = useState<string | null>(null);
   const [appendOutro, setAppendOutro] = useState(false);
+  const outroVideoElRef = useRef<HTMLVideoElement | null>(null);
+  const outroActiveRef = useRef(false);
 
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);
@@ -191,7 +192,6 @@ const App: React.FC = () => {
   const groupIconInputRef = useRef<HTMLInputElement>(null);
   const exportBgInputRef = useRef<HTMLInputElement>(0 as any);
   const exportBgVideoInputRef = useRef<HTMLInputElement>(0 as any);
-  const outroVideoInputRef = useRef<HTMLInputElement>(0 as any);
   const timelineImageInputRef = useRef<HTMLInputElement>(0 as any);
   const activeTimelineEventIdRef = useRef<string | null>(null);
 
@@ -402,15 +402,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleOutroVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (outroVideoUrl) URL.revokeObjectURL(outroVideoUrl);
-      const url = URL.createObjectURL(file);
-      setOutroVideoUrl(url);
-      setAppendOutro(true);
-    }
-  };
+  const OUTRO_WEBM_URL = 'https://raw.githubusercontent.com/truls-dev/images/main/animationsubscribe.webm';
 
   const handleTimelineImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -916,7 +908,34 @@ const App: React.FC = () => {
     }
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
-      await delay(3000);
+      if (appendOutro) {
+        const outroVideo = document.createElement('video');
+        outroVideo.muted = true;
+        outroVideo.playsInline = true;
+        outroVideo.preload = 'auto';
+        outroVideo.crossOrigin = 'anonymous';
+        outroVideo.src = OUTRO_WEBM_URL;
+        try {
+          await new Promise<void>((resolve, reject) => {
+            outroVideo.onloadeddata = () => resolve();
+            outroVideo.onerror = () => reject(new Error('Failed to load outro'));
+          });
+          outroVideoElRef.current = outroVideo;
+          outroActiveRef.current = true;
+          outroVideo.play().catch(() => {});
+          const outroDurationMs = (outroVideo.duration || 4) * 1000;
+          await delay(outroDurationMs);
+          outroActiveRef.current = false;
+          outroVideoElRef.current = null;
+          outroVideo.pause();
+          outroVideo.src = '';
+        } catch (e) {
+          console.warn('[Outro] Failed to load outro video, skipping overlay');
+          await delay(3000);
+        }
+      } else {
+        await delay(3000);
+      }
       stopRecordingSession();
     } else {
       if (previewAnimFrameRef.current) {
@@ -997,6 +1016,13 @@ const App: React.FC = () => {
     resetSimulationState();
     soundService.stopMusicPreview();
     setIsMusicPreviewing(false);
+
+    outroActiveRef.current = false;
+    if (outroVideoElRef.current) {
+      outroVideoElRef.current.pause();
+      outroVideoElRef.current.src = '';
+      outroVideoElRef.current = null;
+    }
 
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
@@ -1139,6 +1165,16 @@ const App: React.FC = () => {
             };
             renderer.renderFrame(currentFrameState);
 
+            if (outroActiveRef.current && outroVideoElRef.current) {
+              const outroVid = outroVideoElRef.current;
+              const ctx = canvas.getContext('2d');
+              if (ctx && outroVid.videoWidth > 0 && outroVid.videoHeight > 0) {
+                const dx = (canvas.width - outroVid.videoWidth) / 2;
+                const dy = (canvas.height - outroVid.videoHeight) / 2;
+                ctx.drawImage(outroVid, dx, dy, outroVid.videoWidth, outroVid.videoHeight);
+              }
+            }
+
             const frameTimestamp = Math.floor(frameCount * frameDurationUs);
             const frame = new win.VideoFrame(canvas, { timestamp: frameTimestamp });
 
@@ -1156,8 +1192,6 @@ const App: React.FC = () => {
       setTimeout(renderLoop, 0);
       runPlaybackLoop(true);
 
-      const shouldAppendOutro = appendOutro && outroVideoUrl;
-
       win.finishWebCodecsExport = async () => {
         if (isFinished) return;
         isFinished = true;
@@ -1167,127 +1201,8 @@ const App: React.FC = () => {
 
             await videoEncoder.flush();
 
-            let outroDurationMs = 0;
-            let outroAudioBuffer: AudioBuffer | null = null;
-
-            if (shouldAppendOutro) {
-              console.log('[Outro] Appending outro video...');
-              const outroVideo = document.createElement('video');
-              outroVideo.muted = true;
-              outroVideo.playsInline = true;
-              outroVideo.preload = 'auto';
-              outroVideo.src = outroVideoUrl!;
-
-              await new Promise<void>((resolve, reject) => {
-                outroVideo.onloadeddata = () => resolve();
-                outroVideo.onerror = () => reject(new Error('Failed to load outro video'));
-              });
-
-              outroDurationMs = outroVideo.duration * 1000;
-              const mainVideoEndUs = frameCount * frameDurationUs;
-              const outroFps = 30;
-              const outroFrameDurationUs = 1_000_000 / outroFps;
-
-              const outroCanvas = document.createElement('canvas');
-              outroCanvas.width = canvas.width;
-              outroCanvas.height = canvas.height;
-              const outroCtx = outroCanvas.getContext('2d')!;
-
-              const lastFrameSnapshot = document.createElement('canvas');
-              lastFrameSnapshot.width = canvas.width;
-              lastFrameSnapshot.height = canvas.height;
-              const snapshotCtx = lastFrameSnapshot.getContext('2d')!;
-              snapshotCtx.drawImage(canvas, 0, 0);
-
-              console.log(`[Outro] duration ${(outroDurationMs / 1000).toFixed(1)}s, overlaying on last chat frame`);
-
-              const drawOutroFrame = () => {
-                outroCtx.drawImage(lastFrameSnapshot, 0, 0);
-                const vw = outroVideo.videoWidth;
-                const vh = outroVideo.videoHeight;
-                if (vw > 0 && vh > 0) {
-                  outroCtx.drawImage(outroVideo, 0, 0, outroCanvas.width, outroCanvas.height);
-                }
-              };
-
-              let outroFrameIdx = 0;
-
-              const hasRVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
-              if (hasRVFC) {
-                await new Promise<void>((resolve) => {
-                  let lastFrameTime = Date.now();
-                  const stallTimeout = 5000;
-                  let stallCheck: number;
-
-                  const checkStall = () => {
-                    if (Date.now() - lastFrameTime > stallTimeout) {
-                      console.warn('[Outro] rVFC stalled, completing with frames captured so far');
-                      outroVideo.pause();
-                      resolve();
-                      return;
-                    }
-                    stallCheck = window.setTimeout(checkStall, 1000);
-                  };
-                  stallCheck = window.setTimeout(checkStall, stallTimeout);
-
-                  const onFrame = () => {
-                    lastFrameTime = Date.now();
-                    drawOutroFrame();
-                    const timestamp = Math.floor(mainVideoEndUs + outroFrameIdx * outroFrameDurationUs);
-                    const vf = new win.VideoFrame(outroCanvas, { timestamp });
-                    if (videoEncoder.state === 'configured') {
-                      videoEncoder.encode(vf, { keyFrame: outroFrameIdx % 60 === 0 });
-                    }
-                    vf.close();
-                    outroFrameIdx++;
-
-                    if (!outroVideo.ended && !outroVideo.paused) {
-                      (outroVideo as any).requestVideoFrameCallback(onFrame);
-                    } else {
-                      clearTimeout(stallCheck);
-                      resolve();
-                    }
-                  };
-                  outroVideo.onended = () => { clearTimeout(stallCheck); resolve(); };
-                  (outroVideo as any).requestVideoFrameCallback(onFrame);
-                  outroVideo.play().catch(() => { clearTimeout(stallCheck); resolve(); });
-                });
-              } else {
-                const totalOutroFrames = Math.ceil(outroVideo.duration * outroFps);
-                for (let i = 0; i < totalOutroFrames; i++) {
-                  outroVideo.currentTime = i / outroFps;
-                  await new Promise<void>(r => { outroVideo.onseeked = () => r(); });
-                  drawOutroFrame();
-                  const timestamp = Math.floor(mainVideoEndUs + i * outroFrameDurationUs);
-                  const vf = new win.VideoFrame(outroCanvas, { timestamp });
-                  if (videoEncoder.state === 'configured') {
-                    videoEncoder.encode(vf, { keyFrame: i % 60 === 0 });
-                  }
-                  vf.close();
-                  outroFrameIdx++;
-                }
-              }
-
-              outroDurationMs = (outroFrameIdx * outroFrameDurationUs) / 1000;
-              console.log(`[Outro] Encoded ${outroFrameIdx} frames (${(outroDurationMs / 1000).toFixed(1)}s)`);
-              await videoEncoder.flush();
-
-              try {
-                const response = await fetch(outroVideoUrl!);
-                const arrayBuffer = await response.arrayBuffer();
-                const decodeCtx = new OfflineAudioContext(2, 48000, 48000);
-                outroAudioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
-              } catch (e) {
-                console.log('[Outro] No audio track in outro video (or decode failed), using silence');
-              }
-
-              outroVideo.src = '';
-              console.log('[Outro] Outro appended successfully');
-            }
-
             const mainVideoFrameDurationMs = (frameCount * frameDurationUs) / 1000;
-            const outroDurationMsActual = outroDurationMs;
-            const totalVideoMs = mainVideoFrameDurationMs + outroDurationMsActual;
+            const totalVideoMs = mainVideoFrameDurationMs;
 
             const offlineAudio = await soundService.renderOffline(
               soundEvents,
@@ -1296,54 +1211,8 @@ const App: React.FC = () => {
               musicVolume
             );
             const audioSampleRate = offlineAudio.sampleRate;
-            const mainAudioSamples = offlineAudio.left.length;
-
-            let outroAudioLeft: Float32Array | null = null;
-            let outroAudioRight: Float32Array | null = null;
-            let outroAudioSamples = 0;
-
-            if (outroAudioBuffer) {
-              if (outroAudioBuffer.sampleRate !== audioSampleRate) {
-                const resampleCtx = new OfflineAudioContext(
-                  2,
-                  Math.ceil(outroAudioBuffer.duration * audioSampleRate),
-                  audioSampleRate
-                );
-                const source = resampleCtx.createBufferSource();
-                source.buffer = outroAudioBuffer;
-                source.connect(resampleCtx.destination);
-                source.start();
-                const resampled = await resampleCtx.startRendering();
-                outroAudioLeft = resampled.getChannelData(0);
-                outroAudioRight = resampled.numberOfChannels > 1 ? resampled.getChannelData(1) : outroAudioLeft;
-              } else {
-                outroAudioLeft = outroAudioBuffer.getChannelData(0);
-                outroAudioRight = outroAudioBuffer.numberOfChannels > 1 ? outroAudioBuffer.getChannelData(1) : outroAudioLeft;
-              }
-              outroAudioSamples = outroAudioLeft.length;
-            } else if (outroDurationMs > 0) {
-              outroAudioSamples = Math.ceil((outroDurationMs / 1000) * audioSampleRate);
-              outroAudioLeft = new Float32Array(outroAudioSamples);
-              outroAudioRight = new Float32Array(outroAudioSamples);
-            }
-
-            const totalAudioSamples = mainAudioSamples + outroAudioSamples;
-            let left: Float32Array;
-            let right: Float32Array;
-
-            if (outroAudioSamples > 0) {
-              left = new Float32Array(totalAudioSamples);
-              right = new Float32Array(totalAudioSamples);
-              left.set(offlineAudio.left);
-              right.set(offlineAudio.right);
-              if (outroAudioLeft && outroAudioRight) {
-                left.set(outroAudioLeft, mainAudioSamples);
-                right.set(outroAudioRight, mainAudioSamples);
-              }
-            } else {
-              left = offlineAudio.left;
-              right = offlineAudio.right;
-            }
+            const left = offlineAudio.left;
+            const right = offlineAudio.right;
 
             const numberOfChannels = 2;
             const chunkSize = 4800;
@@ -2277,42 +2146,14 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3 px-1">
             <button
               data-testid="button-toggle-outro"
-              onClick={() => {
-                if (!outroVideoUrl) {
-                  outroVideoInputRef.current?.click();
-                } else {
-                  setAppendOutro(!appendOutro);
-                }
-              }}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${appendOutro && outroVideoUrl ? 'bg-[#FFFC00] border-[#FFFC00]' : 'border-gray-500 bg-transparent'}`}
+              onClick={() => setAppendOutro(!appendOutro)}
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${appendOutro ? 'bg-[#FFFC00] border-[#FFFC00]' : 'border-gray-500 bg-transparent'}`}
             >
-              {appendOutro && outroVideoUrl && <i className="fa-solid fa-check text-black text-[10px]"></i>}
+              {appendOutro && <i className="fa-solid fa-check text-black text-[10px]"></i>}
             </button>
             <div className="flex-1 min-w-0">
-              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Outro Overlay</span>
-              {outroVideoUrl && (
-                <span className="text-[9px] text-gray-500 ml-2">
-                  <button
-                    data-testid="button-change-outro"
-                    onClick={() => outroVideoInputRef.current?.click()}
-                    className="text-blue-400 hover:text-blue-300 underline uppercase font-bold"
-                  >Change</button>
-                  {' | '}
-                  <button
-                    data-testid="button-remove-outro"
-                    onClick={() => { if (outroVideoUrl) URL.revokeObjectURL(outroVideoUrl); setOutroVideoUrl(null); setAppendOutro(false); }}
-                    className="text-red-400 hover:text-red-300 underline uppercase font-bold"
-                  >Remove</button>
-                </span>
-              )}
+              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Subscribe Overlay</span>
             </div>
-            <input
-              type="file"
-              ref={outroVideoInputRef}
-              className="hidden"
-              accept="video/webm,video/mp4,video/*"
-              onChange={handleOutroVideoUpload}
-            />
           </div>
 
           <button onClick={playbackMode ? stopPlayback : () => startPlaybackSequence(false)} className={`w-full ${playbackMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-white/5 border-white/10'} border py-4 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95`}>
