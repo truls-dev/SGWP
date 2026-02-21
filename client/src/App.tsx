@@ -1143,7 +1143,7 @@ const App: React.FC = () => {
               const ctx = canvas.getContext('2d');
               if (ctx && outroVid.videoWidth > 0 && outroVid.videoHeight > 0) {
                 const dx = (canvas.width - outroVid.videoWidth) / 2;
-                const dy = (canvas.height - outroVid.videoHeight) / 2;
+                const dy = canvas.height - outroVid.videoHeight;
                 ctx.drawImage(outroVid, dx, dy, outroVid.videoWidth, outroVid.videoHeight);
               }
             }
