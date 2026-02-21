@@ -31,6 +31,11 @@ Preferred communication style: Simple, everyday language.
 - **`customojiService.ts`**: Loads a sticker catalog from `templates.json` (in `client/public/`) and provides tag-based search for sticker suggestions.
 - **`soundService.ts`**: Manages keyboard click sounds, notification sounds, sound effects, and background music using Web Audio API. Offline audio rendering uses direct Float32Array sample mixing (no OfflineAudioContext) to prevent audio fading in long videos and memory exhaustion crashes. Resampling cache avoids duplicate buffer allocations. Background music loaded from `github.com/truls-dev/music`, with preview playback, volume control, and automatic looping for videos longer than the track.
 
+### Notable App Features
+- **Timed Sound Effects**: Fire sound effects at specific timestamps independent of the script timeline. Uses Web Worker timers during recording for background tab resilience.
+- **Outro Video Append**: Upload a WEBM/MP4 video (e.g., subscribe animation) to append to the end of exported videos. Uses `requestVideoFrameCallback` for reliable frame extraction with seek-based fallback. Audio from the outro video is decoded, resampled to match, and stitched after the main audio.
+- **Background Tab Export**: Recording uses Web Worker-based timers (`createWorkerTimer()` in App.tsx) instead of regular `setTimeout` to prevent browser throttling when tab is inactive. The render loop uses `setTimeout(renderLoop, 0)` instead of `requestAnimationFrame` with a large batch size (120 frames) for catch-up rendering.
+
 ### Key Frontend Components
 - **`App.tsx`**: Main application component containing all state (cast members, script events, system config, chat config) and the playback/recording engine
 - **`StatusBar.tsx`**: iOS-style status bar with signal, carrier, time, WiFi, battery

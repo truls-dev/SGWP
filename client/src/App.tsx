@@ -1156,6 +1156,8 @@ const App: React.FC = () => {
       setTimeout(renderLoop, 0);
       runPlaybackLoop(true);
 
+      const shouldAppendOutro = appendOutro && outroVideoUrl;
+
       win.finishWebCodecsExport = async () => {
         if (isFinished) return;
         isFinished = true;
@@ -1165,13 +1167,193 @@ const App: React.FC = () => {
 
             await videoEncoder.flush();
 
+            let outroDurationMs = 0;
+            let outroAudioBuffer: AudioBuffer | null = null;
+
+            if (shouldAppendOutro) {
+              console.log('[Outro] Appending outro video...');
+              const outroVideo = document.createElement('video');
+              outroVideo.muted = true;
+              outroVideo.playsInline = true;
+              outroVideo.preload = 'auto';
+              outroVideo.src = outroVideoUrl!;
+
+              await new Promise<void>((resolve, reject) => {
+                outroVideo.onloadeddata = () => resolve();
+                outroVideo.onerror = () => reject(new Error('Failed to load outro video'));
+              });
+
+              outroDurationMs = outroVideo.duration * 1000;
+              const mainVideoEndUs = frameCount * frameDurationUs;
+              const outroFps = 30;
+              const outroFrameDurationUs = 1_000_000 / outroFps;
+
+              const outroCanvas = document.createElement('canvas');
+              outroCanvas.width = canvas.width;
+              outroCanvas.height = canvas.height;
+              const outroCtx = outroCanvas.getContext('2d')!;
+
+              console.log(`[Outro] duration ${(outroDurationMs / 1000).toFixed(1)}s`);
+
+              const drawOutroFrame = () => {
+                outroCtx.fillStyle = '#000000';
+                outroCtx.fillRect(0, 0, outroCanvas.width, outroCanvas.height);
+                const vw = outroVideo.videoWidth;
+                const vh = outroVideo.videoHeight;
+                if (vw > 0 && vh > 0) {
+                  const canvasAspect = outroCanvas.width / outroCanvas.height;
+                  const videoAspect = vw / vh;
+                  let drawW: number, drawH: number, drawX: number, drawY: number;
+                  if (videoAspect > canvasAspect) {
+                    drawW = outroCanvas.width;
+                    drawH = drawW / videoAspect;
+                    drawX = 0;
+                    drawY = (outroCanvas.height - drawH) / 2;
+                  } else {
+                    drawH = outroCanvas.height;
+                    drawW = drawH * videoAspect;
+                    drawX = (outroCanvas.width - drawW) / 2;
+                    drawY = 0;
+                  }
+                  outroCtx.drawImage(outroVideo, drawX, drawY, drawW, drawH);
+                }
+              };
+
+              let outroFrameIdx = 0;
+
+              const hasRVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
+              if (hasRVFC) {
+                await new Promise<void>((resolve) => {
+                  let lastFrameTime = Date.now();
+                  const stallTimeout = 5000;
+                  let stallCheck: number;
+
+                  const checkStall = () => {
+                    if (Date.now() - lastFrameTime > stallTimeout) {
+                      console.warn('[Outro] rVFC stalled, completing with frames captured so far');
+                      outroVideo.pause();
+                      resolve();
+                      return;
+                    }
+                    stallCheck = window.setTimeout(checkStall, 1000);
+                  };
+                  stallCheck = window.setTimeout(checkStall, stallTimeout);
+
+                  const onFrame = () => {
+                    lastFrameTime = Date.now();
+                    drawOutroFrame();
+                    const timestamp = Math.floor(mainVideoEndUs + outroFrameIdx * outroFrameDurationUs);
+                    const vf = new win.VideoFrame(outroCanvas, { timestamp });
+                    if (videoEncoder.state === 'configured') {
+                      videoEncoder.encode(vf, { keyFrame: outroFrameIdx % 60 === 0 });
+                    }
+                    vf.close();
+                    outroFrameIdx++;
+
+                    if (!outroVideo.ended && !outroVideo.paused) {
+                      (outroVideo as any).requestVideoFrameCallback(onFrame);
+                    } else {
+                      clearTimeout(stallCheck);
+                      resolve();
+                    }
+                  };
+                  outroVideo.onended = () => { clearTimeout(stallCheck); resolve(); };
+                  (outroVideo as any).requestVideoFrameCallback(onFrame);
+                  outroVideo.play().catch(() => { clearTimeout(stallCheck); resolve(); });
+                });
+              } else {
+                const totalOutroFrames = Math.ceil(outroVideo.duration * outroFps);
+                for (let i = 0; i < totalOutroFrames; i++) {
+                  outroVideo.currentTime = i / outroFps;
+                  await new Promise<void>(r => { outroVideo.onseeked = () => r(); });
+                  drawOutroFrame();
+                  const timestamp = Math.floor(mainVideoEndUs + i * outroFrameDurationUs);
+                  const vf = new win.VideoFrame(outroCanvas, { timestamp });
+                  if (videoEncoder.state === 'configured') {
+                    videoEncoder.encode(vf, { keyFrame: i % 60 === 0 });
+                  }
+                  vf.close();
+                  outroFrameIdx++;
+                }
+              }
+
+              outroDurationMs = (outroFrameIdx * outroFrameDurationUs) / 1000;
+              console.log(`[Outro] Encoded ${outroFrameIdx} frames (${(outroDurationMs / 1000).toFixed(1)}s)`);
+              await videoEncoder.flush();
+
+              try {
+                const response = await fetch(outroVideoUrl!);
+                const arrayBuffer = await response.arrayBuffer();
+                const decodeCtx = new OfflineAudioContext(2, 48000, 48000);
+                outroAudioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
+              } catch (e) {
+                console.log('[Outro] No audio track in outro video (or decode failed), using silence');
+              }
+
+              outroVideo.src = '';
+              console.log('[Outro] Outro appended successfully');
+            }
+
+            const mainVideoFrameDurationMs = (frameCount * frameDurationUs) / 1000;
+            const outroDurationMsActual = outroDurationMs;
+            const totalVideoMs = mainVideoFrameDurationMs + outroDurationMsActual;
+
             const offlineAudio = await soundService.renderOffline(
               soundEvents,
-              totalDurationMs,
+              mainVideoFrameDurationMs,
               musicTrack || undefined,
               musicVolume
             );
-            const { left, right, sampleRate: audioSampleRate } = offlineAudio;
+            const audioSampleRate = offlineAudio.sampleRate;
+            const mainAudioSamples = offlineAudio.left.length;
+
+            let outroAudioLeft: Float32Array | null = null;
+            let outroAudioRight: Float32Array | null = null;
+            let outroAudioSamples = 0;
+
+            if (outroAudioBuffer) {
+              if (outroAudioBuffer.sampleRate !== audioSampleRate) {
+                const resampleCtx = new OfflineAudioContext(
+                  2,
+                  Math.ceil(outroAudioBuffer.duration * audioSampleRate),
+                  audioSampleRate
+                );
+                const source = resampleCtx.createBufferSource();
+                source.buffer = outroAudioBuffer;
+                source.connect(resampleCtx.destination);
+                source.start();
+                const resampled = await resampleCtx.startRendering();
+                outroAudioLeft = resampled.getChannelData(0);
+                outroAudioRight = resampled.numberOfChannels > 1 ? resampled.getChannelData(1) : outroAudioLeft;
+              } else {
+                outroAudioLeft = outroAudioBuffer.getChannelData(0);
+                outroAudioRight = outroAudioBuffer.numberOfChannels > 1 ? outroAudioBuffer.getChannelData(1) : outroAudioLeft;
+              }
+              outroAudioSamples = outroAudioLeft.length;
+            } else if (outroDurationMs > 0) {
+              outroAudioSamples = Math.ceil((outroDurationMs / 1000) * audioSampleRate);
+              outroAudioLeft = new Float32Array(outroAudioSamples);
+              outroAudioRight = new Float32Array(outroAudioSamples);
+            }
+
+            const totalAudioSamples = mainAudioSamples + outroAudioSamples;
+            let left: Float32Array;
+            let right: Float32Array;
+
+            if (outroAudioSamples > 0) {
+              left = new Float32Array(totalAudioSamples);
+              right = new Float32Array(totalAudioSamples);
+              left.set(offlineAudio.left);
+              right.set(offlineAudio.right);
+              if (outroAudioLeft && outroAudioRight) {
+                left.set(outroAudioLeft, mainAudioSamples);
+                right.set(outroAudioRight, mainAudioSamples);
+              }
+            } else {
+              left = offlineAudio.left;
+              right = offlineAudio.right;
+            }
+
             const numberOfChannels = 2;
             const chunkSize = 4800;
             const totalSamples = left.length;
