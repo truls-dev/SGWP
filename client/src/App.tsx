@@ -1193,29 +1193,20 @@ const App: React.FC = () => {
               outroCanvas.height = canvas.height;
               const outroCtx = outroCanvas.getContext('2d')!;
 
-              console.log(`[Outro] duration ${(outroDurationMs / 1000).toFixed(1)}s`);
+              const lastFrameSnapshot = document.createElement('canvas');
+              lastFrameSnapshot.width = canvas.width;
+              lastFrameSnapshot.height = canvas.height;
+              const snapshotCtx = lastFrameSnapshot.getContext('2d')!;
+              snapshotCtx.drawImage(canvas, 0, 0);
+
+              console.log(`[Outro] duration ${(outroDurationMs / 1000).toFixed(1)}s, overlaying on last chat frame`);
 
               const drawOutroFrame = () => {
-                outroCtx.fillStyle = '#000000';
-                outroCtx.fillRect(0, 0, outroCanvas.width, outroCanvas.height);
+                outroCtx.drawImage(lastFrameSnapshot, 0, 0);
                 const vw = outroVideo.videoWidth;
                 const vh = outroVideo.videoHeight;
                 if (vw > 0 && vh > 0) {
-                  const canvasAspect = outroCanvas.width / outroCanvas.height;
-                  const videoAspect = vw / vh;
-                  let drawW: number, drawH: number, drawX: number, drawY: number;
-                  if (videoAspect > canvasAspect) {
-                    drawW = outroCanvas.width;
-                    drawH = drawW / videoAspect;
-                    drawX = 0;
-                    drawY = (outroCanvas.height - drawH) / 2;
-                  } else {
-                    drawH = outroCanvas.height;
-                    drawW = drawH * videoAspect;
-                    drawX = (outroCanvas.width - drawW) / 2;
-                    drawY = 0;
-                  }
-                  outroCtx.drawImage(outroVideo, drawX, drawY, drawW, drawH);
+                  outroCtx.drawImage(outroVideo, 0, 0, outroCanvas.width, outroCanvas.height);
                 }
               };
 
@@ -2298,7 +2289,7 @@ const App: React.FC = () => {
               {appendOutro && outroVideoUrl && <i className="fa-solid fa-check text-black text-[10px]"></i>}
             </button>
             <div className="flex-1 min-w-0">
-              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Append Outro Video</span>
+              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Outro Overlay</span>
               {outroVideoUrl && (
                 <span className="text-[9px] text-gray-500 ml-2">
                   <button
