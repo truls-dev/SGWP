@@ -908,34 +908,7 @@ const App: React.FC = () => {
     }
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
-      if (appendOutro) {
-        const outroVideo = document.createElement('video');
-        outroVideo.muted = true;
-        outroVideo.playsInline = true;
-        outroVideo.preload = 'auto';
-        outroVideo.crossOrigin = 'anonymous';
-        outroVideo.src = OUTRO_WEBM_URL;
-        try {
-          await new Promise<void>((resolve, reject) => {
-            outroVideo.onloadeddata = () => resolve();
-            outroVideo.onerror = () => reject(new Error('Failed to load outro'));
-          });
-          outroVideoElRef.current = outroVideo;
-          outroActiveRef.current = true;
-          outroVideo.play().catch(() => {});
-          const outroDurationMs = (outroVideo.duration || 4) * 1000;
-          await delay(outroDurationMs);
-          outroActiveRef.current = false;
-          outroVideoElRef.current = null;
-          outroVideo.pause();
-          outroVideo.src = '';
-        } catch (e) {
-          console.warn('[Outro] Failed to load outro video, skipping overlay');
-          await delay(3000);
-        }
-      } else {
-        await delay(3000);
-      }
+      await delay(3000);
       stopRecordingSession();
     } else {
       if (previewAnimFrameRef.current) {
@@ -1190,6 +1163,38 @@ const App: React.FC = () => {
       };
 
       setTimeout(renderLoop, 0);
+
+      if (appendOutro) {
+        const outroVideo = document.createElement('video');
+        outroVideo.muted = true;
+        outroVideo.playsInline = true;
+        outroVideo.preload = 'auto';
+        outroVideo.crossOrigin = 'anonymous';
+        outroVideo.src = OUTRO_WEBM_URL;
+        outroVideo.onloadeddata = () => {
+          outroVideoElRef.current = outroVideo;
+          const outroDurationMs = (outroVideo.duration || 4) * 1000;
+          const outroStartMs = Math.max(0, estimatedDurationMs - outroDurationMs);
+          const elapsedSinceStart = performance.now() - startTime;
+          const remainingDelay = Math.max(0, outroStartMs - elapsedSinceStart);
+          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
+          const wt = workerTimerRef.current;
+          const scheduleOutro = wt ? wt.setTimeout.bind(wt) : (fn: () => void, ms: number) => window.setTimeout(fn, ms);
+          scheduleOutro(() => {
+            if (runningStatusRef.current === 'recording' && outroVideoElRef.current) {
+              outroActiveRef.current = true;
+              outroVideoElRef.current.play().catch(() => {});
+              console.log('[Outro] Overlay started');
+            }
+          }, remainingDelay);
+          outroVideo.onended = () => {
+            outroActiveRef.current = false;
+            console.log('[Outro] Overlay animation finished');
+          };
+        };
+        outroVideo.onerror = () => console.warn('[Outro] Failed to pre-load outro video');
+      }
+
       runPlaybackLoop(true);
 
       win.finishWebCodecsExport = async () => {
