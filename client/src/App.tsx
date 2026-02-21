@@ -148,6 +148,9 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.15);
   const [timedSoundEffects, setTimedSoundEffects] = useState<TimedSoundEffect[]>([]);
 
+  const [outroVideoUrl, setOutroVideoUrl] = useState<string | null>(null);
+  const [appendOutro, setAppendOutro] = useState(false);
+
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);
   const stickerTimeoutRef = useRef<number | null>(null);
@@ -188,6 +191,7 @@ const App: React.FC = () => {
   const groupIconInputRef = useRef<HTMLInputElement>(null);
   const exportBgInputRef = useRef<HTMLInputElement>(0 as any);
   const exportBgVideoInputRef = useRef<HTMLInputElement>(0 as any);
+  const outroVideoInputRef = useRef<HTMLInputElement>(0 as any);
   const timelineImageInputRef = useRef<HTMLInputElement>(0 as any);
   const activeTimelineEventIdRef = useRef<string | null>(null);
 
@@ -395,6 +399,16 @@ const App: React.FC = () => {
     if (file) {
       const url = URL.createObjectURL(file);
       updateChat('exportBackgroundVideoUrl', url);
+    }
+  };
+
+  const handleOutroVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (outroVideoUrl) URL.revokeObjectURL(outroVideoUrl);
+      const url = URL.createObjectURL(file);
+      setOutroVideoUrl(url);
+      setAppendOutro(true);
     }
   };
 
@@ -2086,6 +2100,48 @@ const App: React.FC = () => {
               Est. Duration: <span className="text-white/70">{formatDuration(estimatedDurationMs)}</span>
             </div>
           )}
+
+          <div className="flex items-center gap-3 px-1">
+            <button
+              data-testid="button-toggle-outro"
+              onClick={() => {
+                if (!outroVideoUrl) {
+                  outroVideoInputRef.current?.click();
+                } else {
+                  setAppendOutro(!appendOutro);
+                }
+              }}
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${appendOutro && outroVideoUrl ? 'bg-[#FFFC00] border-[#FFFC00]' : 'border-gray-500 bg-transparent'}`}
+            >
+              {appendOutro && outroVideoUrl && <i className="fa-solid fa-check text-black text-[10px]"></i>}
+            </button>
+            <div className="flex-1 min-w-0">
+              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Append Outro Video</span>
+              {outroVideoUrl && (
+                <span className="text-[9px] text-gray-500 ml-2">
+                  <button
+                    data-testid="button-change-outro"
+                    onClick={() => outroVideoInputRef.current?.click()}
+                    className="text-blue-400 hover:text-blue-300 underline uppercase font-bold"
+                  >Change</button>
+                  {' | '}
+                  <button
+                    data-testid="button-remove-outro"
+                    onClick={() => { if (outroVideoUrl) URL.revokeObjectURL(outroVideoUrl); setOutroVideoUrl(null); setAppendOutro(false); }}
+                    className="text-red-400 hover:text-red-300 underline uppercase font-bold"
+                  >Remove</button>
+                </span>
+              )}
+            </div>
+            <input
+              type="file"
+              ref={outroVideoInputRef}
+              className="hidden"
+              accept="video/webm,video/mp4,video/*"
+              onChange={handleOutroVideoUpload}
+            />
+          </div>
+
           <button onClick={playbackMode ? stopPlayback : () => startPlaybackSequence(false)} className={`w-full ${playbackMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-white/5 border-white/10'} border py-4 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95`}>
             {playbackMode ? 'Terminate Simulation' : 'Preview Simulation'}
           </button>
