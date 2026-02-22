@@ -516,7 +516,9 @@ const App: React.FC = () => {
       name,
       bitmojiAvatarId: getRandomAvatarId(),
       isMe: false,
-      color: GROUP_COLORS[state.cast.length % GROUP_COLORS.length]
+      color: state.chat.isGroup
+        ? GROUP_COLORS[state.cast.length % GROUP_COLORS.length]
+        : SNAP_COLORS.THEM
     };
     setState(prev => ({ 
         ...prev, 

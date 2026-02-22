@@ -739,25 +739,34 @@ export class CanvasRenderer {
       ? state.chatConfig.groupName || others.map((o) => o.name).join(", ")
       : state.chatConfig.contactName;
 
+    const callImg = !isCropped ? this.images.get("callIcons") : null;
+    const callIconsW = callImg ? callImg.width * (90 / callImg.height) + 50 : 0;
+    const maxNameW = this.W - cx - callIconsW - 10;
+
+    let nameFontSize = 50;
+    ctx.font = `900 ${nameFontSize}px ${FONT_HEADER}`;
+    let nameW = ctx.measureText(displayName).width;
+    while (nameW > maxNameW && nameFontSize > 28) {
+      nameFontSize -= 2;
+      ctx.font = `900 ${nameFontSize}px ${FONT_HEADER}`;
+      nameW = ctx.measureText(displayName).width;
+    }
+
     ctx.fillStyle = "#111827";
-    ctx.font = `900 50px ${FONT_HEADER}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    this.fillTextWithEmoji(ctx, displayName, cx, y + HEADER_H / 2, FONT_HEADER, 50);
+    this.fillTextWithEmoji(ctx, displayName, cx, y + HEADER_H / 2, FONT_HEADER, nameFontSize);
 
-    if (!isCropped) {
-      const callImg = this.images.get("callIcons");
-      if (callImg) {
-        const ih = 90;
-        const iw = callImg.width * (ih / callImg.height);
-        ctx.drawImage(
-          callImg,
-          this.W - iw - 40,
-          y + (HEADER_H - ih) / 2,
-          iw,
-          ih,
-        );
-      }
+    if (callImg) {
+      const ih = 90;
+      const iw = callImg.width * (ih / callImg.height);
+      ctx.drawImage(
+        callImg,
+        this.W - iw - 40,
+        y + (HEADER_H - ih) / 2,
+        iw,
+        ih,
+      );
     }
   }
 
