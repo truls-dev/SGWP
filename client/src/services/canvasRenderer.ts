@@ -792,7 +792,10 @@ export class CanvasRenderer {
     const layouts: MsgLayout[] = [];
     let totalH = 80;
 
-    ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
+    const msgFontSize = state.chatConfig.messageFontSize || MSG_FONT_SIZE;
+    const msgLineH = Math.round(msgFontSize * (MSG_LINE_H / MSG_FONT_SIZE));
+
+    ctx.font = `400 ${msgFontSize}px ${FONT_REGULAR}`;
 
     for (let i = 0; i < msgs.length; i++) {
       const msg = msgs[i];
@@ -817,18 +820,18 @@ export class CanvasRenderer {
       } else {
         if (!isGrouped) h += NAME_FONT_SIZE + 14;
 
-        ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
+        ctx.font = `400 ${msgFontSize}px ${FONT_REGULAR}`;
 
         if (msg.type === MessageType.STICKER) {
           h += 200;
         } else if (msg.type === MessageType.IMAGE) {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
-          h += lines.length * MSG_LINE_H;
+          h += lines.length * msgLineH;
           h += msg.isVertical ? 420 : 300;
           if (lines.length > 0) h += 10;
         } else {
           lines = this.wrapText(ctx, msg.text || "", maxTextW);
-          h += lines.length * MSG_LINE_H;
+          h += lines.length * msgLineH;
         }
 
         h += isGrouped ? 6 : 10;
@@ -860,7 +863,7 @@ export class CanvasRenderer {
       const y = drawYs[i];
       if (y + item.h < areaY - 20) continue;
       if (y > areaY + areaH + 20) continue;
-      this.drawMessage(ctx, item, y, padX, maxTextW, false);
+      this.drawMessage(ctx, item, y, padX, maxTextW, false, msgFontSize, msgLineH);
     }
 
     for (let i = 0; i < layouts.length; i++) {
@@ -911,6 +914,8 @@ export class CanvasRenderer {
     padX: number,
     maxTextW: number,
     drawBar: boolean = true,
+    fontSize: number = MSG_FONT_SIZE,
+    lineH: number = MSG_LINE_H,
   ): void {
     const { msg, isGrouped, lines, sender, color } = item;
 
@@ -953,13 +958,13 @@ export class CanvasRenderer {
       }
     } else if (msg.type === MessageType.IMAGE) {
       if (lines.length > 0) {
-        ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
+        ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
         ctx.fillStyle = "#000000";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         for (const line of lines) {
-          this.fillTextWithEmoji(ctx, line, textStartX, curY + MSG_LINE_H / 2, FONT_REGULAR, MSG_FONT_SIZE);
-          curY += MSG_LINE_H;
+          this.fillTextWithEmoji(ctx, line, textStartX, curY + lineH / 2, FONT_REGULAR, fontSize);
+          curY += lineH;
         }
         curY += 10;
       }
@@ -974,13 +979,13 @@ export class CanvasRenderer {
         curY += msg.isVertical ? 400 : 280;
       }
     } else {
-      ctx.font = `400 ${MSG_FONT_SIZE}px ${FONT_REGULAR}`;
+      ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = "#000000";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       for (const line of lines) {
-        this.fillTextWithEmoji(ctx, line, textStartX, curY + MSG_LINE_H / 2, FONT_REGULAR, MSG_FONT_SIZE);
-        curY += MSG_LINE_H;
+        this.fillTextWithEmoji(ctx, line, textStartX, curY + lineH / 2, FONT_REGULAR, fontSize);
+        curY += lineH;
       }
     }
 

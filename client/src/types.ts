@@ -61,6 +61,7 @@ export interface ChatConfig {
   isVideoBackgroundMode?: boolean; // NEW: Toggle for video background
   exportBackgroundVideoUrl?: string; // NEW: URL for the background video
   videoModeScale: number; // NEW: Manual scale for the phone in video mode
+  messageFontSize: number;
 }
 
 export interface TimedSoundEffect {

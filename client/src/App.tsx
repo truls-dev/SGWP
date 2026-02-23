@@ -118,7 +118,8 @@ const App: React.FC = () => {
       exportBackgroundUrl: undefined,
       isVideoBackgroundMode: true,
       exportBackgroundVideoUrl: undefined,
-      videoModeScale: 0.78
+      videoModeScale: 0.78,
+      messageFontSize: 56
     }
   });
 
@@ -358,7 +359,8 @@ const App: React.FC = () => {
           exportBackgroundUrl: undefined,
           isVideoBackgroundMode: false,
           exportBackgroundVideoUrl: undefined,
-          videoModeScale: 0.78
+          videoModeScale: 0.78,
+          messageFontSize: 56
         }
       };
     });
@@ -1471,6 +1473,20 @@ const App: React.FC = () => {
                       className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                      />
                   </div>
+                </div>
+
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center px-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Message Font Size</label>
+                      <span className="text-[10px] font-black text-[#33B5FF]">{state.chat.messageFontSize}px</span>
+                   </div>
+                   <input 
+                    data-testid="input-message-font-size"
+                    type="range" min="30" max="80" step="1" 
+                    value={state.chat.messageFontSize} 
+                    onChange={e => updateChat('messageFontSize', parseInt(e.target.value))}
+                    className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                   />
                 </div>
 
                 <div className="space-y-3 px-1">
