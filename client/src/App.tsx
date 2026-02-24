@@ -1437,11 +1437,12 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen w-full bg-[#0a0a0a] overflow-hidden text-white font-sans">
       <div 
-        className={`w-[480px] p-6 overflow-y-auto border-r border-white/10 bg-[#121212] flex flex-col gap-8 no-scrollbar transition-all duration-700 ease-in-out ${
+        className={`w-[480px] border-r border-white/10 bg-[#121212] flex flex-col transition-all duration-700 ease-in-out ${
           'ml-0 opacity-100'
         }`}
       >
-        <div className="flex flex-col sticky top-0 bg-[#121212] z-50 pb-4 pt-2 gap-4">
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 no-scrollbar">
+        <div className="flex flex-col sticky top-0 bg-[#121212] z-50 pb-4 pt-2 gap-4 -mt-6 -mx-6 px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-black mb-1 flex items-center gap-2">
@@ -2259,8 +2260,9 @@ const App: React.FC = () => {
           </>
           )}
         </div>
+        </div>
 
-        <div className="sticky bottom-0 bg-[#121212] pt-6 pb-2 border-t border-white/10 flex flex-col gap-4">
+        <div className="shrink-0 bg-[#121212] px-6 pt-4 pb-4 border-t border-white/10 flex flex-col gap-3">
           {state.script.length > 0 && (
             <div data-testid="text-estimated-duration" className="text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest">
               Est. Duration: <span className="text-white/70">{formatDuration(estimatedDurationMs)}</span>
