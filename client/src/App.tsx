@@ -119,7 +119,7 @@ const App: React.FC = () => {
       isVideoBackgroundMode: true,
       exportBackgroundVideoUrl: undefined,
       videoModeScale: 0.78,
-      messageFontSize: 56
+      messageFontSize: 40
     }
   });
 
@@ -361,7 +361,7 @@ const App: React.FC = () => {
           isVideoBackgroundMode: false,
           exportBackgroundVideoUrl: undefined,
           videoModeScale: 0.78,
-          messageFontSize: 56
+          messageFontSize: 40
         }
       };
     });
@@ -2042,6 +2042,7 @@ const App: React.FC = () => {
                           onDragStart={(e) => handleDragStart(e, idx)}
                           onDragOver={(e) => handleDragOver(e, idx)}
                           onDrop={(e) => handleDrop(e, idx)}
+                          onDragEnd={() => setDraggedItemIndex(null)}
                           className={`bg-black/30 border ${item.type === MessageType.PRESENCE ? 'border-[#33B5FF]/30 bg-[#33B5FF]/5' : 'border-white/10'} p-4 rounded-2xl relative transition-all hover:border-white/20 cursor-grab active:cursor-grabbing ${draggedItemIndex === idx ? 'opacity-40 grayscale scale-95' : 'opacity-100'}`}
                         >
                           <div className="flex justify-between items-center mb-2.5 pointer-events-none">
