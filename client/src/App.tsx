@@ -295,10 +295,9 @@ const App: React.FC = () => {
       const container = staticPreviewContainerRef.current;
       if (container) {
         container.innerHTML = '';
-        canvasEl.style.width = '100%';
-        canvasEl.style.height = '100%';
+        canvasEl.style.maxWidth = '100%';
+        canvasEl.style.maxHeight = '100%';
         canvasEl.style.display = 'block';
-        canvasEl.style.objectFit = 'contain';
         container.appendChild(canvasEl);
       }
     };
@@ -2325,23 +2324,27 @@ const App: React.FC = () => {
             </div>
         )}
 
+        {!playbackMode && !isRecording && (
+          <div
+            ref={staticPreviewContainerRef}
+            className="absolute inset-0 z-[60] flex items-center justify-center"
+            style={{ background: 'black' }}
+          />
+        )}
+
         <div 
           className={`relative flex flex-row transition-all duration-700 ease-in-out z-10 bg-transparent ${
-            isRecording || isVideoMode || (!playbackMode && !isRecording) ? 'shadow-none' : 'shadow-[0_30px_120px_rgba(0,0,0,0.9)]'
-          } ${state.chat.isShortCrop || isVideoMode || (!playbackMode && !isRecording) ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
+            isRecording || isVideoMode ? 'shadow-none' : 'shadow-[0_30px_120px_rgba(0,0,0,0.9)]'
+          } ${state.chat.isShortCrop || isVideoMode ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
           style={{ 
             width: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : basePhoneWidth,
             height: state.chat.isShortCrop ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px` : (isRecording ? '100vh' : '98vh'),
             borderBottomLeftRadius: isRecording || isVideoMode ? '0' : '10px',
             borderBottomRightRadius: isRecording || isVideoMode ? '0' : '10px',
-            flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto'
+            flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto',
+            display: playbackMode || isRecording ? undefined : 'none',
           }}
         >
-          <div
-            ref={staticPreviewContainerRef}
-            className="absolute inset-0 z-[60]"
-            style={{ background: 'black', display: !playbackMode && !isRecording ? 'block' : 'none' }}
-          />
 
           {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black', display: playbackMode || isRecording ? undefined : 'none' }} className="h-full shrink-0" />}
 
