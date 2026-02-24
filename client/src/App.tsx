@@ -1098,12 +1098,20 @@ const App: React.FC = () => {
         renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
       }
 
+      const canvas = renderer.getCanvas();
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.objectFit = 'contain';
+      canvas.style.display = 'block';
+      if (previewCanvasContainerRef.current) {
+        previewCanvasContainerRef.current.innerHTML = '';
+        previewCanvasContainerRef.current.appendChild(canvas);
+      }
+
       setIsRecording(true);
       await new Promise(r => setTimeout(r, 500));
 
       runningStatusRef.current = 'recording';
-
-      const canvas = renderer.getCanvas();
 
       const muxer = new Muxer({
         target: new ArrayBufferTarget(),
@@ -1425,7 +1433,7 @@ const App: React.FC = () => {
 
   const isVideoMode = state.chat.isVideoBackgroundMode;
   const previewInterfaceScaleFactor = isVideoMode ? state.chat.videoModeScale : 1;
-  const basePhoneWidth = `calc((${isRecording ? '100vh' : '94vh'}) * 9 / 19.5 * ${previewInterfaceScaleFactor})`;
+  const basePhoneWidth = `calc((${isRecording ? '100vh' : '98vh'}) * 9 / 19.5 * ${previewInterfaceScaleFactor})`;
 
   return (
     <div className="flex h-screen w-full bg-[#0a0a0a] overflow-hidden text-white font-sans">
@@ -2322,7 +2330,7 @@ const App: React.FC = () => {
           } ${state.chat.isShortCrop || isVideoMode ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
           style={{ 
             width: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : basePhoneWidth,
-            height: state.chat.isShortCrop ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px` : (isRecording ? '100vh' : '94vh'),
+            height: state.chat.isShortCrop ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px` : (isRecording ? '100vh' : '98vh'),
             borderBottomLeftRadius: isRecording || isVideoMode ? '0' : '10px',
             borderBottomRightRadius: isRecording || isVideoMode ? '0' : '10px',
             flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto'
@@ -2346,7 +2354,7 @@ const App: React.FC = () => {
               className="absolute inset-0 z-50"
               style={{ 
                 background: 'black',
-                display: playbackMode && !isRecording ? 'block' : 'none'
+                display: playbackMode ? 'block' : 'none'
               }}
             />
             <div className="flex flex-col bg-white select-none absolute top-0 left-0 overflow-hidden snap-font-regular h-full w-full" style={{ transform: `scale(${scale})`, transformOrigin: '0 0', width: `${100 / scale}%`, height: `${100 / scale}%` }}>
