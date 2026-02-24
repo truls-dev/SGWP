@@ -2271,25 +2271,22 @@ const App: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-3 px-1">
+          <div className="flex items-center gap-2">
+            <button onClick={playbackMode ? stopPlayback : () => startPlaybackSequence(false)} className={`flex-1 ${playbackMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-white/5 border-white/10'} border py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95`}>
+              {playbackMode ? 'Stop' : 'Preview'}
+            </button>
+            <button onClick={() => startPlaybackSequence(true)} disabled={isRecording} className="flex-1 bg-[#FFFC00] text-black py-3.5 rounded-[20px] font-black text-[10px] uppercase tracking-[0.15em] shadow-[0_10px_40px_rgba(255,252,0,0.15)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
+              Export
+            </button>
             <button
               data-testid="button-toggle-outro"
               onClick={() => setAppendOutro(!appendOutro)}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${appendOutro ? 'bg-[#FFFC00] border-[#FFFC00]' : 'border-gray-500 bg-transparent'}`}
+              className={`flex items-center gap-1.5 px-3 py-3.5 rounded-[20px] border-2 transition-all text-[10px] font-black uppercase tracking-wider ${appendOutro ? 'bg-[#FFFC00]/10 border-[#FFFC00] text-[#FFFC00]' : 'border-gray-600 text-gray-400 bg-transparent'}`}
             >
-              {appendOutro && <i className="fa-solid fa-check text-black text-[10px]"></i>}
+              {appendOutro && <i className="fa-solid fa-check text-[8px]"></i>}
+              Overlay
             </button>
-            <div className="flex-1 min-w-0">
-              <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">Subscribe Overlay</span>
-            </div>
           </div>
-
-          <button onClick={playbackMode ? stopPlayback : () => startPlaybackSequence(false)} className={`w-full ${playbackMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/20' : 'bg-white/5 border-white/10'} border py-4 rounded-[24px] font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95`}>
-            {playbackMode ? 'Terminate Simulation' : 'Preview Simulation'}
-          </button>
-          <button onClick={() => startPlaybackSequence(true)} disabled={isRecording} className="w-full bg-[#FFFC00] text-black p-5 rounded-[32px] font-black text-sm uppercase tracking-[0.15em] shadow-[0_10px_40px_rgba(255,252,0,0.15)] hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
-            Export Video (Vertical)
-          </button>
         </div>
       </div>
 

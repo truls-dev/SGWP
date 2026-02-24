@@ -814,9 +814,10 @@ export class CanvasRenderer {
       let lines: string[] = [];
 
       if (msg.type === MessageType.NOTIFICATION) {
-        ctx.font = `900 ${NOTIF_FONT_SIZE}px ${FONT_REGULAR}`;
+        const notifSize = msgFontSize * 0.75;
+        ctx.font = `900 ${notifSize}px ${FONT_REGULAR}`;
         lines = this.wrapText(ctx, msg.text || "", this.W - padX * 4);
-        h = 50 + lines.length * (NOTIF_FONT_SIZE + 10);
+        h = 50 + lines.length * (notifSize + 10);
       } else {
         if (!isGrouped) h += NAME_FONT_SIZE + 14;
 
@@ -920,14 +921,15 @@ export class CanvasRenderer {
     const { msg, isGrouped, lines, sender, color } = item;
 
     if (msg.type === MessageType.NOTIFICATION) {
-      ctx.font = `900 ${NOTIF_FONT_SIZE}px ${FONT_REGULAR}`;
+      const notifSize = fontSize * 0.75;
+      ctx.font = `900 ${notifSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = "#9CA3AF";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       let textY = y + 25;
       for (const line of lines) {
-        this.fillTextWithEmoji(ctx, line, this.W / 2, textY, FONT_REGULAR, NOTIF_FONT_SIZE);
-        textY += NOTIF_FONT_SIZE + 10;
+        this.fillTextWithEmoji(ctx, line, this.W / 2, textY, FONT_REGULAR, notifSize);
+        textY += notifSize + 10;
       }
       return;
     }
