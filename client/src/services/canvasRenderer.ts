@@ -815,7 +815,8 @@ export class CanvasRenderer {
         lines = this.wrapText(ctx, msg.text || "", this.W - padX * 4);
         h = 50 + lines.length * (notifSize + 10);
       } else {
-        if (!isGrouped) h += msgFontSize + 14;
+        const nameSize = Math.round(msgFontSize * 0.75);
+        if (!isGrouped) h += nameSize + 14;
 
         ctx.font = `400 ${msgFontSize}px ${FONT_REGULAR}`;
 
@@ -880,7 +881,7 @@ export class CanvasRenderer {
       const firstY = drawYs[i];
       const lastItem = layouts[groupEndIdx];
       const lastY = drawYs[groupEndIdx];
-      const groupTopY = firstY + 10 + (msgFontSize + 14);
+      const groupTopY = firstY + 10 + (Math.round(msgFontSize * 0.75) + 14);
       const groupBottomY = lastY + lastItem.h;
 
       if (groupBottomY < areaY - 20 || groupTopY > areaY + areaH + 20) continue;
@@ -936,12 +937,13 @@ export class CanvasRenderer {
     const textColor = isFreshlySent ? "#8E8E8E" : "#000000";
 
     if (!isGrouped) {
-      ctx.font = `700 ${fontSize}px ${FONT_REGULAR}`;
+      const nameSize = Math.round(fontSize * 0.75);
+      ctx.font = `700 ${nameSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = color;
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
-      this.fillTextWithEmoji(ctx, sender?.name?.toUpperCase() || "", padX, curY, FONT_REGULAR, fontSize);
-      curY += fontSize + 14;
+      this.fillTextWithEmoji(ctx, sender?.name?.toUpperCase() || "", padX, curY, FONT_REGULAR, nameSize);
+      curY += nameSize + 14;
     }
 
     const textStartX = padX + BAR_WIDTH + BAR_GAP;
