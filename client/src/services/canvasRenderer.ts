@@ -221,7 +221,7 @@ const MSG_LINE_H = 68;
 const NAME_FONT_SIZE = 36;
 const NOTIF_FONT_SIZE = 33;
 const BAR_WIDTH = 6;
-const BAR_GAP = 28;
+const BAR_GAP = 14;
 const MSG_PAD_X = 44;
 const MSG_PAD_X_CROPPED = 183;
 
