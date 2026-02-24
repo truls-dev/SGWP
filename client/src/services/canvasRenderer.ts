@@ -605,16 +605,12 @@ export class CanvasRenderer {
     ctx.textBaseline = "middle";
 
     const carrierY = y + STATUS_BAR_H / 2;
-    const metrics = ctx.measureText(state.systemConfig.carrier);
-    const textTop = carrierY - (metrics.actualBoundingBoxAscent || 10);
-    const textBottom = carrierY + (metrics.actualBoundingBoxDescent || 3);
-    const textH = textBottom - textTop;
 
-    const signalH = textH;
+    const signalH = 17;
     const svgAspect = 27 / 17;
     const signalW = signalH * svgAspect;
     const signalX = 22;
-    const signalY = textTop;
+    const signalY = carrierY - signalH / 2;
     const sx = signalW / 27;
     const sy = signalH / 17;
 
