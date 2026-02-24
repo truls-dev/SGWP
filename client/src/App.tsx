@@ -1441,11 +1441,10 @@ const App: React.FC = () => {
           'ml-0 opacity-100'
         }`}
       >
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 no-scrollbar">
-        <div className="flex flex-col sticky top-0 bg-[#121212] z-50 pb-4 pt-2 gap-4 -mt-6 -mx-6 px-6">
+        <div className="shrink-0 px-6 pt-4 pb-3 bg-[#121212] border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-black mb-1 flex items-center gap-2">
+              <h2 className="text-2xl font-black mb-0 flex items-center gap-2">
                 <span className="text-[#FFFC00] drop-shadow-[0_0_10px_rgba(255,252,0,0.3)]">👻</span> 
                 SnapGen Pro
               </h2>
@@ -1459,6 +1458,8 @@ const App: React.FC = () => {
             <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em] font-bold">Studio Dashboard</p>
           </div>
         </div>
+
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 no-scrollbar">
 
         <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1 gap-1">
           {(['script', 'cast', 'settings'] as const).map(tab => (
