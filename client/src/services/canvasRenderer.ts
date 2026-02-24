@@ -1011,7 +1011,7 @@ export class CanvasRenderer {
 
     const isGroup = state.chatConfig.isGroup;
     const isCropped = state.chatConfig.isKeyboardCropped;
-    const padLeft = isCropped ? 183 : 0;
+    const padLeft = isCropped ? 183 : Math.round(5 * 2.77);
 
     if (isGroup) {
       this.drawGroupPresence(ctx, state, areaBottom, padLeft);
@@ -1253,7 +1253,7 @@ export class CanvasRenderer {
   // All values in CSS px, converted to canvas scale (S=2.77) at runtime
   // ═══════════════════════════════════════════════════════════════
   private static readonly GROUP_PRESENCE = {
-    ROW_LEFT_PADDING: 12,
+    ROW_LEFT_PADDING: 5,
     ROW_GAP: -18,
     AVATAR_CONTAINER_W: 68,
     AVATAR_CONTAINER_H: 40,
