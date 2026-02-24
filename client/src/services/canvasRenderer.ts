@@ -1086,7 +1086,7 @@ export class CanvasRenderer {
   // Positive Y = move down, Negative Y = move up.
   // ═══════════════════════════════════════════════════════════════
   private static readonly SINGLE_PRESENCE = {
-    AVATAR_OFFSET_X: 28, // Shift bitmoji left/right (px)
+    AVATAR_OFFSET_X: 0, // Shift bitmoji left/right (px)
     AVATAR_OFFSET_Y: 0, // Shift bitmoji up/down (px)
     BUBBLE_OFFSET_X: 0, // Shift typing bubble left/right (px)
     BUBBLE_OFFSET_Y: -35, // Shift typing bubble up/down (px)
