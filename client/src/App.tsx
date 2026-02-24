@@ -1433,7 +1433,8 @@ const App: React.FC = () => {
 
   const isVideoMode = state.chat.isVideoBackgroundMode;
   const previewInterfaceScaleFactor = isVideoMode ? state.chat.videoModeScale : 1;
-  const basePhoneWidth = `calc((${isRecording ? '100vh' : '98vh'}) * 9 / 19.5 * ${previewInterfaceScaleFactor})`;
+  const phoneAspect = !playbackMode && !isRecording ? '9 / 16' : '9 / 19.5';
+  const basePhoneWidth = `calc((${isRecording ? '100vh' : '98vh'}) * ${phoneAspect} * ${previewInterfaceScaleFactor})`;
 
   return (
     <div className="flex h-screen w-full bg-[#0a0a0a] overflow-hidden text-white font-sans">
@@ -2326,8 +2327,8 @@ const App: React.FC = () => {
 
         <div 
           className={`relative flex flex-row transition-all duration-700 ease-in-out z-10 bg-transparent ${
-            isRecording || isVideoMode ? 'shadow-none' : 'shadow-[0_30px_120px_rgba(0,0,0,0.9)]'
-          } ${state.chat.isShortCrop || isVideoMode ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
+            isRecording || isVideoMode || (!playbackMode && !isRecording) ? 'shadow-none' : 'shadow-[0_30px_120px_rgba(0,0,0,0.9)]'
+          } ${state.chat.isShortCrop || isVideoMode || (!playbackMode && !isRecording) ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
           style={{ 
             width: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : basePhoneWidth,
             height: state.chat.isShortCrop ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px` : (isRecording ? '100vh' : '98vh'),
