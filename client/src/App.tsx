@@ -959,7 +959,7 @@ const App: React.FC = () => {
     }
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
-      await delay(1500);
+      await delay(3000);
       stopRecordingSession();
     } else {
       if (previewAnimFrameRef.current) {
@@ -1259,22 +1259,6 @@ const App: React.FC = () => {
         if (isFinished) return;
         isFinished = true;
         try {
-            const currentFrameState: FrameState = {
-              ...frameStateRef.current,
-              time: performance.now() - startTime,
-            };
-            renderer.renderFrame(currentFrameState);
-
-            for (let i = 0; i < 4; i++) {
-              const ts = Math.floor(frameCount * frameDurationUs);
-              const f = new win.VideoFrame(canvas, { timestamp: ts });
-              if (videoEncoder.state === 'configured') {
-                videoEncoder.encode(f, { keyFrame: i === 0 });
-              }
-              f.close();
-              frameCount++;
-            }
-
             const totalDurationMs = performance.now() - startTime;
             const soundEvents = soundService.stopRecordingMode();
 
