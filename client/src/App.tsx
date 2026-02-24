@@ -2305,7 +2305,7 @@ const App: React.FC = () => {
                                 <div className="flex items-start gap-3 w-full">
                                 <div className={`w-[2px] h-auto min-h-[28px] self-stretch transition-all ${!isGroupedWithPrev ? 'rounded-t-full' : ''}`} style={{ backgroundColor: color }} />
                                 <div className="flex-1 flex flex-col gap-2">
-                                    {item.text && <span className="snap-font-regular text-[21px] text-black leading-[1.3] tracking-tight block text-balance">{item.text}</span>}
+                                    {item.text && <span className="snap-font-regular text-[21px] text-black leading-[1.3] tracking-tight block text-balance break-all">{item.text}</span>}
                                     <div className={`${imageContainerWidth} w-full`}>
                                         {item.mediaUrl ? (
                                             <img 
@@ -2337,7 +2337,7 @@ const App: React.FC = () => {
                             <div className="flex items-start gap-3 w-full">
                                 <div className={`w-[2px] h-auto min-h-[28px] self-stretch transition-all ${!isGroupedWithPrev ? 'rounded-t-full' : ''}`} style={{ backgroundColor: color }} />
                                 <div className="flex-1">
-                                <span className="snap-font-regular text-[21px] text-black leading-[1.3] tracking-tight block text-balance">{item.text}</span>
+                                <span className="snap-font-regular text-[21px] text-black leading-[1.3] tracking-tight block text-balance break-all">{item.text}</span>
                                 </div>
                             </div>
                             </div>
