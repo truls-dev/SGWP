@@ -222,7 +222,7 @@ const NAME_FONT_SIZE = 36;
 const NOTIF_FONT_SIZE = 33;
 const BAR_WIDTH = 6;
 const BAR_GAP = 14;
-const MSG_PAD_X = 44;
+const MSG_PAD_X = 24;
 const MSG_PAD_X_CROPPED = 183;
 
 interface MsgLayout {
@@ -1011,7 +1011,7 @@ export class CanvasRenderer {
 
     const isGroup = state.chatConfig.isGroup;
     const isCropped = state.chatConfig.isKeyboardCropped;
-    const padLeft = isCropped ? 183 : 6;
+    const padLeft = isCropped ? 183 : 0;
 
     if (isGroup) {
       this.drawGroupPresence(ctx, state, areaBottom, padLeft);
@@ -1719,7 +1719,7 @@ export class CanvasRenderer {
     const hasText = state.compositionText.length > 0;
     const rowH = Math.round(34 * S);
     const rightPad = Math.round(8 * S);
-    let cx = isCropped ? 183 : Math.round(12 * S);
+    let cx = isCropped ? 183 : Math.round(5 * S);
 
     if (!isCropped) {
       cx += rowH + Math.round(10 * S);
@@ -1773,7 +1773,7 @@ export class CanvasRenderer {
     const layout = this.getInputLayout(state);
     const { S, isCropped, hasText, rowH, iconSize, iconGap, smileySlotW, iconAreaW, textPadL, textPadR } = layout;
 
-    let cx = isCropped ? 183 : Math.round(12 * S);
+    let cx = isCropped ? 183 : Math.round(5 * S);
     const bottomRowCenterY = y + totalH - INPUT_H / 2;
     const rowY = bottomRowCenterY - rowH / 2;
 
