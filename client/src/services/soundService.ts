@@ -2,6 +2,7 @@
 const KEYBOARD_CLICK_URL = "https://raw.githubusercontent.com/truls-dev/sounds/main/tock2.wav";
 const NOTIFICATION_SOUND_URL = "https://raw.githubusercontent.com/truls-dev/sounds/main/snapnotif.wav";
 const BACKSPACE_SOUND_URL = "https://raw.githubusercontent.com/truls-dev/sounds/main/key_press_modifier.wav";
+const SUBSEQUENT_NOTIF_URL = "https://raw.githubusercontent.com/truls-dev/sounds/main/48ee2b497d30471250b4.mp3";
 
 const SOUND_EFFECTS: Record<string, string> = {
   Bruh: "https://raw.githubusercontent.com/truls-dev/sounds/main/bruh.wav",
@@ -54,7 +55,7 @@ export const MUSIC_TRACKS: { name: string; filename: string; baseUrl?: string }[
 ];
 
 export interface SoundEvent {
-  type: 'click' | 'notification' | 'backspace' | 'effect';
+  type: 'click' | 'notification' | 'notification_subsequent' | 'backspace' | 'effect';
   timeMs: number;
   volume: number;
   effectName?: string;
@@ -64,6 +65,7 @@ class SoundService {
   private audioCtx: AudioContext | null = null;
   private clickBuffer: AudioBuffer | null = null;
   private notificationBuffer: AudioBuffer | null = null;
+  private subsequentNotifBuffer: AudioBuffer | null = null;
   private backspaceBuffer: AudioBuffer | null = null;
   private effectBuffers: Map<string, AudioBuffer> = new Map();
   private musicBuffers: Map<string, AudioBuffer> = new Map();
@@ -130,14 +132,16 @@ class SoundService {
         return await this.audioCtx!.decodeAudioData(arr);
       };
 
-      const [click, notif, backspace] = await Promise.all([
+      const [click, notif, subNotif, backspace] = await Promise.all([
         fetchAndDecode(KEYBOARD_CLICK_URL),
         fetchAndDecode(NOTIFICATION_SOUND_URL),
+        fetchAndDecode(SUBSEQUENT_NOTIF_URL),
         fetchAndDecode(BACKSPACE_SOUND_URL)
       ]);
 
       this.clickBuffer = click;
       this.notificationBuffer = notif;
+      this.subsequentNotifBuffer = subNotif;
       this.backspaceBuffer = backspace;
 
       const effectEntries = Object.entries(SOUND_EFFECTS);
@@ -158,7 +162,7 @@ class SoundService {
 
   public async prepare() {
     await this.init();
-    if (!this.clickBuffer || !this.notificationBuffer || !this.backspaceBuffer || this.effectBuffers.size === 0) {
+    if (!this.clickBuffer || !this.notificationBuffer || !this.subsequentNotifBuffer || !this.backspaceBuffer || this.effectBuffers.size === 0) {
       await this.loadBuffers();
     }
   }
@@ -217,6 +221,12 @@ class SoundService {
     this.playSound(this.notificationBuffer, vol);
   }
 
+  public playSubsequentNotification() {
+    const vol = 0.9 * this._sfxVolume;
+    this.logEvent('notification_subsequent', vol);
+    this.playSound(this.subsequentNotifBuffer, vol);
+  }
+
   public playBackspace() {
     const vol = 0.9 * this._sfxVolume;
     this.logEvent('backspace', vol);
@@ -260,6 +270,7 @@ class SoundService {
     switch (event.type) {
       case 'click': return this.clickBuffer;
       case 'notification': return this.notificationBuffer;
+      case 'notification_subsequent': return this.subsequentNotifBuffer;
       case 'backspace': return this.backspaceBuffer;
       case 'effect': return event.effectName ? (this.effectBuffers.get(event.effectName) || null) : null;
       default: return null;

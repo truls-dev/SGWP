@@ -697,6 +697,7 @@ const App: React.FC = () => {
     // TRACK STATE LOCALLY TO AVOID CLOSURE STALENESS
     let localActiveParticipantIds: string[] = [...frameStateRef.current.activeParticipantIds];
     let localTypingParticipantIds: string[] = [];
+    let hasPlayedFirstNotif = false;
     
     const updateActiveIds = (newIds: string[]) => {
       localActiveParticipantIds = newIds;
@@ -808,7 +809,12 @@ const App: React.FC = () => {
           if (event.soundEffect) {
             await soundService.playEffect(event.soundEffect);
           } else if (!sender.isMe && !event.isBackspaced) {
-            soundService.playNotification();
+            if (!hasPlayedFirstNotif) {
+              soundService.playNotification();
+              hasPlayedFirstNotif = true;
+            } else {
+              soundService.playSubsequentNotification();
+            }
           }
         }
         await delay(800);
@@ -933,7 +939,12 @@ const App: React.FC = () => {
             if (event.soundEffect) {
               await soundService.playEffect(event.soundEffect);
             } else if (!event.isBackspaced) {
-              soundService.playNotification();
+              if (!hasPlayedFirstNotif) {
+                soundService.playNotification();
+                hasPlayedFirstNotif = true;
+              } else {
+                soundService.playSubsequentNotification();
+              }
             }
           }
           await delay(800);
