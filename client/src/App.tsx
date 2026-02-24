@@ -1265,13 +1265,16 @@ const App: React.FC = () => {
             };
             renderer.renderFrame(currentFrameState);
 
-            const finalTimestamp = Math.floor(frameCount * frameDurationUs);
-            const finalFrame = new win.VideoFrame(canvas, { timestamp: finalTimestamp });
-            if (videoEncoder.state === 'configured') {
-              videoEncoder.encode(finalFrame, { keyFrame: true });
+            const holdFrames = 3;
+            for (let i = 0; i < holdFrames; i++) {
+              const ts = Math.floor(frameCount * frameDurationUs);
+              const f = new win.VideoFrame(canvas, { timestamp: ts });
+              if (videoEncoder.state === 'configured') {
+                videoEncoder.encode(f, { keyFrame: i === 0 });
+              }
+              f.close();
+              frameCount++;
             }
-            finalFrame.close();
-            frameCount++;
 
             const totalDurationMs = performance.now() - startTime;
             const soundEvents = soundService.stopRecordingMode();
