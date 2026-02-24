@@ -1146,7 +1146,7 @@ const App: React.FC = () => {
       muxerRef.current = muxer;
 
       const videoEncoder = new win.VideoEncoder({
-        output: (chunk: any, meta: any) => muxer.addVideoChunk(chunk, meta, Math.floor(frameDurationUs)),
+        output: (chunk: any, meta: any) => muxer.addVideoChunk(chunk, meta),
         error: (e: any) => console.error("VideoEncoder error:", e)
       });
 
@@ -1265,13 +1265,15 @@ const App: React.FC = () => {
             };
             renderer.renderFrame(currentFrameState);
 
-            const finalTs = Math.floor(frameCount * frameDurationUs);
-            const finalFrame = new win.VideoFrame(canvas, { timestamp: finalTs });
-            if (videoEncoder.state === 'configured') {
-              videoEncoder.encode(finalFrame, { keyFrame: true });
+            for (let i = 0; i < 4; i++) {
+              const ts = Math.floor(frameCount * frameDurationUs);
+              const f = new win.VideoFrame(canvas, { timestamp: ts });
+              if (videoEncoder.state === 'configured') {
+                videoEncoder.encode(f, { keyFrame: i === 0 });
+              }
+              f.close();
+              frameCount++;
             }
-            finalFrame.close();
-            frameCount++;
 
             const totalDurationMs = performance.now() - startTime;
             const soundEvents = soundService.stopRecordingMode();
