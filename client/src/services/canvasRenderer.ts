@@ -1678,16 +1678,33 @@ export class CanvasRenderer {
     const textHasEmoji = hasEmoji(text);
     const fontMatch = ctx.font.match(/(\d+)px/);
     const fontSize = fontMatch ? parseInt(fontMatch[1]) : 38;
+
+    const measure = (s: string) =>
+      textHasEmoji
+        ? this.measureTextWithEmoji(ctx, s, FONT_REGULAR, fontSize)
+        : ctx.measureText(s).width;
+
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
-      const w = textHasEmoji
-        ? this.measureTextWithEmoji(ctx, test, FONT_REGULAR, fontSize)
-        : ctx.measureText(test).width;
+      const w = measure(test);
       if (w > maxW && line) {
         lines.push(line);
         line = word;
       } else {
         line = test;
+      }
+      if (measure(line) > maxW) {
+        let remaining = line;
+        line = "";
+        for (const ch of remaining) {
+          const next = line + ch;
+          if (measure(next) > maxW && line) {
+            lines.push(line);
+            line = ch;
+          } else {
+            line = next;
+          }
+        }
       }
     }
     if (line) lines.push(line);
