@@ -170,6 +170,9 @@ const App: React.FC = () => {
 
   const canvasRendererRef = useRef<CanvasRenderer | null>(null);
   const previewCanvasContainerRef = useRef<HTMLDivElement>(null);
+  const staticPreviewRendererRef = useRef<CanvasRenderer | null>(null);
+  const staticPreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const staticPreviewContainerRef = useRef<HTMLDivElement>(null);
   const previewAnimFrameRef = useRef<number | null>(null);
   const timedSfxTimeoutsRef = useRef<number[]>([]);
   const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
@@ -278,6 +281,33 @@ const App: React.FC = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [playbackItems, playbackMode, compositionText, typingParticipantIds, state.script, isMeTyping]);
+
+  useEffect(() => {
+    if (playbackMode || isRecording) return;
+    if (!staticPreviewRendererRef.current) {
+      staticPreviewRendererRef.current = new CanvasRenderer();
+    }
+    const renderer = staticPreviewRendererRef.current;
+    renderer.preload(state.cast, state.script, state.chat);
+    const renderPreview = () => {
+      const canvasEl = renderer.renderFrame(frameStateRef.current);
+      staticPreviewCanvasRef.current = canvasEl;
+      const container = staticPreviewContainerRef.current;
+      if (container) {
+        container.innerHTML = '';
+        canvasEl.style.width = '100%';
+        canvasEl.style.height = '100%';
+        canvasEl.style.display = 'block';
+        canvasEl.style.objectFit = 'contain';
+        container.appendChild(canvasEl);
+      }
+    };
+    renderPreview();
+    const t1 = setTimeout(renderPreview, 500);
+    const t2 = setTimeout(renderPreview, 1500);
+    const t3 = setTimeout(renderPreview, 3000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [state, compositionText, isMeTyping, activeKey, isShiftActive, keyboardLayout, typingParticipantIds, activeParticipantIds, scriptParticipantIds, playbackMode, isRecording, suggestedUrl]);
 
   const toggleGroupMode = () => {
     setState(prev => ({
@@ -2298,12 +2328,18 @@ const App: React.FC = () => {
             flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto'
           }}
         >
-          {/* Sidebars removed entirely if isVideoMode is true */}
-          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black' }} className="h-full shrink-0" />}
+          <div
+            ref={staticPreviewContainerRef}
+            className="absolute inset-0 z-[60]"
+            style={{ background: 'black', display: !playbackMode && !isRecording ? 'block' : 'none' }}
+          />
+
+          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black', display: playbackMode || isRecording ? undefined : 'none' }} className="h-full shrink-0" />}
 
           <div className="flex-1 relative overflow-hidden" style={{ 
               borderTopLeftRadius: `${state.chat.topCornerRadius}px`,
               borderTopRightRadius: `${state.chat.topCornerRadius}px`,
+              display: playbackMode || isRecording ? undefined : 'none',
           }}>
             <div
               ref={previewCanvasContainerRef}
@@ -2468,7 +2504,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black' }} className="h-full shrink-0" />}
+          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black', display: playbackMode || isRecording ? undefined : 'none' }} className="h-full shrink-0" />}
         </div>
       </div>
       
