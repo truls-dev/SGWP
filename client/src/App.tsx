@@ -1792,81 +1792,75 @@ const App: React.FC = () => {
                       )}
                     </div>
                   )}
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-6">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Background Music</h3>
-              <div className="bg-white/5 p-6 rounded-[32px] border border-white/5 space-y-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Music Track</label>
-                  <select
-                    data-testid="select-music-track"
-                    value={musicTrack}
-                    onChange={e => {
-                      const val = e.target.value;
-                      soundService.stopMusicPreview();
-                      setIsMusicPreviewing(false);
-                      setMusicTrack(val);
-                    }}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#33B5FF] appearance-none cursor-pointer"
-                  >
-                    <option value="">None</option>
-                    {MUSIC_TRACKS.map(t => (
-                      <option key={t.filename} value={t.filename}>{t.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {musicTrack && (
-                  <div className="space-y-5 animate-in fade-in duration-300">
-                    <button
-                      data-testid="button-preview-music"
-                      disabled={isMusicLoading}
-                      onClick={async () => {
-                        if (isMusicPreviewing) {
-                          soundService.stopMusicPreview();
-                          setIsMusicPreviewing(false);
-                        } else {
-                          setIsMusicLoading(true);
-                          await soundService.previewMusic(musicTrack, musicVolume);
-                          setIsMusicLoading(false);
-                          setIsMusicPreviewing(true);
-                        }
+                  <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">Music Track</label>
+                    <select
+                      data-testid="select-music-track"
+                      value={musicTrack}
+                      onChange={e => {
+                        const val = e.target.value;
+                        soundService.stopMusicPreview();
+                        setIsMusicPreviewing(false);
+                        setMusicTrack(val);
                       }}
-                      className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#33B5FF] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#33B5FF] appearance-none cursor-pointer"
                     >
-                      {isMusicLoading ? (
-                        <><i className="fa-solid fa-spinner fa-spin"></i> Loading...</>
-                      ) : isMusicPreviewing ? (
-                        <><i className="fa-solid fa-stop"></i> Stop Preview</>
-                      ) : (
-                        <><i className="fa-solid fa-play"></i> Preview Track</>
-                      )}
-                    </button>
+                      <option value="">None</option>
+                      {MUSIC_TRACKS.map(t => (
+                        <option key={t.filename} value={t.filename}>{t.name}</option>
+                      ))}
+                    </select>
 
-                    <div className="space-y-3 px-1">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Music Volume</label>
-                        <span className="text-[10px] font-black text-[#33B5FF]">{Math.round(musicVolume * 100)}%</span>
+                    {musicTrack && (
+                      <div className="space-y-4 pt-2 animate-in fade-in duration-300">
+                        <button
+                          data-testid="button-preview-music"
+                          disabled={isMusicLoading}
+                          onClick={async () => {
+                            if (isMusicPreviewing) {
+                              soundService.stopMusicPreview();
+                              setIsMusicPreviewing(false);
+                            } else {
+                              setIsMusicLoading(true);
+                              await soundService.previewMusic(musicTrack, musicVolume);
+                              setIsMusicLoading(false);
+                              setIsMusicPreviewing(true);
+                            }
+                          }}
+                          className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#33B5FF] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                        >
+                          {isMusicLoading ? (
+                            <><i className="fa-solid fa-spinner fa-spin"></i> Loading...</>
+                          ) : isMusicPreviewing ? (
+                            <><i className="fa-solid fa-stop"></i> Stop Preview</>
+                          ) : (
+                            <><i className="fa-solid fa-play"></i> Preview Track</>
+                          )}
+                        </button>
+
+                        <div className="space-y-3 px-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase">Music Volume</label>
+                            <span className="text-[10px] font-black text-[#33B5FF]">{Math.round(musicVolume * 100)}%</span>
+                          </div>
+                          <input
+                            data-testid="input-music-volume"
+                            type="range" min="0" max="100" step="1"
+                            value={Math.round(musicVolume * 100)}
+                            onChange={e => {
+                              const vol = parseInt(e.target.value) / 100;
+                              setMusicVolume(vol);
+                              if (isMusicPreviewing) {
+                                soundService.setPreviewVolume(vol);
+                              }
+                            }}
+                            className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
+                        </div>
                       </div>
-                      <input
-                        data-testid="input-music-volume"
-                        type="range" min="0" max="100" step="1"
-                        value={Math.round(musicVolume * 100)}
-                        onChange={e => {
-                          const vol = parseInt(e.target.value) / 100;
-                          setMusicVolume(vol);
-                          if (isMusicPreviewing) {
-                            soundService.setPreviewVolume(vol);
-                          }
-                        }}
-                        className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                      />
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </section>
           </div>
