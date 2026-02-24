@@ -1438,7 +1438,7 @@ const App: React.FC = () => {
     <div className="flex h-screen w-full bg-[#0a0a0a] overflow-hidden text-white font-sans">
       <div 
         className={`w-[480px] p-6 overflow-y-auto border-r border-white/10 bg-[#121212] flex flex-col gap-8 no-scrollbar transition-all duration-700 ease-in-out ${
-          isRecording ? 'ml-[-480px] opacity-0 pointer-events-none' : 'ml-0 opacity-100'
+          'ml-0 opacity-100'
         }`}
       >
         <div className="flex flex-col sticky top-0 bg-[#121212] z-50 pb-4 pt-2 gap-4">
@@ -2325,14 +2325,14 @@ const App: React.FC = () => {
 
         <div
           ref={staticPreviewContainerRef}
-          className="absolute inset-0 z-[60] flex items-center justify-center"
-          style={{ background: 'black', display: !playbackMode && !isRecording ? 'block' : 'none' }}
+          className="absolute inset-0 z-[60]"
+          style={{ background: 'black', display: !playbackMode && !isRecording ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center' }}
         />
 
         <div
           ref={previewCanvasContainerRef}
-          className="absolute inset-0 z-[60] flex items-center justify-center"
-          style={{ background: 'black', display: playbackMode || isRecording ? 'block' : 'none' }}
+          className="absolute inset-0 z-[60]"
+          style={{ background: 'black', display: playbackMode || isRecording ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center' }}
         />
 
         <div 
