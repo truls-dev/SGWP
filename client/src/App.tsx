@@ -133,6 +133,7 @@ const App: React.FC = () => {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkImportValue, setBulkImportValue] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script'>('script');
   
   const [typingParticipantIds, setTypingParticipantIds] = useState<string[]>([]);
   const [activeParticipantIds, setActiveParticipantIds] = useState<string[]>([]);
@@ -1428,7 +1429,22 @@ const App: React.FC = () => {
           </div>
         </div>
 
+        <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1 gap-1">
+          {(['script', 'cast', 'settings'] as const).map(tab => (
+            <button
+              key={tab}
+              data-testid={`tab-${tab}`}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#33B5FF] text-white shadow-lg shadow-[#33B5FF]/20' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              {tab === 'script' ? 'Script' : tab === 'cast' ? 'Cast' : 'Settings'}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-col gap-10">
+          {activeTab === 'settings' && (
+          <>
           <section className="space-y-4">
             <div className="flex items-center justify-between bg-white/5 p-5 rounded-3xl border border-white/10">
                 <div className="flex flex-col">
@@ -1821,7 +1837,13 @@ const App: React.FC = () => {
                 )}
               </div>
             </section>
+          </div>
+          </>
+          )}
 
+          {activeTab === 'cast' && (
+          <>
+          <div className="space-y-10">
             <section className="space-y-6">
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Identity Settings</h3>
               <div className="space-y-5 bg-white/5 p-6 rounded-[32px] border border-white/5">
@@ -1967,7 +1989,13 @@ const App: React.FC = () => {
                 ))}
               </div>
             </section>
+          </div>
+          </>
+          )}
 
+          {activeTab === 'script' && (
+          <>
+          <div className="space-y-10">
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Story Timeline</h3>
@@ -2194,6 +2222,8 @@ const App: React.FC = () => {
               </div>
             </section>
           </div>
+          </>
+          )}
         </div>
 
         <div className="sticky bottom-0 bg-[#121212] pt-6 pb-2 border-t border-white/10 flex flex-col gap-4">
