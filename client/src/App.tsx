@@ -655,7 +655,7 @@ const App: React.FC = () => {
     }));
     
     if (playbackMode) {
-      setPlaybackItems(prev => [...prev, { ...newSticker, instanceId: uuidv4() }]);
+      setPlaybackItems(prev => [...prev, { ...newSticker, instanceId: uuidv4(), revealedAt: Date.now() }]);
     }
     
     setCompositionText('');
@@ -678,7 +678,7 @@ const App: React.FC = () => {
     }));
     
     if (playbackMode) {
-      setPlaybackItems(prev => [...prev, { ...newMsg, instanceId: uuidv4() }]);
+      setPlaybackItems(prev => [...prev, { ...newMsg, instanceId: uuidv4(), revealedAt: Date.now() }]);
     }
     
     setCompositionText('');
@@ -774,7 +774,7 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.NOTIFICATION) {
         if (!event.isBackspaced) {
-          setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4() }]);
+          setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
         }
         if (state.system.isSoundEnabled && event.soundEffect) {
           await soundService.playEffect(event.soundEffect);
@@ -791,7 +791,7 @@ const App: React.FC = () => {
         }
 
         if (!event.isBackspaced) {
-          setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4() }]);
+          setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
         }
 
         // POST-SEND REALISM: Arrival logic for "Kenny" reacting to "Me"
@@ -899,7 +899,7 @@ const App: React.FC = () => {
             await delay(70);
             setActiveKey(null);
             
-            setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4() }]);
+            setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
             setCompositionText(''); 
             setIsMeTyping(false);
             setIsShiftActive(true); 
@@ -926,7 +926,7 @@ const App: React.FC = () => {
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
           
           if (!event.isBackspaced) {
-            setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4() }]);
+            setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
           }
 
           if (state.system.isSoundEnabled) {

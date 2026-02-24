@@ -34,6 +34,7 @@ export interface ScriptEvent {
   soundEffect?: string; // Assigned sound effect name
   isBackspaced?: boolean; // If true, the message is typed but then deleted instead of sent
   isPreShown?: boolean; // If true, the message is already visible when the video starts
+  revealedAt?: number; // Timestamp (ms) when message was revealed during playback
 }
 
 export interface SystemConfig {

@@ -936,6 +936,9 @@ export class CanvasRenderer {
 
     let curY = y + (isGrouped ? 6 : 10);
 
+    const isFreshlySent = sender?.isMe && msg.revealedAt && (Date.now() - msg.revealedAt < 150);
+    const textColor = isFreshlySent ? "#8E8E8E" : "#000000";
+
     if (!isGrouped) {
       ctx.font = `700 ${NAME_FONT_SIZE}px ${FONT_REGULAR}`;
       ctx.fillStyle = color;
@@ -961,7 +964,7 @@ export class CanvasRenderer {
     } else if (msg.type === MessageType.IMAGE) {
       if (lines.length > 0) {
         ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = textColor;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         for (const line of lines) {
@@ -982,7 +985,7 @@ export class CanvasRenderer {
       }
     } else {
       ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = textColor;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       for (const line of lines) {
@@ -992,11 +995,12 @@ export class CanvasRenderer {
     }
 
     if (drawBar) {
+      const barColor = isFreshlySent ? "#C0C0C0" : color;
       const barH = Math.max(curY - barStartY, 30);
       if (!isGrouped) {
-        this.drawPillRect(ctx, padX, barStartY, BAR_WIDTH, barH, 3, color);
+        this.drawPillRect(ctx, padX, barStartY, BAR_WIDTH, barH, 3, barColor);
       } else {
-        ctx.fillStyle = color;
+        ctx.fillStyle = barColor;
         ctx.fillRect(padX, barStartY, BAR_WIDTH, barH);
       }
     }
