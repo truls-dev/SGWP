@@ -814,7 +814,7 @@ export class CanvasRenderer {
       let lines: string[] = [];
 
       if (msg.type === MessageType.NOTIFICATION) {
-        const notifSize = msgFontSize * 0.75;
+        const notifSize = msgFontSize;
         ctx.font = `900 ${notifSize}px ${FONT_REGULAR}`;
         lines = this.wrapText(ctx, msg.text || "", this.W - padX * 4);
         h = 50 + lines.length * (notifSize + 10);
@@ -921,7 +921,7 @@ export class CanvasRenderer {
     const { msg, isGrouped, lines, sender, color } = item;
 
     if (msg.type === MessageType.NOTIFICATION) {
-      const notifSize = fontSize * 0.75;
+      const notifSize = fontSize;
       ctx.font = `900 ${notifSize}px ${FONT_REGULAR}`;
       ctx.fillStyle = "#9CA3AF";
       ctx.textAlign = "center";

@@ -1442,13 +1442,6 @@ const App: React.FC = () => {
         }`}
       >
         <div className="flex flex-col sticky top-0 bg-[#121212] z-50 pb-4 pt-2 gap-4">
-          <button 
-            onClick={handleNewChat}
-            className="w-full bg-red-600 border border-red-500 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95 shadow-lg relative pointer-events-auto"
-          >
-            <i className="fa-solid fa-trash-can mr-2"></i> New Chat (Reset Studio)
-          </button>
-          
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-black mb-1 flex items-center gap-2">
@@ -1875,6 +1868,13 @@ const App: React.FC = () => {
               </div>
             </section>
           </div>
+
+          <button 
+            onClick={handleNewChat}
+            className="w-full bg-red-600/20 border border-red-500/30 text-red-400 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600/30 transition-all active:scale-95"
+          >
+            <i className="fa-solid fa-trash-can mr-2"></i> Reset Studio
+          </button>
           </>
           )}
 
@@ -2245,15 +2245,11 @@ const App: React.FC = () => {
                       onChange={handleTimelineImageUpload}
                     />
 
-                    <div className="flex flex-col gap-3 pt-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => addScriptItem(MessageType.TEXT)} className="bg-white/5 border border-white/10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition hover:bg-white/10 active:scale-95 shadow-sm">+ Add Message</button>
-                        <button onClick={() => addScriptItem(MessageType.IMAGE)} className="bg-white/5 border border-white/10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition hover:bg-white/10 active:scale-95 shadow-sm">+ Add Image</button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => addScriptItem(MessageType.NOTIFICATION)} className="bg-white/5 border border-white/10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition hover:bg-white/10 active:scale-95 shadow-sm">+ Add Alert</button>
-                        <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition hover:bg-[#33B5FF]/20 active:scale-95 shadow-sm">+ Add Presence</button>
-                      </div>
+                    <div className="flex gap-2 pt-4">
+                      <button onClick={() => addScriptItem(MessageType.TEXT)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
+                      <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
+                      <button onClick={() => addScriptItem(MessageType.NOTIFICATION)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ ALERT</button>
+                      <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
                     </div>
                   </>
                 )}
