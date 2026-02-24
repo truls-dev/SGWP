@@ -1926,6 +1926,43 @@ const App: React.FC = () => {
                     >
                       <i className="fa-solid fa-wand-sparkles"></i> Randomize Bitmoji
                     </button>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter Bitmoji ID"
+                        data-testid={`input-bitmoji-id-${member.id}`}
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-[10px] text-gray-200 placeholder-gray-600 outline-none focus:border-[#33B5FF]"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value.trim();
+                            if (val) {
+                              setState(prev => ({
+                                ...prev,
+                                cast: prev.cast.map(c => c.id === member.id ? { ...c, bitmojiAvatarId: val } : c)
+                              }));
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        data-testid={`button-set-bitmoji-${member.id}`}
+                        onClick={e => {
+                          const input = (e.currentTarget as HTMLElement).previousElementSibling as HTMLInputElement;
+                          const val = input?.value.trim();
+                          if (val) {
+                            setState(prev => ({
+                              ...prev,
+                              cast: prev.cast.map(c => c.id === member.id ? { ...c, bitmojiAvatarId: val } : c)
+                            }));
+                            input.value = '';
+                          }
+                        }}
+                        className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#33B5FF] hover:text-white transition-all active:scale-95"
+                      >
+                        Set
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
