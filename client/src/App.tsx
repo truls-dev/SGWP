@@ -990,9 +990,9 @@ const App: React.FC = () => {
         }
 
         const canvasEl = renderer.getCanvas();
-        canvasEl.style.width = '100%';
-        canvasEl.style.height = '100%';
-        canvasEl.style.objectFit = 'contain';
+        canvasEl.style.maxWidth = '100%';
+        canvasEl.style.maxHeight = '100%';
+        canvasEl.style.display = 'block';
 
         if (previewCanvasContainerRef.current) {
           previewCanvasContainerRef.current.innerHTML = '';
@@ -1098,9 +1098,8 @@ const App: React.FC = () => {
       }
 
       const canvas = renderer.getCanvas();
-      canvas.style.width = '100%';
-      canvas.style.height = '100%';
-      canvas.style.objectFit = 'contain';
+      canvas.style.maxWidth = '100%';
+      canvas.style.maxHeight = '100%';
       canvas.style.display = 'block';
       if (previewCanvasContainerRef.current) {
         previewCanvasContainerRef.current.innerHTML = '';
@@ -2324,13 +2323,17 @@ const App: React.FC = () => {
             </div>
         )}
 
-        {!playbackMode && !isRecording && (
-          <div
-            ref={staticPreviewContainerRef}
-            className="absolute inset-0 z-[60] flex items-center justify-center"
-            style={{ background: 'black' }}
-          />
-        )}
+        <div
+          ref={staticPreviewContainerRef}
+          className="absolute inset-0 z-[60] flex items-center justify-center"
+          style={{ background: 'black', display: !playbackMode && !isRecording ? 'block' : 'none' }}
+        />
+
+        <div
+          ref={previewCanvasContainerRef}
+          className="absolute inset-0 z-[60] flex items-center justify-center"
+          style={{ background: 'black', display: playbackMode || isRecording ? 'block' : 'none' }}
+        />
 
         <div 
           className={`relative flex flex-row transition-all duration-700 ease-in-out z-10 bg-transparent ${
@@ -2342,25 +2345,16 @@ const App: React.FC = () => {
             borderBottomLeftRadius: isRecording || isVideoMode ? '0' : '10px',
             borderBottomRightRadius: isRecording || isVideoMode ? '0' : '10px',
             flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto',
-            display: playbackMode || isRecording ? undefined : 'none',
+            display: 'none',
           }}
         >
 
-          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black', display: playbackMode || isRecording ? undefined : 'none' }} className="h-full shrink-0" />}
+          {!isVideoMode && <div style={{ width: `calc(10px * ${previewInterfaceScaleFactor})`, backgroundColor: (state.chat.exportBackgroundUrl) ? 'transparent' : 'black' }} className="h-full shrink-0" />}
 
           <div className="flex-1 relative overflow-hidden" style={{ 
               borderTopLeftRadius: `${state.chat.topCornerRadius}px`,
               borderTopRightRadius: `${state.chat.topCornerRadius}px`,
-              display: playbackMode || isRecording ? undefined : 'none',
           }}>
-            <div
-              ref={previewCanvasContainerRef}
-              className="absolute inset-0 z-50"
-              style={{ 
-                background: 'black',
-                display: playbackMode ? 'block' : 'none'
-              }}
-            />
             <div className="flex flex-col bg-white select-none absolute top-0 left-0 overflow-hidden snap-font-regular h-full w-full" style={{ transform: `scale(${scale})`, transformOrigin: '0 0', width: `${100 / scale}%`, height: `${100 / scale}%` }}>
                 <StatusBar config={state.system} />
                 <ChatHeader config={state.chat} cast={state.cast} isKeyboardCropped={state.chat.isKeyboardCropped} />
