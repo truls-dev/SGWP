@@ -813,6 +813,7 @@ const App: React.FC = () => {
               soundService.playNotification();
               hasPlayedFirstNotif = true;
             } else {
+              soundService.playClick();
               soundService.playSubsequentNotification();
             }
           }
@@ -947,6 +948,7 @@ const App: React.FC = () => {
                 soundService.playNotification();
                 hasPlayedFirstNotif = true;
               } else {
+                soundService.playClick();
                 soundService.playSubsequentNotification();
               }
             }
