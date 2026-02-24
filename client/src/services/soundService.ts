@@ -222,7 +222,7 @@ class SoundService {
   }
 
   public playSubsequentNotification() {
-    const vol = 0.9 * this._sfxVolume;
+    const vol = 0.85 * this._sfxVolume;
     this.logEvent('notification_subsequent', vol);
     this.playSound(this.subsequentNotifBuffer, vol);
   }

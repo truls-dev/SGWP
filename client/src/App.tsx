@@ -910,6 +910,14 @@ const App: React.FC = () => {
             setIsMeTyping(false);
             setIsShiftActive(true); 
 
+            if (state.system.isSoundEnabled) {
+              if (event.soundEffect) {
+                await soundService.playEffect(event.soundEffect);
+              } else {
+                soundService.playSubsequentNotification();
+              }
+            }
+
             // POST-SEND REALISM: Arrival logic for Them noticing my text
             if (!state.chat.isGroup) {
               const them = state.cast.find(c => !c.isMe);
@@ -918,10 +926,6 @@ const App: React.FC = () => {
                  updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
                  await delay(400);
               }
-            }
-            
-            if (state.system.isSoundEnabled && event.soundEffect) {
-              await soundService.playEffect(event.soundEffect);
             }
             await delay(400);
           }
