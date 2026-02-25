@@ -185,6 +185,7 @@ const App: React.FC = () => {
   const scriptNotificationsRef = useRef<TimedNotification[]>([]);
   const lockscreenActiveRef = useRef(false);
   const lockscreenNotifRef = useRef<TimedNotification | null>(null);
+  const lockscreenSwipeRef = useRef(0);
   const playbackStartTimeRef = useRef<number>(0);
   const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
   const frameStateRef = useRef<FrameState>({
@@ -363,6 +364,7 @@ const App: React.FC = () => {
     frameStateRef.current.typingParticipantIds = [];
     lockscreenActiveRef.current = false;
     lockscreenNotifRef.current = null;
+    lockscreenSwipeRef.current = 0;
     frameStateRef.current.compositionText = '';
     frameStateRef.current.isMeTyping = false;
     if (canvasRendererRef.current) {
@@ -786,7 +788,7 @@ const App: React.FC = () => {
           customIconUrl: bitmojiUrl,
         };
         if (state.system.isSoundEnabled) {
-          soundService.playEffect('notif');
+          soundService.playNotification();
         }
 
         setPlaybackItems(prev => [...prev, { ...firstNonMeEvent, instanceId: uuidv4(), revealedAt: Date.now() }]);
@@ -799,8 +801,25 @@ const App: React.FC = () => {
       await delay(lockDurationMs);
       if ((runningStatusRef.current as string) === 'idle') return;
 
+      const swipeDurationMs = 400;
+      const swipeStartTime = Date.now();
+      await new Promise<void>(resolve => {
+        const animateSwipe = () => {
+          const elapsed = Date.now() - swipeStartTime;
+          const progress = Math.min(elapsed / swipeDurationMs, 1);
+          lockscreenSwipeRef.current = progress;
+          if (progress < 1) {
+            requestAnimationFrame(animateSwipe);
+          } else {
+            resolve();
+          }
+        };
+        requestAnimationFrame(animateSwipe);
+      });
+
       lockscreenActiveRef.current = false;
       lockscreenNotifRef.current = null;
+      lockscreenSwipeRef.current = 0;
       await delay(100);
     }
 
@@ -1122,6 +1141,7 @@ const App: React.FC = () => {
             activeNotifications: active,
             lockscreenActive: lockscreenActiveRef.current,
             lockscreenNotification: lockscreenNotifRef.current,
+            lockscreenSwipeProgress: lockscreenSwipeRef.current,
           };
           renderer.renderFrame(currentFrameState);
           previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
@@ -1301,6 +1321,7 @@ const App: React.FC = () => {
               }),
               lockscreenActive: lockscreenActiveRef.current,
               lockscreenNotification: lockscreenNotifRef.current,
+              lockscreenSwipeProgress: lockscreenSwipeRef.current,
             };
             renderer.renderFrame(currentFrameState);
 

@@ -32,6 +32,7 @@ export interface FrameState {
   activeNotifications?: TimedNotification[];
   lockscreenActive?: boolean;
   lockscreenNotification?: TimedNotification | null;
+  lockscreenSwipeProgress?: number;
 }
 
 interface StickerAnimState {
@@ -544,7 +545,8 @@ export class CanvasRenderer {
     state: FrameState,
     kbH: number,
   ): void {
-    if (state.lockscreenActive) {
+    const swipe = state.lockscreenSwipeProgress || 0;
+    if (state.lockscreenActive && swipe <= 0) {
       this.drawLockscreen(ctx, state);
       return;
     }
@@ -588,6 +590,10 @@ export class CanvasRenderer {
 
     this.drawKeyboard(ctx, state, kbYInCanvas, kbH);
 
+    if (state.lockscreenActive && swipe > 0) {
+      this.drawLockscreen(ctx, state);
+    }
+
     this.drawActiveNotifications(ctx, state);
   }
 
@@ -595,6 +601,14 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     state: FrameState,
   ): void {
+    const swipe = state.lockscreenSwipeProgress || 0;
+    if (swipe > 0) {
+      ctx.save();
+      const offsetX = swipe * this.W;
+      ctx.translate(offsetX, 0);
+      ctx.globalAlpha = 1 - swipe * 0.3;
+    }
+
     const lockBg = this.images.get("lockscreenBg");
     if (lockBg) {
       const imgR = lockBg.width / lockBg.height;
@@ -643,22 +657,26 @@ export class CanvasRenderer {
       }
       const elapsed = state.time - notif.timeMs;
       const totalDuration = notif.durationMs;
-      const slideInDuration = 500;
+      const popInDuration = 350;
 
-      let slideProgress: number;
+      let appearProgress: number;
       if (elapsed < 0) {
-        slideProgress = 0;
-      } else if (elapsed < slideInDuration) {
-        slideProgress = elapsed / slideInDuration;
+        appearProgress = 0;
+      } else if (elapsed < popInDuration) {
+        appearProgress = elapsed / popInDuration;
       } else if (elapsed < totalDuration) {
-        slideProgress = 1;
+        appearProgress = 1;
       } else {
-        slideProgress = 1;
+        appearProgress = 1;
       }
 
-      if (slideProgress > 0) {
-        this.drawLockscreenNotification(ctx, notif, slideProgress, state);
+      if (appearProgress > 0) {
+        this.drawLockscreenNotification(ctx, notif, appearProgress, state);
       }
+    }
+
+    if (swipe > 0) {
+      ctx.restore();
     }
   }
 
@@ -737,23 +755,28 @@ export class CanvasRenderer {
   private drawLockscreenNotification(
     ctx: CanvasRenderingContext2D,
     notification: TimedNotification,
-    slideProgress: number,
+    appearProgress: number,
     state: FrameState,
   ): void {
     const bannerW = this.W - 56;
     const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
-    const onscreenY = STATUS_BAR_H + 320;
-    const offscreenY = this.H + 20;
+    const bannerY = STATUS_BAR_H + 320;
 
-    const eased = slideProgress < 0.5
-      ? 4 * slideProgress * slideProgress * slideProgress
-      : 1 - Math.pow(-2 * slideProgress + 2, 3) / 2;
-
-    const bannerY = offscreenY + (onscreenY - offscreenY) * eased;
+    const eased = 1 - Math.pow(1 - appearProgress, 3);
+    const scale = 0.85 + 0.15 * eased;
+    const opacity = eased;
 
     ctx.save();
+    ctx.globalAlpha = opacity;
+
+    const cx = bannerX + bannerW / 2;
+    const cy = bannerY + bannerH / 2;
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+
     ctx.shadowColor = 'rgba(0,0,0,0.2)';
     ctx.shadowBlur = 20;
     ctx.shadowOffsetY = 4;
@@ -801,8 +824,8 @@ export class CanvasRenderer {
       if (snapLogo) {
         const badgeSize = 40;
         const badgeX = iconX + iconSize - badgeSize + 4;
-        const badgeY = iconY + iconSize - badgeSize + 4;
-        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+        const badgeY2 = iconY + iconSize - badgeSize + 4;
+        ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
       }
     } else {
       ctx.fillStyle = '#FFFC00';
@@ -813,8 +836,8 @@ export class CanvasRenderer {
       if (snapLogo) {
         const badgeSize = 40;
         const badgeX = iconX + iconSize - badgeSize + 4;
-        const badgeY = iconY + iconSize - badgeSize + 4;
-        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+        const badgeY2 = iconY + iconSize - badgeSize + 4;
+        ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
       }
     }
 
@@ -854,6 +877,7 @@ export class CanvasRenderer {
 
     ctx.restore();
   }
+
 
   private drawVideoBackground(
     ctx: CanvasRenderingContext2D,
