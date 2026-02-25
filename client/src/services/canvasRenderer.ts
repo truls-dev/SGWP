@@ -879,29 +879,32 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     swipeProgress: number,
   ): void {
+    const bannerW = this.W - 56;
     const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
     const bannerY = STATUS_BAR_H + 320;
 
-    const eased = swipeProgress < 0.5
+    const swipeEased = swipeProgress < 0.5
       ? 2 * swipeProgress * swipeProgress
       : 1 - Math.pow(-2 * swipeProgress + 2, 2) / 2;
+    const swipeOffsetX = swipeEased * (this.W - bannerX + 20);
 
-    const pillW = Math.min(eased * 280, 280);
+    const pillRight = bannerX + bannerW + swipeOffsetX;
+    const pillW = pillRight - bannerX;
 
     if (pillW > 5) {
       ctx.save();
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = 0.9;
 
       const pillR = Math.min(bannerR, pillW / 2);
-      ctx.fillStyle = 'rgba(100, 100, 120, 0.65)';
+      ctx.fillStyle = 'rgba(180, 170, 200, 0.45)';
       ctx.beginPath();
       ctx.moveTo(bannerX + pillR, bannerY);
-      ctx.lineTo(bannerX + pillW - pillR, bannerY);
-      ctx.quadraticCurveTo(bannerX + pillW, bannerY, bannerX + pillW, bannerY + pillR);
-      ctx.lineTo(bannerX + pillW, bannerY + bannerH - pillR);
-      ctx.quadraticCurveTo(bannerX + pillW, bannerY + bannerH, bannerX + pillW - pillR, bannerY + bannerH);
+      ctx.lineTo(pillRight - pillR, bannerY);
+      ctx.quadraticCurveTo(pillRight, bannerY, pillRight, bannerY + pillR);
+      ctx.lineTo(pillRight, bannerY + bannerH - pillR);
+      ctx.quadraticCurveTo(pillRight, bannerY + bannerH, pillRight - pillR, bannerY + bannerH);
       ctx.lineTo(bannerX + pillR, bannerY + bannerH);
       ctx.quadraticCurveTo(bannerX, bannerY + bannerH, bannerX, bannerY + bannerH - pillR);
       ctx.lineTo(bannerX, bannerY + pillR);
@@ -909,14 +912,13 @@ export class CanvasRenderer {
       ctx.closePath();
       ctx.fill();
 
-      if (pillW > 80) {
-        ctx.globalAlpha = Math.min(eased * 1.5, 1);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = `600 32px ${FONT_SYSTEM}`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Open', bannerX + pillW / 2, bannerY + bannerH / 2);
-      }
+      const textCenterX = bannerX + (pillW - swipeOffsetX) / 2;
+      ctx.globalAlpha = Math.min(swipeEased * 2, 1);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = `500 34px ${FONT_SYSTEM}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Open', textCenterX, bannerY + bannerH / 2);
 
       ctx.restore();
     }
