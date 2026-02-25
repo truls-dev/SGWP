@@ -878,7 +878,7 @@ export class CanvasRenderer {
 
     for (let i = 0; i < layouts.length; i++) {
       const item = layouts[i];
-      if (item.msg.type === MessageType.NOTIFICATION) continue;
+      if (item.msg.type === MessageType.NOTIFICATION || item.msg.type === MessageType.IOS_NOTIFICATION) continue;
 
       if (item.isGrouped) continue;
 

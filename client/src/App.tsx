@@ -215,7 +215,7 @@ const App: React.FC = () => {
   useEffect(() => {
     frameStateRef.current = {
       ...frameStateRef.current,
-      messages: playbackMode ? playbackItems : state.script,
+      messages: (playbackMode ? playbackItems : state.script).filter(m => m.type !== MessageType.IOS_NOTIFICATION),
       compositionText,
       isMeTyping,
       activeKey,
@@ -2625,9 +2625,9 @@ const App: React.FC = () => {
                 <div ref={scrollRef} className="h-full overflow-y-auto no-scrollbar relative flex flex-col">
                     <div className="flex-grow min-h-full flex flex-col justify-end py-2">
                     <div className="text-center py-4"><span className="text-[11px] font-black text-gray-300 uppercase tracking-[0.25em]">Today</span></div>
-                    {messagesToRender.filter(i => i.type !== MessageType.PRESENCE).map((item, idx) => {
+                    {messagesToRender.filter(i => i.type !== MessageType.PRESENCE && i.type !== MessageType.IOS_NOTIFICATION).map((item, idx) => {
                         const key = item.instanceId || item.id;
-                        const filteredMessages = messagesToRender.filter(i => i.type !== MessageType.PRESENCE);
+                        const filteredMessages = messagesToRender.filter(i => i.type !== MessageType.PRESENCE && i.type !== MessageType.IOS_NOTIFICATION);
                         const prevItem = idx > 0 ? filteredMessages[idx - 1] : null;
                         const isGroupedWithPrev = prevItem && (prevItem.type === MessageType.TEXT || prevItem.type === MessageType.STICKER || prevItem.type === MessageType.IMAGE) && item.senderId === prevItem.senderId;
                         
