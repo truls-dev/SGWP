@@ -523,8 +523,6 @@ export class CanvasRenderer {
       }
     }
 
-    this.drawActiveNotifications(ctx, state);
-
     return this.canvas;
   }
 
@@ -571,6 +569,8 @@ export class CanvasRenderer {
     (this as any).H = origH;
 
     this.drawKeyboard(ctx, state, kbYInCanvas, kbH);
+
+    this.drawActiveNotifications(ctx, state);
   }
 
   private drawVideoBackground(
@@ -2385,12 +2385,12 @@ export class CanvasRenderer {
     notification: TimedNotification,
     slideProgress: number,
   ): void {
-    const bannerW = this.W - 40;
-    const bannerH = 180;
-    const bannerX = 20;
-    const bannerR = 42;
+    const bannerW = this.W - 56;
+    const bannerH = 170;
+    const bannerX = 28;
+    const bannerR = 55;
     const offscreenY = -bannerH - 20;
-    const onscreenY = 28;
+    const onscreenY = 20;
 
     const eased = slideProgress < 0.5
       ? 4 * slideProgress * slideProgress * slideProgress
