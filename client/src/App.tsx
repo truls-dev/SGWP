@@ -1736,6 +1736,14 @@ const App: React.FC = () => {
                       />
                       <div className="flex items-center gap-2">
                         <label className="text-[9px] text-gray-500 shrink-0">Profile pic:</label>
+                        {tn.customIconUrl && (
+                          <img
+                            src={tn.customIconUrl}
+                            alt="icon"
+                            data-testid={`img-notif-icon-preview-${idx}`}
+                            className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0"
+                          />
+                        )}
                         <input
                           data-testid={`input-notif-icon-${idx}`}
                           type="file"
