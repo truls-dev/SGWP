@@ -71,7 +71,7 @@ export interface TimedSoundEffect {
   timeMs: number;
 }
 
-export type NotificationPlatform = 'Messages' | 'Snapchat' | 'Instagram' | 'WhatsApp' | 'Twitter' | 'TikTok' | 'Facebook' | 'Telegram';
+export type NotificationPlatform = 'Messages' | 'Snapchat';
 
 export interface TimedNotification {
   id: string;

@@ -1666,12 +1666,6 @@ const App: React.FC = () => {
                         >
                           <option value="Messages">Messages</option>
                           <option value="Snapchat">Snapchat</option>
-                          <option value="Instagram">Instagram</option>
-                          <option value="WhatsApp">WhatsApp</option>
-                          <option value="Twitter">Twitter / X</option>
-                          <option value="TikTok">TikTok</option>
-                          <option value="Facebook">Facebook</option>
-                          <option value="Telegram">Telegram</option>
                         </select>
                         <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
                           <span className="text-[9px] text-gray-500">@</span>

@@ -2369,23 +2369,11 @@ export class CanvasRenderer {
   private static PLATFORM_COLORS: Record<string, string> = {
     'Messages': '#34C759',
     'Snapchat': '#FFFC00',
-    'Instagram': '#E1306C',
-    'WhatsApp': '#25D366',
-    'Twitter': '#000000',
-    'TikTok': '#000000',
-    'Facebook': '#1877F2',
-    'Telegram': '#0088CC',
   };
 
   private static PLATFORM_ICONS: Record<string, string> = {
     'Messages': '\uD83D\uDCAC',
     'Snapchat': '\uD83D\uDC7B',
-    'Instagram': '\uD83D\uDCF7',
-    'WhatsApp': '\uD83D\uDCDE',
-    'Twitter': '𝕏',
-    'TikTok': '\uD83C\uDFB5',
-    'Facebook': 'f',
-    'Telegram': '\u2708',
   };
 
   drawNotificationBanner(
