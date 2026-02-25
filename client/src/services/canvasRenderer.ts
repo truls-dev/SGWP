@@ -30,7 +30,6 @@ export interface FrameState {
   backgroundVideo?: HTMLVideoElement | null;
   suggestedCustomojiUrl?: string | null;
   activeNotifications?: TimedNotification[];
-  allNotificationSources?: TimedNotification[];
 }
 
 interface StickerAnimState {

@@ -150,6 +150,8 @@ const App: React.FC = () => {
   const [sfxVolume, setSfxVolume] = useState(0.15);
   const [timedSoundEffects, setTimedSoundEffects] = useState<TimedSoundEffect[]>([]);
   const [timedNotifications, setTimedNotifications] = useState<TimedNotification[]>([]);
+  const timedNotificationsRef = useRef<TimedNotification[]>([]);
+  useEffect(() => { timedNotificationsRef.current = timedNotifications; }, [timedNotifications]);
 
   const [appendOutro, setAppendOutro] = useState(false);
   const outroVideoElRef = useRef<HTMLVideoElement | null>(null);
@@ -228,7 +230,6 @@ const App: React.FC = () => {
       cast: state.cast,
       backgroundVideo: previewVideoRef.current,
       suggestedCustomojiUrl: suggestedUrl,
-      allNotificationSources: [...timedNotifications, ...scriptNotificationsRef.current],
     };
   });
 
@@ -1052,14 +1053,15 @@ const App: React.FC = () => {
           if (runningStatusRef.current !== 'previewing') return;
           const now = performance.now();
           const t = now - startTime;
-          const sources = frameStateRef.current.allNotificationSources || [];
+          const sources = [...timedNotificationsRef.current, ...scriptNotificationsRef.current];
+          const active = sources.filter(n => {
+            const elapsed = t - n.timeMs;
+            return elapsed >= -50 && elapsed < n.durationMs;
+          });
           const currentFrameState: FrameState = {
             ...frameStateRef.current,
             time: t,
-            activeNotifications: sources.filter(n => {
-              const elapsed = t - n.timeMs;
-              return elapsed >= -50 && elapsed < n.durationMs;
-            }),
+            activeNotifications: active,
           };
           renderer.renderFrame(currentFrameState);
           previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
@@ -1229,7 +1231,7 @@ const App: React.FC = () => {
         let rendered = 0;
         while (frameCount <= targetFrames && rendered < maxBatch) {
             const t = now - startTime;
-            const sources = frameStateRef.current.allNotificationSources || [];
+            const sources = [...timedNotificationsRef.current, ...scriptNotificationsRef.current];
             const currentFrameState: FrameState = {
               ...frameStateRef.current,
               time: t,
