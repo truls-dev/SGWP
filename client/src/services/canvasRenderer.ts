@@ -2503,23 +2503,22 @@ export class CanvasRenderer {
     const textMaxW = bannerX + bannerW - textX - 28;
 
     ctx.fillStyle = "#8E8E93";
-    ctx.font = `600 26px ${FONT_SYSTEM}`;
+    ctx.font = `600 28px ${FONT_SYSTEM}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(notification.platform.toUpperCase(), textX, bannerY + 28);
+    ctx.fillText(notification.platform.toUpperCase(), textX, bannerY + 24);
 
-    const nowW = ctx.measureText("now").width;
     ctx.fillStyle = "#8E8E93";
-    ctx.font = `400 26px ${FONT_SYSTEM}`;
+    ctx.font = `400 28px ${FONT_SYSTEM}`;
     ctx.textAlign = "right";
-    ctx.fillText("now", bannerX + bannerW - 28, bannerY + 28);
+    ctx.fillText("now", bannerX + bannerW - 28, bannerY + 24);
 
     ctx.fillStyle = "#000000";
-    ctx.font = `700 32px ${FONT_SYSTEM}`;
+    ctx.font = `700 36px ${FONT_SYSTEM}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
 
-    const nameY = bannerY + 60;
+    const nameY = bannerY + 58;
     const nameText = notification.senderName;
     const measuredName = ctx.measureText(nameText).width;
     if (measuredName > textMaxW) {
@@ -2530,8 +2529,8 @@ export class CanvasRenderer {
     }
 
     ctx.fillStyle = "#3C3C43";
-    ctx.font = `400 30px ${FONT_SYSTEM}`;
-    const msgY = nameY + 40;
+    ctx.font = `400 34px ${FONT_SYSTEM}`;
+    const msgY = nameY + 44;
     const msgText = notification.message;
     const measuredMsg = ctx.measureText(msgText).width;
     if (measuredMsg > textMaxW) {
