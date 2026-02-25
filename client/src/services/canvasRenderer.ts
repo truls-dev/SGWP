@@ -683,12 +683,12 @@ export class CanvasRenderer {
     const svgAspect = 27 / 17;
     const signalW = signalH * svgAspect;
     const signalX = 22;
-    const signalY = carrierY - signalH / 2;
+    const signalY2 = carrierY - signalH / 2;
     const sx = signalW / 27;
     const sy = signalH / 17;
 
     ctx.save();
-    ctx.translate(signalX, signalY);
+    ctx.translate(signalX, signalY2);
     ctx.scale(sx, sy);
     ctx.fillStyle = '#FFFFFF';
 
@@ -703,39 +703,27 @@ export class CanvasRenderer {
     this.fillTextWithEmoji(ctx, state.systemConfig.carrier, signalX + signalW + 8, carrierY, FONT_SYSTEM, 28);
 
     let rx = this.W - 22;
-    const batteryImg = this.images.get('battery_white');
-    const batteryFallback = this.images.get('battery');
-    const bImg = batteryImg || batteryFallback;
-    if (bImg) {
+    const batteryImg = this.images.get("battery");
+    if (batteryImg) {
       const ih = 24;
-      const iw = bImg.width * (ih / bImg.height);
+      const iw = batteryImg.width * (ih / batteryImg.height);
       rx -= iw;
-      if (!batteryImg) {
-        ctx.save();
-        ctx.filter = 'brightness(0) invert(1)';
-        ctx.drawImage(bImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-        ctx.restore();
-      } else {
-        ctx.drawImage(bImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-      }
+      ctx.save();
+      ctx.filter = 'brightness(0) invert(1)';
+      ctx.drawImage(batteryImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      ctx.restore();
       rx -= 14;
     }
 
-    const wifiImg = this.images.get('wifi_white');
-    const wifiFallback = this.images.get('wifi');
-    const wImg = wifiImg || wifiFallback;
-    if (wImg) {
+    const wifiImg = this.images.get("wifi");
+    if (wifiImg) {
       const ih = 25;
-      const iw = wImg.width * (ih / wImg.height);
+      const iw = wifiImg.width * (ih / wifiImg.height);
       rx -= iw;
-      if (!wifiImg) {
-        ctx.save();
-        ctx.filter = 'brightness(0) invert(1)';
-        ctx.drawImage(wImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-        ctx.restore();
-      } else {
-        ctx.drawImage(wImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-      }
+      ctx.save();
+      ctx.filter = 'brightness(0) invert(1)';
+      ctx.drawImage(wifiImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      ctx.restore();
     }
   }
 
