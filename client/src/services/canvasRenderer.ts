@@ -620,10 +620,16 @@ export class CanvasRenderer {
     }
 
     const uiScale = state.systemConfig.uiScale || 1;
+    const origW = this.W;
+    const origH = this.H;
     ctx.save();
     ctx.scale(uiScale, uiScale);
+    (this as any).W = Math.round(origW / uiScale);
+    (this as any).H = Math.round(origH / uiScale);
     this.drawLockscreenStatusBar(ctx, state, 0);
     ctx.restore();
+    (this as any).W = origW;
+    (this as any).H = origH;
 
     const dateText = state.chatConfig.lockscreenDate || 'Thursday, February 19';
     const timeText = state.systemConfig.time || '5:40';
