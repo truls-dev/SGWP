@@ -619,7 +619,11 @@ export class CanvasRenderer {
       ctx.fillRect(0, 0, this.W, this.H);
     }
 
+    const uiScale = state.systemConfig.uiScale || 1;
+    ctx.save();
+    ctx.scale(uiScale, uiScale);
     this.drawLockscreenStatusBar(ctx, state, 0);
+    ctx.restore();
 
     const dateText = state.chatConfig.lockscreenDate || 'Thursday, February 19';
     const timeText = state.systemConfig.time || '5:40';
