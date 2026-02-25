@@ -1735,12 +1735,12 @@ const App: React.FC = () => {
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-[#33B5FF]"
                       />
                       <div className="flex items-center gap-2">
-                        <label className="text-[9px] text-gray-500">Custom icon:</label>
+                        <label className="text-[9px] text-gray-500 shrink-0">Profile pic:</label>
                         <input
                           data-testid={`input-notif-icon-${idx}`}
                           type="file"
                           accept="image/*"
-                          className="text-[9px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-gray-300 hover:file:bg-white/20"
+                          className="text-[9px] text-gray-400 min-w-0 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-gray-300 hover:file:bg-white/20"
                           onChange={e => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -1751,6 +1751,19 @@ const App: React.FC = () => {
                             }
                           }}
                         />
+                        <button
+                          data-testid={`button-notif-bitmoji-${idx}`}
+                          onClick={() => {
+                            const avatarId = getRandomAvatarId();
+                            const url = getSelfieUrlForAvatar(avatarId);
+                            const updated = [...timedNotifications];
+                            updated[idx] = { ...updated[idx], customIconUrl: url };
+                            setTimedNotifications(updated);
+                          }}
+                          className="shrink-0 bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-[9px] font-black uppercase text-gray-300 hover:bg-[#33B5FF] hover:text-white transition-all active:scale-95"
+                        >
+                          <i className="fa-solid fa-wand-sparkles mr-1"></i>Bitmoji
+                        </button>
                       </div>
                     </div>
                   ))}
