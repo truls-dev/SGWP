@@ -746,7 +746,7 @@ export class CanvasRenderer {
     const bannerW = this.W - 56;
     const bannerH = 220;
     const bannerX = 28;
-    const bannerR = 48;
+    const bannerR = bannerH / 2;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipe = state.lockscreenSwipeProgress || 0;
@@ -885,7 +885,7 @@ export class CanvasRenderer {
     const bannerW = this.W - 56;
     const bannerH = 220;
     const bannerX = 28;
-    const bannerR = 48;
+    const bannerR = bannerH / 2;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipeEased = swipeProgress < 0.5
