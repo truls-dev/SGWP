@@ -332,6 +332,10 @@ export class CanvasRenderer {
         "snapLogo",
         "https://raw.githubusercontent.com/truls-dev/images/main/snaplogo.png",
       ],
+      [
+        "imessageLogo",
+        "https://raw.githubusercontent.com/truls-dev/images/main/IMessage_logo.png",
+      ],
     ];
 
     const promises: Promise<void>[] = [];
@@ -2427,10 +2431,11 @@ export class CanvasRenderer {
     const iconSize = 96;
     const iconR = 22;
 
-    const isSnapchat = notification.platform === 'Snapchat';
+    const hasBadge = notification.platform === 'Snapchat' || notification.platform === 'Messages';
+    const badgeLogoKey = notification.platform === 'Snapchat' ? 'snapLogo' : notification.platform === 'Messages' ? 'imessageLogo' : '';
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
 
-    if (isSnapchat && customIcon) {
+    if (hasBadge && customIcon) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
@@ -2449,19 +2454,19 @@ export class CanvasRenderer {
       ctx.drawImage(customIcon, dx, dy, dw, dh);
       ctx.restore();
 
-      const snapLogo = this.images.get("snapLogo");
-      if (snapLogo) {
+      const badgeLogo = this.images.get(badgeLogoKey);
+      if (badgeLogo) {
         const badgeSize = 40;
         const badgeX = iconX + iconSize - badgeSize + 4;
         const badgeY = iconY + iconSize - badgeSize + 4;
-        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+        ctx.drawImage(badgeLogo, badgeX, badgeY, badgeSize, badgeSize);
       }
     } else if (customIcon) {
       this.drawRoundedImage(ctx, customIcon, iconX, iconY, iconSize, iconSize, iconR);
     } else {
       const platformColor = CanvasRenderer.PLATFORM_COLORS[notification.platform] || '#999999';
       ctx.fillStyle = platformColor;
-      if (isSnapchat) {
+      if (hasBadge) {
         ctx.beginPath();
         ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
         ctx.closePath();
@@ -2482,19 +2487,19 @@ export class CanvasRenderer {
       }
 
       const icon = CanvasRenderer.PLATFORM_ICONS[notification.platform] || '?';
-      ctx.fillStyle = isSnapchat ? '#000000' : '#FFFFFF';
+      ctx.fillStyle = notification.platform === 'Snapchat' ? '#000000' : '#FFFFFF';
       ctx.font = `400 48px ${FONT_EMOJI}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(icon, iconX + iconSize / 2, iconY + iconSize / 2);
 
-      if (isSnapchat) {
-        const snapLogo = this.images.get("snapLogo");
-        if (snapLogo) {
+      if (hasBadge) {
+        const badgeLogo = this.images.get(badgeLogoKey);
+        if (badgeLogo) {
           const badgeSize = 40;
           const badgeX = iconX + iconSize - badgeSize + 4;
           const badgeY = iconY + iconSize - badgeSize + 4;
-          ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+          ctx.drawImage(badgeLogo, badgeX, badgeY, badgeSize, badgeSize);
         }
       }
     }
