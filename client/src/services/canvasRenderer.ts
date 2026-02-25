@@ -872,7 +872,7 @@ export class CanvasRenderer {
       ctx.fillText(msgText, textX, msgY);
     }
 
-    ctx.fillStyle = 'rgba(80, 50, 120, 0.5)';
+    ctx.fillStyle = 'rgba(60, 40, 90, 0.75)';
     ctx.font = `500 42px ${FONT_SYSTEM}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
