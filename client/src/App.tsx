@@ -820,7 +820,7 @@ const App: React.FC = () => {
       lockscreenActiveRef.current = false;
       lockscreenNotifRef.current = null;
       lockscreenSwipeRef.current = 0;
-      await delay(100);
+      await delay(1000);
     }
 
     let startIdx = 0;
