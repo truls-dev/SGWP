@@ -746,7 +746,7 @@ export class CanvasRenderer {
     state: FrameState,
   ): void {
     const bannerW = this.W - 56;
-    const bannerH = 195;
+    const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
     const bannerY = STATUS_BAR_H + 320;
@@ -880,7 +880,7 @@ export class CanvasRenderer {
     swipeProgress: number,
   ): void {
     const bannerW = this.W - 56;
-    const bannerH = 195;
+    const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
     const bannerY = STATUS_BAR_H + 320;
