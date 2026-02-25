@@ -1033,7 +1033,7 @@ export class CanvasRenderer {
       ctx.lineTo(cx + 22, y + HEADER_H / 2);
       ctx.lineTo(cx + 38, y + HEADER_H / 2 + 16);
       ctx.stroke();
-      cx += 50;
+      cx += 58;
     }
 
     const others = state.cast.filter((c) => !c.isMe);
@@ -1049,7 +1049,7 @@ export class CanvasRenderer {
           ctx.clip();
           ctx.drawImage(groupIconImg, cx, y + HEADER_H / 2 - s / 2, s, s);
           ctx.restore();
-          cx += s + 16;
+          cx += s + 20;
         } else if (avatarImg) {
           const s = 76;
           ctx.save();
@@ -1070,7 +1070,7 @@ export class CanvasRenderer {
               ctx.restore();
             }
           }
-          cx += s + 40;
+          cx += s + 44;
         }
       } else if (avatarImg) {
         const containerW = 110;
@@ -1085,7 +1085,7 @@ export class CanvasRenderer {
         ctx.clip();
         ctx.drawImage(avatarImg, imgX, imgY, imgW, imgH);
         ctx.restore();
-        cx += containerW + 10;
+        cx += containerW + 20;
       }
     }
 
