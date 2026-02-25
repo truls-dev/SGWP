@@ -1651,9 +1651,9 @@ export class CanvasRenderer {
           if (img) {
             let drawY: number;
             if (savedBaseline === "middle") {
-              drawY = y - emojiSize / 2;
+              drawY = y - emojiSize / 2 - fontSize * 0.05;
             } else if (savedBaseline === "top") {
-              drawY = y - (emojiSize - fontSize) / 2;
+              drawY = y - (emojiSize - fontSize) / 2 - fontSize * 0.05;
             } else {
               drawY = y - emojiSize * 0.82;
             }
