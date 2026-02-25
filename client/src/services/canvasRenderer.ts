@@ -621,7 +621,7 @@ export class CanvasRenderer {
     this.drawLockscreenStatusBar(ctx, state, 0);
 
     const dateText = state.chatConfig.lockscreenDate || 'Thursday, February 19';
-    const timeText = state.chatConfig.lockscreenTime || state.systemConfig.time || '5:40';
+    const timeText = state.systemConfig.time || '5:40';
 
     ctx.fillStyle = '#FFFFFF';
     ctx.font = `500 42px ${FONT_SYSTEM}`;

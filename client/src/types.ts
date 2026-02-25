@@ -72,7 +72,6 @@ export interface ChatConfig {
   lockscreenEnabled?: boolean;
   lockscreenBgUrl?: string;
   lockscreenDate?: string;
-  lockscreenTime?: string;
   lockscreenDurationMs?: number;
 }
 

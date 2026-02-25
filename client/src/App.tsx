@@ -123,7 +123,6 @@ const App: React.FC = () => {
       lockscreenEnabled: false,
       lockscreenBgUrl: undefined,
       lockscreenDate: 'Thursday, February 19',
-      lockscreenTime: '5:40',
       lockscreenDurationMs: 2000,
     }
   });
@@ -764,6 +763,7 @@ const App: React.FC = () => {
     }
 
     const scriptToPlay = state.script;
+    let lockscreenFirstEventId: string | null = null;
 
     if (state.chat.lockscreenEnabled) {
       const firstNonMeEvent = state.script.find(e =>
@@ -774,6 +774,7 @@ const App: React.FC = () => {
 
       if (firstNonMeEvent) {
         const sender = state.cast.find(c => c.id === firstNonMeEvent.senderId);
+        const bitmojiUrl = sender ? getSelfieUrlForAvatar(sender.bitmojiAvatarId) : undefined;
         const notifStartTime = performance.now() - playbackStartTimeRef.current;
         lockscreenNotifRef.current = {
           id: 'lockscreen_notif',
@@ -782,11 +783,17 @@ const App: React.FC = () => {
           message: firstNonMeEvent.text || 'Sent a snap',
           timeMs: notifStartTime,
           durationMs: lockDurationMs + 5000,
-          customIconUrl: sender?.avatarUrl,
+          customIconUrl: bitmojiUrl,
         };
         if (state.system.isSoundEnabled) {
           soundService.playEffect('notif');
         }
+
+        setPlaybackItems(prev => [...prev, { ...firstNonMeEvent, instanceId: uuidv4(), revealedAt: Date.now() }]);
+        if (sender && !localActiveParticipantIds.includes(sender.id)) {
+          updateActiveIds(Array.from(new Set([sender.id, ...localActiveParticipantIds])));
+        }
+        lockscreenFirstEventId = firstNonMeEvent.id;
       }
 
       await delay(lockDurationMs);
@@ -806,6 +813,8 @@ const App: React.FC = () => {
     for (let idx = startIdx; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];
       if ((runningStatusRef.current as string) === 'idle') break;
+
+      if (lockscreenFirstEventId && event.id === lockscreenFirstEventId) continue;
       
       if (event.type === MessageType.TEXT && event.senderId === 'me') {
         const firstChar = event.text?.[0];
@@ -1972,25 +1981,15 @@ const App: React.FC = () => {
 
                   {state.chat.lockscreenEnabled && (
                     <div className="space-y-4 animate-in slide-in-from-top-2 duration-300 px-1">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-gray-400 uppercase">Date Text</label>
-                          <input 
-                            type="text"
-                            value={state.chat.lockscreenDate || ''}
-                            onChange={e => updateChat('lockscreenDate', e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none focus:border-green-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-gray-400 uppercase">Clock Time</label>
-                          <input 
-                            type="text"
-                            value={state.chat.lockscreenTime || ''}
-                            onChange={e => updateChat('lockscreenTime', e.target.value)}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none focus:border-green-500"
-                          />
-                        </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase">Date Text</label>
+                        <input 
+                          type="text"
+                          value={state.chat.lockscreenDate || ''}
+                          onChange={e => updateChat('lockscreenDate', e.target.value)}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none focus:border-green-500"
+                        />
+                        <p className="text-[9px] text-gray-500 italic">Clock time uses the time set in the status bar settings above</p>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center">
