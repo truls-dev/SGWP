@@ -2021,7 +2021,17 @@ const App: React.FC = () => {
                     <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Landscape with black bars</span>
                   </div>
                   <button 
-                    onClick={() => updateChat('export16x9', !state.chat.export16x9)}
+                    onClick={() => {
+                      const next = !state.chat.export16x9;
+                      setState(prev => ({
+                        ...prev,
+                        chat: {
+                          ...prev.chat,
+                          export16x9: next,
+                          ...(next ? { videoModeScale: 1, topCornerRadius: 0 } : {})
+                        }
+                      }));
+                    }}
                     className={`w-14 h-7 rounded-full transition-all relative ${state.chat.export16x9 ? 'bg-[#33B5FF]' : 'bg-gray-600'}`}
                     data-testid="toggle-export16x9"
                   >
