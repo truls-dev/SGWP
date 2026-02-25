@@ -4,7 +4,8 @@ export enum MessageType {
   IMAGE = 'IMAGE',
   AUDIO = 'AUDIO',
   NOTIFICATION = 'NOTIFICATION',
-  PRESENCE = 'PRESENCE'
+  PRESENCE = 'PRESENCE',
+  IOS_NOTIFICATION = 'IOS_NOTIFICATION'
 }
 
 export enum SenderType {
@@ -35,6 +36,11 @@ export interface ScriptEvent {
   isBackspaced?: boolean; // If true, the message is typed but then deleted instead of sent
   isPreShown?: boolean; // If true, the message is already visible when the video starts
   revealedAt?: number; // Timestamp (ms) when message was revealed during playback
+  notifPlatform?: NotificationPlatform;
+  notifSenderName?: string;
+  notifMessage?: string;
+  notifDurationMs?: number;
+  notifIconUrl?: string;
 }
 
 export interface SystemConfig {

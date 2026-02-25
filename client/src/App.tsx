@@ -176,6 +176,8 @@ const App: React.FC = () => {
   const staticPreviewContainerRef = useRef<HTMLDivElement>(null);
   const previewAnimFrameRef = useRef<number | null>(null);
   const timedSfxTimeoutsRef = useRef<number[]>([]);
+  const scriptNotificationsRef = useRef<TimedNotification[]>([]);
+  const playbackStartTimeRef = useRef<number>(0);
   const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
   const frameStateRef = useRef<FrameState>({
     messages: [],
@@ -226,10 +228,16 @@ const App: React.FC = () => {
       cast: state.cast,
       backgroundVideo: previewVideoRef.current,
       suggestedCustomojiUrl: suggestedUrl,
-      activeNotifications: timedNotifications.filter(n => {
-        const elapsed = frameStateRef.current.time - n.timeMs;
-        return elapsed >= -50 && elapsed < n.durationMs;
-      }),
+      activeNotifications: [
+        ...timedNotifications.filter(n => {
+          const elapsed = frameStateRef.current.time - n.timeMs;
+          return elapsed >= -50 && elapsed < n.durationMs;
+        }),
+        ...scriptNotificationsRef.current.filter(n => {
+          const elapsed = frameStateRef.current.time - n.timeMs;
+          return elapsed >= -50 && elapsed < n.durationMs;
+        }),
+      ],
     };
   });
 
@@ -593,11 +601,17 @@ const App: React.FC = () => {
     const newItem: ScriptEvent = {
       id: uuidv4(),
       type,
-      senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : state.cast[0].id),
-      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE ? '' : 'New message')),
+      senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : (type === MessageType.IOS_NOTIFICATION ? undefined : state.cast[0].id)),
+      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.IOS_NOTIFICATION ? '' : 'New message')),
       presenceAction: type === MessageType.PRESENCE ? 'ENTER' : undefined,
       isVertical: false,
-      isBackspaced: false
+      isBackspaced: false,
+      ...(type === MessageType.IOS_NOTIFICATION ? {
+        notifPlatform: 'Messages' as NotificationPlatform,
+        notifSenderName: 'Jane',
+        notifMessage: "I'm on my way!",
+        notifDurationMs: 2500,
+      } : {}),
     };
     setState(prev => ({ ...prev, script: [...prev.script, newItem] }));
   };
@@ -720,6 +734,7 @@ const App: React.FC = () => {
 
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
+    scriptNotificationsRef.current = [];
     if (state.system.isSoundEnabled && timedSoundEffects.length > 0) {
       for (const tse of timedSoundEffects) {
         if (wt) {
@@ -776,6 +791,25 @@ const App: React.FC = () => {
            updateActiveIds(Array.from(new Set([event.senderId as string, ...localActiveParticipantIds])));
            await delay(600);
         }
+      }
+
+      if (event.type === MessageType.IOS_NOTIFICATION) {
+        const notifStartTime = performance.now() - playbackStartTimeRef.current;
+        const scriptNotif: TimedNotification = {
+          id: event.id,
+          platform: event.notifPlatform || 'Messages',
+          senderName: event.notifSenderName || 'Unknown',
+          message: event.notifMessage || '',
+          timeMs: notifStartTime,
+          durationMs: event.notifDurationMs || 2500,
+          customIconUrl: event.notifIconUrl,
+        };
+        scriptNotificationsRef.current = [...scriptNotificationsRef.current, scriptNotif];
+        if (state.system.isSoundEnabled && event.soundEffect) {
+          await soundService.playEffect(event.soundEffect);
+        }
+        await delay(event.notifDurationMs || 2500);
+        continue;
       }
 
       if (event.type === MessageType.NOTIFICATION) {
@@ -1022,6 +1056,7 @@ const App: React.FC = () => {
         }
 
         const startTime = performance.now();
+        playbackStartTimeRef.current = startTime;
         const previewRenderLoop = () => {
           if (runningStatusRef.current !== 'previewing') return;
           const now = performance.now();
@@ -1181,6 +1216,7 @@ const App: React.FC = () => {
 
       soundService.resetRecordingStartTime();
       const startTime = performance.now();
+      playbackStartTimeRef.current = startTime;
       const fps = 60;
       const frameDurationUs = 1000000 / fps;
       let frameCount = 0;
@@ -1364,7 +1400,7 @@ const App: React.FC = () => {
       }
 
       const sender = cast.find(c => c.id === event.senderId);
-      if (!sender && event.type !== MessageType.NOTIFICATION) continue;
+      if (!sender && event.type !== MessageType.NOTIFICATION && event.type !== MessageType.IOS_NOTIFICATION) continue;
 
       if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
         if (!activeIds.includes(event.senderId)) {
@@ -2216,14 +2252,14 @@ const App: React.FC = () => {
                           onDragOver={(e) => handleDragOver(e, idx)}
                           onDrop={(e) => handleDrop(e, idx)}
                           onDragEnd={() => setDraggedItemIndex(null)}
-                          className={`bg-black/30 border ${item.type === MessageType.PRESENCE ? 'border-[#33B5FF]/30 bg-[#33B5FF]/5' : 'border-white/10'} p-4 rounded-2xl relative transition-all hover:border-white/20 cursor-grab active:cursor-grabbing ${draggedItemIndex === idx ? 'opacity-40 grayscale scale-95' : 'opacity-100'}`}
+                          className={`bg-black/30 border ${item.type === MessageType.PRESENCE ? 'border-[#33B5FF]/30 bg-[#33B5FF]/5' : item.type === MessageType.IOS_NOTIFICATION ? 'border-green-500/30 bg-green-500/5' : 'border-white/10'} p-4 rounded-2xl relative transition-all hover:border-white/20 cursor-grab active:cursor-grabbing ${draggedItemIndex === idx ? 'opacity-40 grayscale scale-95' : 'opacity-100'}`}
                         >
                           <div className="flex justify-between items-center mb-2.5 pointer-events-none">
                             <div className="flex gap-2 items-center pointer-events-auto">
                               <div className="text-gray-600 px-1"><i className="fa-solid fa-grip-vertical"></i></div>
                               <select 
                                 className="bg-[#1a1a1a] border border-white/10 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer hover:bg-black transition-colors" 
-                                value={item.type === MessageType.NOTIFICATION ? 'SYSTEM' : (item.type === MessageType.PRESENCE ? 'PRESENCE' : item.senderId)} 
+                                value={item.type === MessageType.NOTIFICATION ? 'SYSTEM' : (item.type === MessageType.PRESENCE ? 'PRESENCE' : (item.type === MessageType.IOS_NOTIFICATION ? 'IOS_NOTIF' : item.senderId))} 
                                 onChange={e => {
                                   const val = e.target.value;
                                   const newScript = [...state.script];
@@ -2231,14 +2267,17 @@ const App: React.FC = () => {
                                       newScript[idx] = { ...item, type: MessageType.NOTIFICATION, senderId: undefined };
                                   } else if (val === 'PRESENCE') {
                                       newScript[idx] = { ...item, type: MessageType.PRESENCE, senderId: state.cast.find(c => !c.isMe)?.id, presenceAction: 'ENTER' };
+                                  } else if (val === 'IOS_NOTIF') {
+                                      newScript[idx] = { ...item, type: MessageType.IOS_NOTIFICATION, senderId: undefined, notifPlatform: item.notifPlatform || 'Messages', notifSenderName: item.notifSenderName || 'Jane', notifMessage: item.notifMessage || "I'm on my way!", notifDurationMs: item.notifDurationMs || 2500 };
                                   } else {
-                                      newScript[idx] = { ...item, type: item.type === MessageType.NOTIFICATION || item.type === MessageType.PRESENCE ? MessageType.TEXT : item.type, senderId: val };
+                                      newScript[idx] = { ...item, type: item.type === MessageType.NOTIFICATION || item.type === MessageType.PRESENCE || item.type === MessageType.IOS_NOTIFICATION ? MessageType.TEXT : item.type, senderId: val };
                                   }
                                   setState(prev => ({ ...prev, script: newScript }));
                                 }}
                               >
                                 <option value="SYSTEM">Alert / Notification</option>
                                 <option value="PRESENCE">Presence Event</option>
+                                <option value="IOS_NOTIF">iOS Notification</option>
                                 {state.cast.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                               </select>
                             </div>
@@ -2286,7 +2325,97 @@ const App: React.FC = () => {
                           </div>
                           
                           <div className="pointer-events-auto">
-                            {item.type === MessageType.PRESENCE ? (
+                            {item.type === MessageType.IOS_NOTIFICATION ? (
+                              <div className="space-y-2 mt-1">
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer focus:border-green-500"
+                                    value={item.notifPlatform || 'Messages'}
+                                    onChange={e => {
+                                      const newScript = [...state.script];
+                                      newScript[idx] = { ...item, notifPlatform: e.target.value as NotificationPlatform };
+                                      setState(prev => ({ ...prev, script: newScript }));
+                                    }}
+                                  >
+                                    <option value="Messages">Messages</option>
+                                    <option value="Snapchat">Snapchat</option>
+                                  </select>
+                                  <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      step="0.5"
+                                      value={((item.notifDurationMs || 2500) / 1000).toFixed(1)}
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, notifDurationMs: Math.max(500, parseFloat(e.target.value || '2') * 1000) };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                      className="w-[36px] bg-transparent text-[10px] font-bold outline-none text-center"
+                                    />
+                                    <span className="text-[9px] text-gray-500">s dur</span>
+                                  </div>
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Sender name"
+                                  value={item.notifSenderName || ''}
+                                  onChange={e => {
+                                    const newScript = [...state.script];
+                                    newScript[idx] = { ...item, notifSenderName: e.target.value };
+                                    setState(prev => ({ ...prev, script: newScript }));
+                                  }}
+                                  className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-green-500"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Notification message"
+                                  value={item.notifMessage || ''}
+                                  onChange={e => {
+                                    const newScript = [...state.script];
+                                    newScript[idx] = { ...item, notifMessage: e.target.value };
+                                    setState(prev => ({ ...prev, script: newScript }));
+                                  }}
+                                  className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-green-500"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[9px] text-gray-500 shrink-0">Profile pic:</label>
+                                  {item.notifIconUrl && (
+                                    <img
+                                      src={item.notifIconUrl}
+                                      alt="icon"
+                                      className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0"
+                                    />
+                                  )}
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="text-[9px] text-gray-400 min-w-0 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-gray-300 hover:file:bg-white/20"
+                                    onChange={e => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const url = URL.createObjectURL(file);
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, notifIconUrl: url };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const avatarId = getRandomAvatarId();
+                                      const url = getSelfieUrlForAvatar(avatarId);
+                                      const newScript = [...state.script];
+                                      newScript[idx] = { ...item, notifIconUrl: url };
+                                      setState(prev => ({ ...prev, script: newScript }));
+                                    }}
+                                    className="shrink-0 bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-[9px] font-black uppercase text-gray-300 hover:bg-green-500 hover:text-white transition-all active:scale-95"
+                                  >
+                                    <i className="fa-solid fa-wand-sparkles mr-1"></i>Bitmoji
+                                  </button>
+                                </div>
+                              </div>
+                            ) : item.type === MessageType.PRESENCE ? (
                                <div className="space-y-3 mt-1">
                                    <div className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/5">
                                       <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest pl-1">Participant:</span>
@@ -2386,6 +2515,9 @@ const App: React.FC = () => {
                       <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
                       <button onClick={() => addScriptItem(MessageType.NOTIFICATION)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ ALERT</button>
                       <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="flex-1 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95"><i className="fa-solid fa-bell mr-1"></i> + iOS NOTIF</button>
                     </div>
                   </>
                 )}
