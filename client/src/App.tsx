@@ -1894,11 +1894,10 @@ const App: React.FC = () => {
           {activeTab === 'cast' && (
           <>
           <div className="space-y-10">
+            {state.chat.isGroup && (
             <section className="space-y-6">
-              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Identity Settings</h3>
+              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Group Settings</h3>
               <div className="space-y-5 bg-white/5 p-6 rounded-[32px] border border-white/5">
-                {state.chat.isGroup ? (
-                  <>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-400 uppercase">Group Name</label>
                       <input 
@@ -1929,30 +1928,9 @@ const App: React.FC = () => {
                     >
                       <i className="fa-solid fa-shuffle"></i> Randomize All Cast Bitmojis
                     </button>
-                  </>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase">Partner Name</label>
-                      <input 
-                        type="text" value={state.chat.contactName} 
-                        onChange={e => updateChat('contactName', e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#33B5FF]"
-                      />
-                    </div>
-                    <button 
-                      onClick={() => {
-                        const partner = state.cast.find(c => !c.isMe);
-                        if (partner) cycleAvatar(partner.id);
-                      }}
-                      className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#33B5FF] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      <i className="fa-solid fa-wand-sparkles"></i> Randomize Partner Bitmoji
-                    </button>
-                  </div>
-                )}
               </div>
             </section>
+            )}
 
             <section className="space-y-6">
               <div className="flex justify-between items-center">
