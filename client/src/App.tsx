@@ -1251,12 +1251,25 @@ const App: React.FC = () => {
 
       runningStatusRef.current = 'recording';
 
+      const is16x9 = state.chat.export16x9 === true;
+      let outputCanvas: HTMLCanvasElement | null = null;
+      let outputCtx: CanvasRenderingContext2D | null = null;
+      if (is16x9) {
+        outputCanvas = document.createElement('canvas');
+        outputCanvas.width = 1920;
+        outputCanvas.height = 1080;
+        outputCtx = outputCanvas.getContext('2d')!;
+      }
+
+      const encodeWidth = is16x9 ? 1920 : canvas.width;
+      const encodeHeight = is16x9 ? 1080 : canvas.height;
+
       const muxer = new Muxer({
         target: new ArrayBufferTarget(),
         video: {
           codec: 'avc',
-          width: canvas.width,
-          height: canvas.height
+          width: encodeWidth,
+          height: encodeHeight
         },
         audio: {
           codec: 'aac',
@@ -1275,8 +1288,8 @@ const App: React.FC = () => {
 
       videoEncoder.configure({
         codec: 'avc1.640033',
-        width: canvas.width,
-        height: canvas.height,
+        width: encodeWidth,
+        height: encodeHeight,
         bitrate: 10_000_000,
         framerate: 60,
         latencyMode: 'quality'
@@ -1339,8 +1352,20 @@ const App: React.FC = () => {
               }
             }
 
+            let frameSource: HTMLCanvasElement = canvas;
+            if (is16x9 && outputCanvas && outputCtx) {
+              outputCtx.fillStyle = '#000000';
+              outputCtx.fillRect(0, 0, 1920, 1080);
+              const scale = 1080 / canvas.height;
+              const dw = canvas.width * scale;
+              const dh = 1080;
+              const dx = (1920 - dw) / 2;
+              outputCtx.drawImage(canvas, dx, 0, dw, dh);
+              frameSource = outputCanvas;
+            }
+
             const frameTimestamp = Math.floor(frameCount * frameDurationUs);
-            const frame = new win.VideoFrame(canvas, { timestamp: frameTimestamp });
+            const frame = new win.VideoFrame(frameSource, { timestamp: frameTimestamp });
 
             if (videoEncoder.state === 'configured') {
                 const keyFrame = frameCount % 120 === 0;
@@ -1988,6 +2013,20 @@ const App: React.FC = () => {
                       />
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">Export 16:9</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Landscape with black bars</span>
+                  </div>
+                  <button 
+                    onClick={() => updateChat('export16x9', !state.chat.export16x9)}
+                    className={`w-14 h-7 rounded-full transition-all relative ${state.chat.export16x9 ? 'bg-[#33B5FF]' : 'bg-gray-600'}`}
+                    data-testid="toggle-export16x9"
+                  >
+                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${state.chat.export16x9 ? 'right-1' : 'left-1'}`} />
+                  </button>
                 </div>
 
                 <div className="flex flex-col pt-2 border-t border-white/10 gap-6">

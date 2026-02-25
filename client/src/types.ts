@@ -73,6 +73,7 @@ export interface ChatConfig {
   lockscreenBgUrl?: string;
   lockscreenDate?: string;
   lockscreenDurationMs?: number;
+  export16x9?: boolean;
 }
 
 export interface TimedSoundEffect {
