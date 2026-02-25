@@ -744,9 +744,9 @@ export class CanvasRenderer {
     state: FrameState,
   ): void {
     const bannerW = this.W - 56;
-    const bannerH = 170;
+    const bannerH = 220;
     const bannerX = 28;
-    const bannerR = 44;
+    const bannerR = 48;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipe = state.lockscreenSwipeProgress || 0;
@@ -791,8 +791,8 @@ export class CanvasRenderer {
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
-    const iconSize = 116;
-    const iconX = bannerX + 28;
+    const iconSize = 136;
+    const iconX = bannerX + 32;
     const iconY = bannerY + (bannerH - iconSize) / 2;
 
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
@@ -817,9 +817,9 @@ export class CanvasRenderer {
       ctx.restore();
 
       if (snapLogo) {
-        const badgeSize = 48;
-        const badgeX = iconX + iconSize - badgeSize + 4;
-        const badgeY2 = iconY + iconSize - badgeSize + 4;
+        const badgeSize = 56;
+        const badgeX = iconX + iconSize - badgeSize + 6;
+        const badgeY2 = iconY + iconSize - badgeSize + 6;
         ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
       }
     } else {
@@ -829,19 +829,19 @@ export class CanvasRenderer {
       ctx.closePath();
       ctx.fill();
       if (snapLogo) {
-        const badgeSize = 48;
-        const badgeX = iconX + iconSize - badgeSize + 4;
-        const badgeY2 = iconY + iconSize - badgeSize + 4;
+        const badgeSize = 56;
+        const badgeX = iconX + iconSize - badgeSize + 6;
+        const badgeY2 = iconY + iconSize - badgeSize + 6;
         ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
       }
     }
 
-    const textX = iconX + iconSize + 24;
-    const textMaxW = bannerX + bannerW - textX - 80;
+    const textX = iconX + iconSize + 28;
+    const textMaxW = bannerX + bannerW - textX - 100;
 
-    const nameFontSize = 44;
-    const msgFontSize = 40;
-    const lineGap = 8;
+    const nameFontSize = 50;
+    const msgFontSize = 46;
+    const lineGap = 10;
     const textBlockH = nameFontSize + lineGap + msgFontSize;
     const textBlockTop = bannerY + (bannerH - textBlockH) / 2;
 
@@ -858,7 +858,7 @@ export class CanvasRenderer {
       ctx.fillText(nameText, textX, textBlockTop);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.font = `400 ${msgFontSize}px ${FONT_SYSTEM}`;
     const msgY = textBlockTop + nameFontSize + lineGap;
     const msgText = notification.message;
@@ -869,11 +869,11 @@ export class CanvasRenderer {
       ctx.fillText(msgText, textX, msgY);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.font = `400 30px ${FONT_SYSTEM}`;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.font = `400 36px ${FONT_SYSTEM}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText('now', bannerX + bannerW - 28, textBlockTop + 4);
+    ctx.fillText('now', bannerX + bannerW - 32, textBlockTop + 6);
 
     ctx.restore();
   }
@@ -883,9 +883,9 @@ export class CanvasRenderer {
     swipeProgress: number,
   ): void {
     const bannerW = this.W - 56;
-    const bannerH = 170;
+    const bannerH = 220;
     const bannerX = 28;
-    const bannerR = 44;
+    const bannerR = 48;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipeEased = swipeProgress < 0.5
