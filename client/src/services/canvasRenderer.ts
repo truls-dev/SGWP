@@ -743,9 +743,9 @@ export class CanvasRenderer {
     appearProgress: number,
     state: FrameState,
   ): void {
-    const bannerW = this.W - 56;
-    const bannerH = 220;
-    const bannerX = 28;
+    const bannerW = this.W - 70;
+    const bannerH = 260;
+    const bannerX = 35;
     const bannerR = bannerH / 2;
     const bannerY = STATUS_BAR_H + 440;
 
@@ -772,11 +772,11 @@ export class CanvasRenderer {
     ctx.scale(scale, scale);
     ctx.translate(-cx, -cy);
 
-    ctx.shadowColor = 'rgba(0,0,0,0.2)';
-    ctx.shadowBlur = 20;
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 24;
     ctx.shadowOffsetY = 4;
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.fillStyle = 'rgba(220, 210, 230, 0.65)';
     ctx.beginPath();
     ctx.moveTo(bannerX + bannerR, bannerY);
     ctx.lineTo(bannerX + bannerW - bannerR, bannerY);
@@ -791,8 +791,8 @@ export class CanvasRenderer {
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
-    const iconSize = 136;
-    const iconX = bannerX + 32;
+    const iconSize = 160;
+    const iconX = bannerX + 40;
     const iconY = bannerY + (bannerH - iconSize) / 2;
 
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
@@ -817,7 +817,7 @@ export class CanvasRenderer {
       ctx.restore();
 
       if (snapLogo) {
-        const badgeSize = 56;
+        const badgeSize = 64;
         const badgeX = iconX + iconSize - badgeSize + 6;
         const badgeY2 = iconY + iconSize - badgeSize + 6;
         ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
@@ -829,18 +829,18 @@ export class CanvasRenderer {
       ctx.closePath();
       ctx.fill();
       if (snapLogo) {
-        const badgeSize = 56;
+        const badgeSize = 64;
         const badgeX = iconX + iconSize - badgeSize + 6;
         const badgeY2 = iconY + iconSize - badgeSize + 6;
         ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
       }
     }
 
-    const textX = iconX + iconSize + 28;
-    const textMaxW = bannerX + bannerW - textX - 100;
+    const textX = iconX + iconSize + 30;
+    const textMaxW = bannerX + bannerW - textX - 120;
 
-    const nameFontSize = 50;
-    const msgFontSize = 46;
+    const nameFontSize = 58;
+    const msgFontSize = 52;
     const lineGap = 10;
     const textBlockH = nameFontSize + lineGap + msgFontSize;
     const textBlockTop = bannerY + (bannerH - textBlockH) / 2;
@@ -858,7 +858,7 @@ export class CanvasRenderer {
       ctx.fillText(nameText, textX, textBlockTop);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.font = `400 ${msgFontSize}px ${FONT_SYSTEM}`;
     const msgY = textBlockTop + nameFontSize + lineGap;
     const msgText = notification.message;
@@ -869,11 +869,11 @@ export class CanvasRenderer {
       ctx.fillText(msgText, textX, msgY);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.font = `400 36px ${FONT_SYSTEM}`;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.font = `500 42px ${FONT_SYSTEM}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText('now', bannerX + bannerW - 32, textBlockTop + 6);
+    ctx.fillText('now', bannerX + bannerW - 40, textBlockTop + 8);
 
     ctx.restore();
   }
@@ -882,9 +882,9 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     swipeProgress: number,
   ): void {
-    const bannerW = this.W - 56;
-    const bannerH = 220;
-    const bannerX = 28;
+    const bannerW = this.W - 70;
+    const bannerH = 260;
+    const bannerX = 35;
     const bannerR = bannerH / 2;
     const bannerY = STATUS_BAR_H + 440;
 
