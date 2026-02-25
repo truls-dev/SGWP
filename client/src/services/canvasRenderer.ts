@@ -625,15 +625,15 @@ export class CanvasRenderer {
     const timeText = state.systemConfig.time || '5:40';
 
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `500 42px ${FONT_SYSTEM}`;
+    ctx.font = `500 52px ${FONT_SYSTEM}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 8;
-    this.fillTextWithEmoji(ctx, dateText, this.W / 2, STATUS_BAR_H + 60, FONT_SYSTEM, 42);
+    this.fillTextWithEmoji(ctx, dateText, this.W / 2, STATUS_BAR_H + 100, FONT_SYSTEM, 52);
 
-    ctx.font = `bold 200px ${FONT_SYSTEM}`;
-    this.fillTextWithEmoji(ctx, timeText, this.W / 2, STATUS_BAR_H + 200, FONT_SYSTEM, 200);
+    ctx.font = `bold 260px ${FONT_SYSTEM}`;
+    this.fillTextWithEmoji(ctx, timeText, this.W / 2, STATUS_BAR_H + 290, FONT_SYSTEM, 260);
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
 
@@ -749,7 +749,7 @@ export class CanvasRenderer {
     const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
-    const bannerY = STATUS_BAR_H + 320;
+    const bannerY = STATUS_BAR_H + 440;
 
     const swipe = state.lockscreenSwipeProgress || 0;
     const swipeEased = swipe < 0.5
@@ -888,7 +888,7 @@ export class CanvasRenderer {
     const bannerH = 170;
     const bannerX = 28;
     const bannerR = 44;
-    const bannerY = STATUS_BAR_H + 320;
+    const bannerY = STATUS_BAR_H + 440;
 
     const swipeEased = swipeProgress < 0.5
       ? 2 * swipeProgress * swipeProgress
