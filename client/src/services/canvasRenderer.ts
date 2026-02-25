@@ -328,6 +328,10 @@ export class CanvasRenderer {
         "updown",
         "https://raw.githubusercontent.com/truls-dev/images/main/updown-removebg-preview.png",
       ],
+      [
+        "snapLogo",
+        "https://raw.githubusercontent.com/truls-dev/images/main/snaplogo.png",
+      ],
     ];
 
     const promises: Promise<void>[] = [];
@@ -2423,31 +2427,76 @@ export class CanvasRenderer {
     const iconSize = 96;
     const iconR = 22;
 
+    const isSnapchat = notification.platform === 'Snapchat';
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
-    if (customIcon) {
+
+    if (isSnapchat && customIcon) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      const imgRatio = customIcon.width / customIcon.height;
+      const boxRatio = 1;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (imgRatio > boxRatio) {
+        dh = iconSize; dw = iconSize * imgRatio;
+        dx = iconX + (iconSize - dw) / 2; dy = iconY;
+      } else {
+        dw = iconSize; dh = iconSize / imgRatio;
+        dx = iconX; dy = iconY + (iconSize - dh) / 2;
+      }
+      ctx.drawImage(customIcon, dx, dy, dw, dh);
+      ctx.restore();
+
+      const snapLogo = this.images.get("snapLogo");
+      if (snapLogo) {
+        const badgeSize = 40;
+        const badgeX = iconX + iconSize - badgeSize + 4;
+        const badgeY = iconY + iconSize - badgeSize + 4;
+        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+      }
+    } else if (customIcon) {
       this.drawRoundedImage(ctx, customIcon, iconX, iconY, iconSize, iconSize, iconR);
     } else {
       const platformColor = CanvasRenderer.PLATFORM_COLORS[notification.platform] || '#999999';
       ctx.fillStyle = platformColor;
-      ctx.beginPath();
-      ctx.moveTo(iconX + iconR, iconY);
-      ctx.lineTo(iconX + iconSize - iconR, iconY);
-      ctx.quadraticCurveTo(iconX + iconSize, iconY, iconX + iconSize, iconY + iconR);
-      ctx.lineTo(iconX + iconSize, iconY + iconSize - iconR);
-      ctx.quadraticCurveTo(iconX + iconSize, iconY + iconSize, iconX + iconSize - iconR, iconY + iconSize);
-      ctx.lineTo(iconX + iconR, iconY + iconSize);
-      ctx.quadraticCurveTo(iconX, iconY + iconSize, iconX, iconY + iconSize - iconR);
-      ctx.lineTo(iconX, iconY + iconR);
-      ctx.quadraticCurveTo(iconX, iconY, iconX + iconR, iconY);
-      ctx.closePath();
-      ctx.fill();
+      if (isSnapchat) {
+        ctx.beginPath();
+        ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(iconX + iconR, iconY);
+        ctx.lineTo(iconX + iconSize - iconR, iconY);
+        ctx.quadraticCurveTo(iconX + iconSize, iconY, iconX + iconSize, iconY + iconR);
+        ctx.lineTo(iconX + iconSize, iconY + iconSize - iconR);
+        ctx.quadraticCurveTo(iconX + iconSize, iconY + iconSize, iconX + iconSize - iconR, iconY + iconSize);
+        ctx.lineTo(iconX + iconR, iconY + iconSize);
+        ctx.quadraticCurveTo(iconX, iconY + iconSize, iconX, iconY + iconSize - iconR);
+        ctx.lineTo(iconX, iconY + iconR);
+        ctx.quadraticCurveTo(iconX, iconY, iconX + iconR, iconY);
+        ctx.closePath();
+        ctx.fill();
+      }
 
       const icon = CanvasRenderer.PLATFORM_ICONS[notification.platform] || '?';
-      ctx.fillStyle = notification.platform === 'Snapchat' ? '#000000' : '#FFFFFF';
+      ctx.fillStyle = isSnapchat ? '#000000' : '#FFFFFF';
       ctx.font = `400 48px ${FONT_EMOJI}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(icon, iconX + iconSize / 2, iconY + iconSize / 2);
+
+      if (isSnapchat) {
+        const snapLogo = this.images.get("snapLogo");
+        if (snapLogo) {
+          const badgeSize = 40;
+          const badgeX = iconX + iconSize - badgeSize + 4;
+          const badgeY = iconY + iconSize - badgeSize + 4;
+          ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+        }
+      }
     }
 
     const textX = iconX + iconSize + 24;
