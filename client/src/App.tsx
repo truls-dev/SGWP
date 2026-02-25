@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect } from './types';
+import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect, TimedNotification, NotificationPlatform } from './types';
 import StatusBar from './components/StatusBar';
 import ChatHeader from './components/ChatHeader';
 import ChatInput from './components/ChatInput';
@@ -149,6 +149,7 @@ const App: React.FC = () => {
   const [isMusicLoading, setIsMusicLoading] = useState(false);
   const [sfxVolume, setSfxVolume] = useState(0.15);
   const [timedSoundEffects, setTimedSoundEffects] = useState<TimedSoundEffect[]>([]);
+  const [timedNotifications, setTimedNotifications] = useState<TimedNotification[]>([]);
 
   const [appendOutro, setAppendOutro] = useState(false);
   const outroVideoElRef = useRef<HTMLVideoElement | null>(null);
@@ -225,6 +226,10 @@ const App: React.FC = () => {
       cast: state.cast,
       backgroundVideo: previewVideoRef.current,
       suggestedCustomojiUrl: suggestedUrl,
+      activeNotifications: timedNotifications.filter(n => {
+        const elapsed = frameStateRef.current.time - n.timeMs;
+        return elapsed >= -50 && elapsed < n.durationMs;
+      }),
     };
   });
 
@@ -1628,6 +1633,131 @@ const App: React.FC = () => {
                       >
                         <i className="fa-solid fa-xmark text-[10px]"></i>
                       </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3 px-1 pt-2 border-t border-white/10">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">Timed Notifications</label>
+                    <button
+                      data-testid="button-add-timed-notif"
+                      onClick={() => setTimedNotifications(prev => [...prev, { id: uuidv4(), platform: 'Messages' as NotificationPlatform, senderName: 'Jane', message: "I'm on my way!", timeMs: 0, durationMs: 2500 }])}
+                      className="text-[10px] font-black text-[#33B5FF] hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <i className="fa-solid fa-plus text-[8px]"></i> Add
+                    </button>
+                  </div>
+                  {timedNotifications.length === 0 && (
+                    <p className="text-[9px] text-gray-600 italic">No timed notifications. Add one to show an iPhone notification banner during the video.</p>
+                  )}
+                  {timedNotifications.map((tn, idx) => (
+                    <div key={tn.id} data-testid={`timed-notif-row-${idx}`} className="bg-black/20 rounded-xl p-3 space-y-2 border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <select
+                          data-testid={`select-notif-platform-${idx}`}
+                          className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer focus:border-[#33B5FF]"
+                          value={tn.platform}
+                          onChange={e => {
+                            const updated = [...timedNotifications];
+                            updated[idx] = { ...updated[idx], platform: e.target.value as NotificationPlatform };
+                            setTimedNotifications(updated);
+                          }}
+                        >
+                          <option value="Messages">Messages</option>
+                          <option value="Snapchat">Snapchat</option>
+                          <option value="Instagram">Instagram</option>
+                          <option value="WhatsApp">WhatsApp</option>
+                          <option value="Twitter">Twitter / X</option>
+                          <option value="TikTok">TikTok</option>
+                          <option value="Facebook">Facebook</option>
+                          <option value="Telegram">Telegram</option>
+                        </select>
+                        <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                          <span className="text-[9px] text-gray-500">@</span>
+                          <input
+                            data-testid={`input-notif-time-${idx}`}
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={(tn.timeMs / 1000).toFixed(1)}
+                            onChange={e => {
+                              const updated = [...timedNotifications];
+                              updated[idx] = { ...updated[idx], timeMs: Math.max(0, parseFloat(e.target.value || '0') * 1000) };
+                              setTimedNotifications(updated);
+                            }}
+                            className="w-[48px] bg-transparent text-[10px] font-bold outline-none text-center"
+                          />
+                          <span className="text-[9px] text-gray-500">s</span>
+                        </div>
+                        <button
+                          data-testid={`button-remove-notif-${idx}`}
+                          onClick={() => setTimedNotifications(prev => prev.filter(t => t.id !== tn.id))}
+                          className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                        >
+                          <i className="fa-solid fa-xmark text-[10px]"></i>
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          data-testid={`input-notif-sender-${idx}`}
+                          type="text"
+                          placeholder="Sender name"
+                          value={tn.senderName}
+                          onChange={e => {
+                            const updated = [...timedNotifications];
+                            updated[idx] = { ...updated[idx], senderName: e.target.value };
+                            setTimedNotifications(updated);
+                          }}
+                          className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-[#33B5FF]"
+                        />
+                        <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                          <input
+                            data-testid={`input-notif-duration-${idx}`}
+                            type="number"
+                            min="0.5"
+                            step="0.5"
+                            value={(tn.durationMs / 1000).toFixed(1)}
+                            onChange={e => {
+                              const updated = [...timedNotifications];
+                              updated[idx] = { ...updated[idx], durationMs: Math.max(500, parseFloat(e.target.value || '2') * 1000) };
+                              setTimedNotifications(updated);
+                            }}
+                            className="w-[36px] bg-transparent text-[10px] font-bold outline-none text-center"
+                          />
+                          <span className="text-[9px] text-gray-500">s dur</span>
+                        </div>
+                      </div>
+                      <input
+                        data-testid={`input-notif-message-${idx}`}
+                        type="text"
+                        placeholder="Notification message"
+                        value={tn.message}
+                        onChange={e => {
+                          const updated = [...timedNotifications];
+                          updated[idx] = { ...updated[idx], message: e.target.value };
+                          setTimedNotifications(updated);
+                        }}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none focus:border-[#33B5FF]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="text-[9px] text-gray-500">Custom icon:</label>
+                        <input
+                          data-testid={`input-notif-icon-${idx}`}
+                          type="file"
+                          accept="image/*"
+                          className="text-[9px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-gray-300 hover:file:bg-white/20"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const url = URL.createObjectURL(file);
+                              const updated = [...timedNotifications];
+                              updated[idx] = { ...updated[idx], customIconUrl: url };
+                              setTimedNotifications(updated);
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

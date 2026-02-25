@@ -4,6 +4,7 @@ import {
   ChatConfig,
   CastMember,
   MessageType,
+  TimedNotification,
 } from "../types";
 import { KeyboardLayout } from "../components/IOSKeyboard";
 import {
@@ -28,6 +29,7 @@ export interface FrameState {
   time: number;
   backgroundVideo?: HTMLVideoElement | null;
   suggestedCustomojiUrl?: string | null;
+  activeNotifications?: TimedNotification[];
 }
 
 interface StickerAnimState {
@@ -520,6 +522,8 @@ export class CanvasRenderer {
         this.drawPhoneUI(ctx, state, kbH);
       }
     }
+
+    this.drawActiveNotifications(ctx, state);
 
     return this.canvas;
   }
@@ -2352,5 +2356,181 @@ export class CanvasRenderer {
     }
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
+  }
+
+  private static PLATFORM_COLORS: Record<string, string> = {
+    'Messages': '#34C759',
+    'Snapchat': '#FFFC00',
+    'Instagram': '#E1306C',
+    'WhatsApp': '#25D366',
+    'Twitter': '#000000',
+    'TikTok': '#000000',
+    'Facebook': '#1877F2',
+    'Telegram': '#0088CC',
+  };
+
+  private static PLATFORM_ICONS: Record<string, string> = {
+    'Messages': '\uD83D\uDCAC',
+    'Snapchat': '\uD83D\uDC7B',
+    'Instagram': '\uD83D\uDCF7',
+    'WhatsApp': '\uD83D\uDCDE',
+    'Twitter': '𝕏',
+    'TikTok': '\uD83C\uDFB5',
+    'Facebook': 'f',
+    'Telegram': '\u2708',
+  };
+
+  drawNotificationBanner(
+    ctx: CanvasRenderingContext2D,
+    notification: TimedNotification,
+    slideProgress: number,
+  ): void {
+    const bannerW = this.W - 40;
+    const bannerH = 180;
+    const bannerX = 20;
+    const bannerR = 42;
+    const offscreenY = -bannerH - 20;
+    const onscreenY = 28;
+
+    const eased = slideProgress < 0.5
+      ? 4 * slideProgress * slideProgress * slideProgress
+      : 1 - Math.pow(-2 * slideProgress + 2, 3) / 2;
+
+    const bannerY = offscreenY + (onscreenY - offscreenY) * eased;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.25)";
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 8;
+
+    ctx.fillStyle = "rgba(245, 245, 247, 0.97)";
+    ctx.beginPath();
+    ctx.moveTo(bannerX + bannerR, bannerY);
+    ctx.lineTo(bannerX + bannerW - bannerR, bannerY);
+    ctx.quadraticCurveTo(bannerX + bannerW, bannerY, bannerX + bannerW, bannerY + bannerR);
+    ctx.lineTo(bannerX + bannerW, bannerY + bannerH - bannerR);
+    ctx.quadraticCurveTo(bannerX + bannerW, bannerY + bannerH, bannerX + bannerW - bannerR, bannerY + bannerH);
+    ctx.lineTo(bannerX + bannerR, bannerY + bannerH);
+    ctx.quadraticCurveTo(bannerX, bannerY + bannerH, bannerX, bannerY + bannerH - bannerR);
+    ctx.lineTo(bannerX, bannerY + bannerR);
+    ctx.quadraticCurveTo(bannerX, bannerY, bannerX + bannerR, bannerY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+
+    const iconX = bannerX + 28;
+    const iconY = bannerY + bannerH / 2 - 48;
+    const iconSize = 96;
+    const iconR = 22;
+
+    const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
+    if (customIcon) {
+      this.drawRoundedImage(ctx, customIcon, iconX, iconY, iconSize, iconSize, iconR);
+    } else {
+      const platformColor = CanvasRenderer.PLATFORM_COLORS[notification.platform] || '#999999';
+      ctx.fillStyle = platformColor;
+      ctx.beginPath();
+      ctx.moveTo(iconX + iconR, iconY);
+      ctx.lineTo(iconX + iconSize - iconR, iconY);
+      ctx.quadraticCurveTo(iconX + iconSize, iconY, iconX + iconSize, iconY + iconR);
+      ctx.lineTo(iconX + iconSize, iconY + iconSize - iconR);
+      ctx.quadraticCurveTo(iconX + iconSize, iconY + iconSize, iconX + iconSize - iconR, iconY + iconSize);
+      ctx.lineTo(iconX + iconR, iconY + iconSize);
+      ctx.quadraticCurveTo(iconX, iconY + iconSize, iconX, iconY + iconSize - iconR);
+      ctx.lineTo(iconX, iconY + iconR);
+      ctx.quadraticCurveTo(iconX, iconY, iconX + iconR, iconY);
+      ctx.closePath();
+      ctx.fill();
+
+      const icon = CanvasRenderer.PLATFORM_ICONS[notification.platform] || '?';
+      ctx.fillStyle = notification.platform === 'Snapchat' ? '#000000' : '#FFFFFF';
+      ctx.font = `400 48px ${FONT_EMOJI}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(icon, iconX + iconSize / 2, iconY + iconSize / 2);
+    }
+
+    const textX = iconX + iconSize + 24;
+    const textMaxW = bannerX + bannerW - textX - 28;
+
+    ctx.fillStyle = "#8E8E93";
+    ctx.font = `600 26px ${FONT_SYSTEM}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(notification.platform.toUpperCase(), textX, bannerY + 28);
+
+    const nowW = ctx.measureText("now").width;
+    ctx.fillStyle = "#8E8E93";
+    ctx.font = `400 26px ${FONT_SYSTEM}`;
+    ctx.textAlign = "right";
+    ctx.fillText("now", bannerX + bannerW - 28, bannerY + 28);
+
+    ctx.fillStyle = "#000000";
+    ctx.font = `700 32px ${FONT_SYSTEM}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+
+    const nameY = bannerY + 60;
+    const nameText = notification.senderName;
+    const measuredName = ctx.measureText(nameText).width;
+    if (measuredName > textMaxW) {
+      const truncated = this.truncateText(ctx, nameText, textMaxW);
+      ctx.fillText(truncated, textX, nameY);
+    } else {
+      ctx.fillText(nameText, textX, nameY);
+    }
+
+    ctx.fillStyle = "#3C3C43";
+    ctx.font = `400 30px ${FONT_SYSTEM}`;
+    const msgY = nameY + 40;
+    const msgText = notification.message;
+    const measuredMsg = ctx.measureText(msgText).width;
+    if (measuredMsg > textMaxW) {
+      const truncated = this.truncateText(ctx, msgText, textMaxW);
+      ctx.fillText(truncated, textX, msgY);
+    } else {
+      ctx.fillText(msgText, textX, msgY);
+    }
+
+    ctx.restore();
+  }
+
+  private truncateText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
+    const ellipsis = "…";
+    const ellipsisW = ctx.measureText(ellipsis).width;
+    let truncated = text;
+    while (ctx.measureText(truncated).width + ellipsisW > maxW && truncated.length > 0) {
+      truncated = truncated.slice(0, -1);
+    }
+    return truncated + ellipsis;
+  }
+
+  drawActiveNotifications(ctx: CanvasRenderingContext2D, state: FrameState): void {
+    const notifs = state.activeNotifications;
+    if (!notifs || notifs.length === 0) return;
+
+    for (const notif of notifs) {
+      if (notif.customIconUrl && !this.images.has(`notif_icon_${notif.id}`)) {
+        this.loadImg(`notif_icon_${notif.id}`, notif.customIconUrl);
+      }
+
+      const elapsed = state.time - notif.timeMs;
+      const totalDuration = notif.durationMs;
+      const slideInDuration = 400;
+      const slideOutDuration = 350;
+
+      let slideProgress: number;
+      if (elapsed < slideInDuration) {
+        slideProgress = elapsed / slideInDuration;
+      } else if (elapsed < totalDuration - slideOutDuration) {
+        slideProgress = 1;
+      } else if (elapsed < totalDuration) {
+        slideProgress = 1 - (elapsed - (totalDuration - slideOutDuration)) / slideOutDuration;
+      } else {
+        continue;
+      }
+
+      this.drawNotificationBanner(ctx, notif, slideProgress);
+    }
   }
 }
