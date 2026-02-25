@@ -743,10 +743,10 @@ export class CanvasRenderer {
     appearProgress: number,
     state: FrameState,
   ): void {
-    const bannerW = this.W - 70;
-    const bannerH = 260;
-    const bannerX = 35;
-    const bannerR = 56;
+    const bannerW = this.W - 100;
+    const bannerH = 210;
+    const bannerX = 50;
+    const bannerR = 52;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipe = state.lockscreenSwipeProgress || 0;
@@ -791,9 +791,24 @@ export class CanvasRenderer {
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
-    const iconSize = 160;
-    const iconX = bannerX + 40;
-    const iconY = bannerY + (bannerH - iconSize) / 2;
+    const nameFontSize = 54;
+    const msgFontSize = 48;
+    const lineGap = 6;
+    const textBlockH = nameFontSize + lineGap + msgFontSize;
+    const textBlockTop = bannerY + (bannerH - textBlockH) / 2;
+    const msgBottomY = textBlockTop + nameFontSize + lineGap + msgFontSize;
+
+    const iconSize = 130;
+    const badgeSize = 56;
+    const badgeBottomY = msgBottomY;
+    const badgeTopY = badgeBottomY - badgeSize;
+    const iconBottomY = badgeBottomY - badgeSize * 0.25;
+    const iconTopY = iconBottomY - iconSize;
+    const iconX = bannerX + 30;
+    const iconY = iconTopY;
+
+    const badgeX = iconX - badgeSize * 0.15;
+    const badgeY = badgeTopY;
 
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
     const snapLogo = this.images.get('snapLogo');
@@ -817,10 +832,7 @@ export class CanvasRenderer {
       ctx.restore();
 
       if (snapLogo) {
-        const badgeSize = 64;
-        const badgeX = iconX + iconSize - badgeSize + 6;
-        const badgeY2 = iconY + iconSize - badgeSize + 6;
-        ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
+        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
       }
     } else {
       ctx.fillStyle = '#FFFC00';
@@ -829,21 +841,12 @@ export class CanvasRenderer {
       ctx.closePath();
       ctx.fill();
       if (snapLogo) {
-        const badgeSize = 64;
-        const badgeX = iconX + iconSize - badgeSize + 6;
-        const badgeY2 = iconY + iconSize - badgeSize + 6;
-        ctx.drawImage(snapLogo, badgeX, badgeY2, badgeSize, badgeSize);
+        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
       }
     }
 
-    const textX = iconX + iconSize + 30;
+    const textX = iconX + iconSize + 24;
     const textMaxW = bannerX + bannerW - textX - 120;
-
-    const nameFontSize = 58;
-    const msgFontSize = 52;
-    const lineGap = 10;
-    const textBlockH = nameFontSize + lineGap + msgFontSize;
-    const textBlockTop = bannerY + (bannerH - textBlockH) / 2;
 
     ctx.fillStyle = '#000000';
     ctx.font = `700 ${nameFontSize}px ${FONT_SYSTEM}`;
@@ -858,7 +861,7 @@ export class CanvasRenderer {
       ctx.fillText(nameText, textX, textBlockTop);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.font = `400 ${msgFontSize}px ${FONT_SYSTEM}`;
     const msgY = textBlockTop + nameFontSize + lineGap;
     const msgText = notification.message;
@@ -869,11 +872,11 @@ export class CanvasRenderer {
       ctx.fillText(msgText, textX, msgY);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillStyle = 'rgba(80, 50, 120, 0.5)';
     ctx.font = `500 42px ${FONT_SYSTEM}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText('now', bannerX + bannerW - 40, textBlockTop + 8);
+    ctx.fillText('now', bannerX + bannerW - 36, textBlockTop + 4);
 
     ctx.restore();
   }
@@ -882,10 +885,10 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     swipeProgress: number,
   ): void {
-    const bannerW = this.W - 70;
-    const bannerH = 260;
-    const bannerX = 35;
-    const bannerR = 56;
+    const bannerW = this.W - 100;
+    const bannerH = 210;
+    const bannerX = 50;
+    const bannerR = 52;
     const bannerY = STATUS_BAR_H + 440;
 
     const swipeEased = swipeProgress < 0.5
