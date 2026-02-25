@@ -1649,7 +1649,14 @@ export class CanvasRenderer {
         for (const ch of emojiChars) {
           const img = this.getEmojiImage(ch);
           if (img) {
-            const drawY = y - emojiSize * 0.82;
+            let drawY: number;
+            if (savedBaseline === "middle") {
+              drawY = y - emojiSize / 2;
+            } else if (savedBaseline === "top") {
+              drawY = y - (emojiSize - fontSize) / 2;
+            } else {
+              drawY = y - emojiSize * 0.82;
+            }
             ctx.drawImage(img, cx, drawY, emojiSize, emojiSize);
             cx += emojiSize;
           } else {
