@@ -874,8 +874,12 @@ const App: React.FC = () => {
           customIconUrl: event.notifIconUrl,
         };
         scriptNotificationsRef.current = [...scriptNotificationsRef.current, scriptNotif];
-        if (state.system.isSoundEnabled && event.soundEffect) {
-          await soundService.playEffect(event.soundEffect);
+        if (state.system.isSoundEnabled) {
+          if (event.soundEffect) {
+            await soundService.playEffect(event.soundEffect);
+          } else {
+            soundService.playIosNotification();
+          }
         }
         await delay(event.notifDurationMs || 2500);
         continue;
