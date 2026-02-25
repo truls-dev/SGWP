@@ -2028,7 +2028,7 @@ const App: React.FC = () => {
                         chat: {
                           ...prev.chat,
                           export16x9: next,
-                          ...(next ? { videoModeScale: 1, topCornerRadius: 0 } : {})
+                          ...(next ? { videoModeScale: 1, topCornerRadius: 0 } : { videoModeScale: 0.78, topCornerRadius: 10 })
                         }
                       }));
                     }}
