@@ -807,7 +807,7 @@ export class CanvasRenderer {
     const iconX = bannerX + 30;
     const iconY = iconTopY;
 
-    const badgeX = iconX - badgeSize * 0.15;
+    const badgeX = iconX + iconSize - badgeSize + 8;
     const badgeY = badgeTopY;
 
     const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
