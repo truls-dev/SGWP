@@ -731,59 +731,18 @@ const App: React.FC = () => {
       frameStateRef.current.typingParticipantIds = newIds;
     };
 
+    lockscreenNotifRef.current = null;
+    if (state.chat.lockscreenEnabled) {
+      lockscreenActiveRef.current = true;
+    } else {
+      lockscreenActiveRef.current = false;
+    }
+
     await delay(300);
 
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
     scriptNotificationsRef.current = [];
-    lockscreenActiveRef.current = false;
-    lockscreenNotifRef.current = null;
-
-    if (state.chat.lockscreenEnabled) {
-      lockscreenActiveRef.current = true;
-
-      const firstNonMeEvent = state.script.find(e =>
-        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
-        e.senderId && e.senderId !== 'me'
-      );
-
-      if (firstNonMeEvent) {
-        const sender = state.cast.find(c => c.id === firstNonMeEvent.senderId);
-        const lockDurationMs = state.chat.lockscreenDurationMs || 2000;
-        const notifAppearDelay = 800;
-
-        await delay(notifAppearDelay);
-        if ((runningStatusRef.current as string) === 'idle') return;
-
-        const notifStartTime = performance.now() - playbackStartTimeRef.current;
-        lockscreenNotifRef.current = {
-          id: 'lockscreen_notif',
-          platform: 'Snapchat',
-          senderName: sender?.name || state.chat.contactName || 'Unknown',
-          message: firstNonMeEvent.text || 'Sent a snap',
-          timeMs: notifStartTime,
-          durationMs: lockDurationMs + 5000,
-          customIconUrl: sender?.avatarUrl,
-        };
-        if (lockscreenNotifRef.current.customIconUrl && !lockscreenNotifRef.current.customIconUrl.startsWith('blob:')) {
-          // preload
-        }
-
-        if (state.system.isSoundEnabled) {
-          await soundService.playEffect('notif');
-        }
-
-        await delay(lockDurationMs);
-        if ((runningStatusRef.current as string) === 'idle') return;
-      } else {
-        await delay(state.chat.lockscreenDurationMs || 2000);
-        if ((runningStatusRef.current as string) === 'idle') return;
-      }
-
-      lockscreenActiveRef.current = false;
-      lockscreenNotifRef.current = null;
-      await delay(100);
-    }
 
     if (state.system.isSoundEnabled && timedSoundEffects.length > 0) {
       for (const tse of timedSoundEffects) {
@@ -805,6 +764,38 @@ const App: React.FC = () => {
     }
 
     const scriptToPlay = state.script;
+
+    if (state.chat.lockscreenEnabled) {
+      const firstNonMeEvent = state.script.find(e =>
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
+        e.senderId && e.senderId !== 'me'
+      );
+      const lockDurationMs = state.chat.lockscreenDurationMs || 2000;
+
+      if (firstNonMeEvent) {
+        const sender = state.cast.find(c => c.id === firstNonMeEvent.senderId);
+        const notifStartTime = performance.now() - playbackStartTimeRef.current;
+        lockscreenNotifRef.current = {
+          id: 'lockscreen_notif',
+          platform: 'Snapchat',
+          senderName: sender?.name || state.chat.contactName || 'Unknown',
+          message: firstNonMeEvent.text || 'Sent a snap',
+          timeMs: notifStartTime,
+          durationMs: lockDurationMs + 5000,
+          customIconUrl: sender?.avatarUrl,
+        };
+        if (state.system.isSoundEnabled) {
+          soundService.playEffect('notif');
+        }
+      }
+
+      await delay(lockDurationMs);
+      if ((runningStatusRef.current as string) === 'idle') return;
+
+      lockscreenActiveRef.current = false;
+      lockscreenNotifRef.current = null;
+      await delay(100);
+    }
 
     let startIdx = 0;
     for (let i = 0; i < scriptToPlay.length; i++) {

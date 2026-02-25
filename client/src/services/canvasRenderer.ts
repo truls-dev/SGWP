@@ -697,10 +697,6 @@ export class CanvasRenderer {
     ctx.fillStyle = '#FFFFFF';
     this.fillTextWithEmoji(ctx, state.systemConfig.carrier, signalX + signalW + 8, carrierY, FONT_SYSTEM, 28);
 
-    ctx.font = `bold 30px ${FONT_SYSTEM}`;
-    ctx.textAlign = 'center';
-    this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
-
     let rx = this.W - 22;
     const batteryImg = this.images.get('battery_white');
     const batteryFallback = this.images.get('battery');
