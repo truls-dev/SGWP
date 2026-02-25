@@ -545,8 +545,7 @@ export class CanvasRenderer {
     state: FrameState,
     kbH: number,
   ): void {
-    const swipe = state.lockscreenSwipeProgress || 0;
-    if (state.lockscreenActive && swipe <= 0) {
+    if (state.lockscreenActive) {
       this.drawLockscreen(ctx, state);
       return;
     }
@@ -590,10 +589,6 @@ export class CanvasRenderer {
 
     this.drawKeyboard(ctx, state, kbYInCanvas, kbH);
 
-    if (state.lockscreenActive && swipe > 0) {
-      this.drawLockscreen(ctx, state);
-    }
-
     this.drawActiveNotifications(ctx, state);
   }
 
@@ -601,14 +596,6 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     state: FrameState,
   ): void {
-    const swipe = state.lockscreenSwipeProgress || 0;
-    if (swipe > 0) {
-      ctx.save();
-      const offsetX = swipe * this.W;
-      ctx.translate(offsetX, 0);
-      ctx.globalAlpha = 1 - swipe * 0.3;
-    }
-
     const lockBg = this.images.get("lockscreenBg");
     if (lockBg) {
       const imgR = lockBg.width / lockBg.height;
@@ -671,12 +658,12 @@ export class CanvasRenderer {
       }
 
       if (appearProgress > 0) {
+        const swipe = state.lockscreenSwipeProgress || 0;
+        if (swipe > 0) {
+          this.drawSwipeOpenPill(ctx, swipe);
+        }
         this.drawLockscreenNotification(ctx, notif, appearProgress, state);
       }
-    }
-
-    if (swipe > 0) {
-      ctx.restore();
     }
   }
 
@@ -764,12 +751,22 @@ export class CanvasRenderer {
     const bannerR = 44;
     const bannerY = STATUS_BAR_H + 320;
 
+    const swipe = state.lockscreenSwipeProgress || 0;
+    const swipeEased = swipe < 0.5
+      ? 2 * swipe * swipe
+      : 1 - Math.pow(-2 * swipe + 2, 2) / 2;
+    const swipeOffsetX = swipeEased * (this.W - bannerX + 20);
+
     const eased = 1 - Math.pow(1 - appearProgress, 3);
     const scale = 0.85 + 0.15 * eased;
     const opacity = eased;
 
     ctx.save();
     ctx.globalAlpha = opacity;
+
+    if (swipeOffsetX > 0) {
+      ctx.translate(swipeOffsetX, 0);
+    }
 
     const cx = bannerX + bannerW / 2;
     const cy = bannerY + bannerH / 2;
@@ -878,6 +875,52 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
+  private drawSwipeOpenPill(
+    ctx: CanvasRenderingContext2D,
+    swipeProgress: number,
+  ): void {
+    const bannerH = 170;
+    const bannerX = 28;
+    const bannerR = 44;
+    const bannerY = STATUS_BAR_H + 320;
+
+    const eased = swipeProgress < 0.5
+      ? 2 * swipeProgress * swipeProgress
+      : 1 - Math.pow(-2 * swipeProgress + 2, 2) / 2;
+
+    const pillW = Math.min(eased * 280, 280);
+
+    if (pillW > 5) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+
+      const pillR = Math.min(bannerR, pillW / 2);
+      ctx.fillStyle = 'rgba(100, 100, 120, 0.65)';
+      ctx.beginPath();
+      ctx.moveTo(bannerX + pillR, bannerY);
+      ctx.lineTo(bannerX + pillW - pillR, bannerY);
+      ctx.quadraticCurveTo(bannerX + pillW, bannerY, bannerX + pillW, bannerY + pillR);
+      ctx.lineTo(bannerX + pillW, bannerY + bannerH - pillR);
+      ctx.quadraticCurveTo(bannerX + pillW, bannerY + bannerH, bannerX + pillW - pillR, bannerY + bannerH);
+      ctx.lineTo(bannerX + pillR, bannerY + bannerH);
+      ctx.quadraticCurveTo(bannerX, bannerY + bannerH, bannerX, bannerY + bannerH - pillR);
+      ctx.lineTo(bannerX, bannerY + pillR);
+      ctx.quadraticCurveTo(bannerX, bannerY, bannerX + pillR, bannerY);
+      ctx.closePath();
+      ctx.fill();
+
+      if (pillW > 80) {
+        ctx.globalAlpha = Math.min(eased * 1.5, 1);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `600 32px ${FONT_SYSTEM}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Open', bannerX + pillW / 2, bannerY + bannerH / 2);
+      }
+
+      ctx.restore();
+    }
+  }
 
   private drawVideoBackground(
     ctx: CanvasRenderingContext2D,
