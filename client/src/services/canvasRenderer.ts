@@ -1393,8 +1393,8 @@ export class CanvasRenderer {
         arrivalStartTime: time,
         typing: isTyping,
         typingStartTime: time,
-        hasEverArrived: false,
-        hasEverTyped: false,
+        hasEverArrived: isArrived,
+        hasEverTyped: isTyping,
       };
       this.presenceAnims.set(id, anim);
       return anim;
