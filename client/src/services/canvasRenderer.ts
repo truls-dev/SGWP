@@ -791,9 +791,9 @@ export class CanvasRenderer {
     ctx.fill();
     ctx.shadowColor = 'transparent';
 
-    const nameFontSize = 54;
-    const msgFontSize = 48;
-    const lineGap = 6;
+    const nameFontSize = 60;
+    const msgFontSize = 52;
+    const lineGap = 4;
     const textBlockH = nameFontSize + lineGap + msgFontSize;
     const textBlockTop = bannerY + (bannerH - textBlockH) / 2;
     const msgBottomY = textBlockTop + nameFontSize + lineGap + msgFontSize;
@@ -861,7 +861,7 @@ export class CanvasRenderer {
       ctx.fillText(nameText, textX, textBlockTop);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillStyle = '#000000';
     ctx.font = `400 ${msgFontSize}px ${FONT_SYSTEM}`;
     const msgY = textBlockTop + nameFontSize + lineGap;
     const msgText = notification.message;
