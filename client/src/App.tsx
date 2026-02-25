@@ -228,16 +228,7 @@ const App: React.FC = () => {
       cast: state.cast,
       backgroundVideo: previewVideoRef.current,
       suggestedCustomojiUrl: suggestedUrl,
-      activeNotifications: [
-        ...timedNotifications.filter(n => {
-          const elapsed = frameStateRef.current.time - n.timeMs;
-          return elapsed >= -50 && elapsed < n.durationMs;
-        }),
-        ...scriptNotificationsRef.current.filter(n => {
-          const elapsed = frameStateRef.current.time - n.timeMs;
-          return elapsed >= -50 && elapsed < n.durationMs;
-        }),
-      ],
+      allNotificationSources: [...timedNotifications, ...scriptNotificationsRef.current],
     };
   });
 
@@ -1060,9 +1051,15 @@ const App: React.FC = () => {
         const previewRenderLoop = () => {
           if (runningStatusRef.current !== 'previewing') return;
           const now = performance.now();
+          const t = now - startTime;
+          const sources = frameStateRef.current.allNotificationSources || [];
           const currentFrameState: FrameState = {
             ...frameStateRef.current,
-            time: now - startTime,
+            time: t,
+            activeNotifications: sources.filter(n => {
+              const elapsed = t - n.timeMs;
+              return elapsed >= -50 && elapsed < n.durationMs;
+            }),
           };
           renderer.renderFrame(currentFrameState);
           previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
@@ -1231,9 +1228,15 @@ const App: React.FC = () => {
         const maxBatch = 120;
         let rendered = 0;
         while (frameCount <= targetFrames && rendered < maxBatch) {
+            const t = now - startTime;
+            const sources = frameStateRef.current.allNotificationSources || [];
             const currentFrameState: FrameState = {
               ...frameStateRef.current,
-              time: now - startTime,
+              time: t,
+              activeNotifications: sources.filter(n => {
+                const elapsed = t - n.timeMs;
+                return elapsed >= -50 && elapsed < n.durationMs;
+              }),
             };
             renderer.renderFrame(currentFrameState);
 
