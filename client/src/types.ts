@@ -61,14 +61,19 @@ export interface ChatConfig {
   messageDelay: number;
   groupIconUrl?: string;
   isKeyboardCropped?: boolean;
-  isShortCrop?: boolean; // New social media framing toggle
-  shortCropHeight: number; // New: Dynamic height for short crop mode
-  topCornerRadius: number; // Corner radius for top corners
-  exportBackgroundUrl?: string; // Background image for the export canvas
-  isVideoBackgroundMode?: boolean; // NEW: Toggle for video background
-  exportBackgroundVideoUrl?: string; // NEW: URL for the background video
-  videoModeScale: number; // NEW: Manual scale for the phone in video mode
+  isShortCrop?: boolean;
+  shortCropHeight: number;
+  topCornerRadius: number;
+  exportBackgroundUrl?: string;
+  isVideoBackgroundMode?: boolean;
+  exportBackgroundVideoUrl?: string;
+  videoModeScale: number;
   messageFontSize: number;
+  lockscreenEnabled?: boolean;
+  lockscreenBgUrl?: string;
+  lockscreenDate?: string;
+  lockscreenTime?: string;
+  lockscreenDurationMs?: number;
 }
 
 export interface TimedSoundEffect {

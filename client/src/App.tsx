@@ -119,7 +119,12 @@ const App: React.FC = () => {
       isVideoBackgroundMode: true,
       exportBackgroundVideoUrl: undefined,
       videoModeScale: 0.78,
-      messageFontSize: 40
+      messageFontSize: 40,
+      lockscreenEnabled: false,
+      lockscreenBgUrl: undefined,
+      lockscreenDate: 'Thursday, February 19',
+      lockscreenTime: '5:40',
+      lockscreenDurationMs: 2000,
     }
   });
 
@@ -179,6 +184,8 @@ const App: React.FC = () => {
   const previewAnimFrameRef = useRef<number | null>(null);
   const timedSfxTimeoutsRef = useRef<number[]>([]);
   const scriptNotificationsRef = useRef<TimedNotification[]>([]);
+  const lockscreenActiveRef = useRef(false);
+  const lockscreenNotifRef = useRef<TimedNotification | null>(null);
   const playbackStartTimeRef = useRef<number>(0);
   const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
   const frameStateRef = useRef<FrameState>({
@@ -355,6 +362,8 @@ const App: React.FC = () => {
     setKeyboardLayout('ALPHA');
     frameStateRef.current.activeParticipantIds = preShownActiveIds;
     frameStateRef.current.typingParticipantIds = [];
+    lockscreenActiveRef.current = false;
+    lockscreenNotifRef.current = null;
     frameStateRef.current.compositionText = '';
     frameStateRef.current.isMeTyping = false;
     if (canvasRendererRef.current) {
@@ -727,6 +736,55 @@ const App: React.FC = () => {
     timedSfxTimeoutsRef.current.forEach(t => clearTimeout(t));
     timedSfxTimeoutsRef.current = [];
     scriptNotificationsRef.current = [];
+    lockscreenActiveRef.current = false;
+    lockscreenNotifRef.current = null;
+
+    if (state.chat.lockscreenEnabled) {
+      lockscreenActiveRef.current = true;
+
+      const firstNonMeEvent = state.script.find(e =>
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
+        e.senderId && e.senderId !== 'me'
+      );
+
+      if (firstNonMeEvent) {
+        const sender = state.cast.find(c => c.id === firstNonMeEvent.senderId);
+        const lockDurationMs = state.chat.lockscreenDurationMs || 2000;
+        const notifAppearDelay = 800;
+
+        await delay(notifAppearDelay);
+        if ((runningStatusRef.current as string) === 'idle') return;
+
+        const notifStartTime = performance.now() - playbackStartTimeRef.current;
+        lockscreenNotifRef.current = {
+          id: 'lockscreen_notif',
+          platform: 'Snapchat',
+          senderName: sender?.name || state.chat.contactName || 'Unknown',
+          message: firstNonMeEvent.text || 'Sent a snap',
+          timeMs: notifStartTime,
+          durationMs: lockDurationMs + 5000,
+          customIconUrl: sender?.avatarUrl,
+        };
+        if (lockscreenNotifRef.current.customIconUrl && !lockscreenNotifRef.current.customIconUrl.startsWith('blob:')) {
+          // preload
+        }
+
+        if (state.system.isSoundEnabled) {
+          await soundService.playEffect('notif');
+        }
+
+        await delay(lockDurationMs);
+        if ((runningStatusRef.current as string) === 'idle') return;
+      } else {
+        await delay(state.chat.lockscreenDurationMs || 2000);
+        if ((runningStatusRef.current as string) === 'idle') return;
+      }
+
+      lockscreenActiveRef.current = false;
+      lockscreenNotifRef.current = null;
+      await delay(100);
+    }
+
     if (state.system.isSoundEnabled && timedSoundEffects.length > 0) {
       for (const tse of timedSoundEffects) {
         if (wt) {
@@ -1062,6 +1120,8 @@ const App: React.FC = () => {
             ...frameStateRef.current,
             time: t,
             activeNotifications: active,
+            lockscreenActive: lockscreenActiveRef.current,
+            lockscreenNotification: lockscreenNotifRef.current,
           };
           renderer.renderFrame(currentFrameState);
           previewAnimFrameRef.current = requestAnimationFrame(previewRenderLoop);
@@ -1239,6 +1299,8 @@ const App: React.FC = () => {
                 const elapsed = t - n.timeMs;
                 return elapsed >= -50 && elapsed < n.durationMs;
               }),
+              lockscreenActive: lockscreenActiveRef.current,
+              lockscreenNotification: lockscreenNotifRef.current,
             };
             renderer.renderFrame(currentFrameState);
 
@@ -1899,6 +1961,83 @@ const App: React.FC = () => {
                         onChange={e => updateChat('shortCropHeight', parseInt(e.target.value))}
                         className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                       />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col pt-2 border-t border-white/10 gap-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">Lockscreen Intro</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest text-green-400">Start on iPhone Lockscreen</span>
+                    </div>
+                    <button 
+                      onClick={() => updateChat('lockscreenEnabled', !state.chat.lockscreenEnabled)}
+                      className={`w-14 h-7 rounded-full transition-all relative ${state.chat.lockscreenEnabled ? 'bg-green-500' : 'bg-gray-600'}`}
+                    >
+                      <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${state.chat.lockscreenEnabled ? 'right-1' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  {state.chat.lockscreenEnabled && (
+                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300 px-1">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Date Text</label>
+                          <input 
+                            type="text"
+                            value={state.chat.lockscreenDate || ''}
+                            onChange={e => updateChat('lockscreenDate', e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none focus:border-green-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Clock Time</label>
+                          <input 
+                            type="text"
+                            value={state.chat.lockscreenTime || ''}
+                            onChange={e => updateChat('lockscreenTime', e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold outline-none focus:border-green-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Duration (seconds)</label>
+                          <span className="text-[10px] font-black text-green-400">{((state.chat.lockscreenDurationMs || 2000) / 1000).toFixed(1)}s</span>
+                        </div>
+                        <input 
+                          type="range" min="1" max="6" step="0.5"
+                          value={(state.chat.lockscreenDurationMs || 2000) / 1000}
+                          onChange={e => updateChat('lockscreenDurationMs', parseFloat(e.target.value) * 1000)}
+                          className="w-full accent-green-500 h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase">Wallpaper Image</label>
+                        <div className="flex gap-2 items-center">
+                          {state.chat.lockscreenBgUrl && (
+                            <img src={state.chat.lockscreenBgUrl} alt="lockscreen bg" className="w-14 h-24 rounded-lg object-cover border border-white/20 shrink-0" />
+                          )}
+                          <input 
+                            type="file" accept="image/*"
+                            className="text-[9px] text-gray-400 min-w-0 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[9px] file:font-bold file:bg-white/10 file:text-gray-300 hover:file:bg-white/20"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const url = URL.createObjectURL(file);
+                                updateChat('lockscreenBgUrl', url);
+                              }
+                            }}
+                          />
+                          {state.chat.lockscreenBgUrl && (
+                            <button onClick={() => updateChat('lockscreenBgUrl', undefined)} className="text-gray-500 hover:text-red-500 text-xs"><i className="fa-solid fa-xmark"></i></button>
+                          )}
+                        </div>
+                        {!state.chat.lockscreenBgUrl && (
+                          <p className="text-[9px] text-gray-500 italic">Default gradient will be used if no image is set</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

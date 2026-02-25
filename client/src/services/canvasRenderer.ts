@@ -30,6 +30,8 @@ export interface FrameState {
   backgroundVideo?: HTMLVideoElement | null;
   suggestedCustomojiUrl?: string | null;
   activeNotifications?: TimedNotification[];
+  lockscreenActive?: boolean;
+  lockscreenNotification?: TimedNotification | null;
 }
 
 interface StickerAnimState {
@@ -367,6 +369,9 @@ export class CanvasRenderer {
     if (chatConfig?.exportBackgroundUrl) {
       promises.push(this.loadImg("exportBg", chatConfig.exportBackgroundUrl));
     }
+    if (chatConfig?.lockscreenBgUrl) {
+      promises.push(this.loadImg("lockscreenBg", chatConfig.lockscreenBgUrl));
+    }
     if (chatConfig?.groupIconUrl) {
       promises.push(this.loadImg("groupIcon", chatConfig.groupIconUrl));
     }
@@ -539,6 +544,11 @@ export class CanvasRenderer {
     state: FrameState,
     kbH: number,
   ): void {
+    if (state.lockscreenActive) {
+      this.drawLockscreen(ctx, state);
+      return;
+    }
+
     const uiScale = state.systemConfig.uiScale || 1;
 
     ctx.fillStyle = "#FFFFFF";
@@ -579,6 +589,274 @@ export class CanvasRenderer {
     this.drawKeyboard(ctx, state, kbYInCanvas, kbH);
 
     this.drawActiveNotifications(ctx, state);
+  }
+
+  private drawLockscreen(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+  ): void {
+    const lockBg = this.images.get("lockscreenBg");
+    if (lockBg) {
+      const imgR = lockBg.width / lockBg.height;
+      const canR = this.W / this.H;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (imgR > canR) {
+        dh = this.H; dw = this.H * imgR;
+        dx = (this.W - dw) / 2; dy = 0;
+      } else {
+        dw = this.W; dh = this.W / imgR;
+        dx = 0; dy = (this.H - dh) / 2;
+      }
+      ctx.drawImage(lockBg, dx, dy, dw, dh);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, this.W, this.H);
+      grad.addColorStop(0, '#1a0533');
+      grad.addColorStop(0.4, '#3b1a7a');
+      grad.addColorStop(0.7, '#7b2d8e');
+      grad.addColorStop(1, '#c94b8a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, this.W, this.H);
+    }
+
+    this.drawLockscreenStatusBar(ctx, state, 0);
+
+    const dateText = state.chatConfig.lockscreenDate || 'Thursday, February 19';
+    const timeText = state.chatConfig.lockscreenTime || state.systemConfig.time || '5:40';
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `500 42px ${FONT_SYSTEM}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 8;
+    this.fillTextWithEmoji(ctx, dateText, this.W / 2, STATUS_BAR_H + 60, FONT_SYSTEM, 42);
+
+    ctx.font = `bold 200px ${FONT_SYSTEM}`;
+    this.fillTextWithEmoji(ctx, timeText, this.W / 2, STATUS_BAR_H + 200, FONT_SYSTEM, 200);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    const notif = state.lockscreenNotification;
+    if (notif) {
+      if (notif.customIconUrl && !this.images.has(`notif_icon_${notif.id}`)) {
+        this.loadImg(`notif_icon_${notif.id}`, notif.customIconUrl);
+      }
+      const elapsed = state.time - notif.timeMs;
+      const totalDuration = notif.durationMs;
+      const slideInDuration = 500;
+
+      let slideProgress: number;
+      if (elapsed < 0) {
+        slideProgress = 0;
+      } else if (elapsed < slideInDuration) {
+        slideProgress = elapsed / slideInDuration;
+      } else if (elapsed < totalDuration) {
+        slideProgress = 1;
+      } else {
+        slideProgress = 1;
+      }
+
+      if (slideProgress > 0) {
+        this.drawLockscreenNotification(ctx, notif, slideProgress, state);
+      }
+    }
+  }
+
+  private drawLockscreenStatusBar(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+    y: number,
+  ): void {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `bold 28px ${FONT_SYSTEM}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    const carrierY = y + STATUS_BAR_H / 2;
+
+    const signalH = 17;
+    const svgAspect = 27 / 17;
+    const signalW = signalH * svgAspect;
+    const signalX = 22;
+    const signalY = carrierY - signalH / 2;
+    const sx = signalW / 27;
+    const sy = signalH / 17;
+
+    ctx.save();
+    ctx.translate(signalX, signalY);
+    ctx.scale(sx, sy);
+    ctx.fillStyle = '#FFFFFF';
+
+    ctx.fill(new Path2D("M22.959 16.9531H25.332C25.9375 16.9531 26.3477 16.5234 26.3477 15.8887V1.06445C26.3477 0.429688 25.9375 0 25.332 0H22.959C22.3535 0 21.9336 0.429688 21.9336 1.06445V15.8887C21.9336 16.5234 22.3535 16.9531 22.959 16.9531Z"));
+    ctx.fill(new Path2D("M15.6543 16.9531H18.0078C18.6133 16.9531 19.0332 16.5234 19.0332 15.8887V4.92188C19.0332 4.28711 18.6133 3.85742 18.0078 3.85742H15.6543C15.0391 3.85742 14.6289 4.28711 14.6289 4.92188V15.8887C14.6289 16.5234 15.0391 16.9531 15.6543 16.9531Z"));
+    ctx.fill(new Path2D("M8.33984 16.9531H10.6934C11.3086 16.9531 11.7188 16.5234 11.7188 15.8887V8.45703C11.7188 7.82227 11.3086 7.39258 10.6934 7.39258H8.33984C7.72461 7.39258 7.31445 7.82227 7.31445 8.45703V15.8887C7.31445 16.5234 7.72461 16.9531 8.33984 16.9531Z"));
+    ctx.fill(new Path2D("M1.02539 16.9531H3.37891C3.99414 16.9531 4.4043 16.5234 4.4043 15.8887V11.5039C4.4043 10.8691 3.99414 10.4492 3.37891 10.4492H1.02539C0.410156 10.4492 0 10.8691 0 11.5039V15.8887C0 16.5234 0.410156 16.9531 1.02539 16.9531Z"));
+
+    ctx.restore();
+
+    ctx.fillStyle = '#FFFFFF';
+    this.fillTextWithEmoji(ctx, state.systemConfig.carrier, signalX + signalW + 8, carrierY, FONT_SYSTEM, 28);
+
+    ctx.font = `bold 30px ${FONT_SYSTEM}`;
+    ctx.textAlign = 'center';
+    this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
+
+    let rx = this.W - 22;
+    const batteryImg = this.images.get('battery_white');
+    const batteryFallback = this.images.get('battery');
+    const bImg = batteryImg || batteryFallback;
+    if (bImg) {
+      const ih = 24;
+      const iw = bImg.width * (ih / bImg.height);
+      rx -= iw;
+      if (!batteryImg) {
+        ctx.save();
+        ctx.filter = 'brightness(0) invert(1)';
+        ctx.drawImage(bImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+        ctx.restore();
+      } else {
+        ctx.drawImage(bImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      }
+      rx -= 14;
+    }
+
+    const wifiImg = this.images.get('wifi_white');
+    const wifiFallback = this.images.get('wifi');
+    const wImg = wifiImg || wifiFallback;
+    if (wImg) {
+      const ih = 25;
+      const iw = wImg.width * (ih / wImg.height);
+      rx -= iw;
+      if (!wifiImg) {
+        ctx.save();
+        ctx.filter = 'brightness(0) invert(1)';
+        ctx.drawImage(wImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+        ctx.restore();
+      } else {
+        ctx.drawImage(wImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      }
+    }
+  }
+
+  private drawLockscreenNotification(
+    ctx: CanvasRenderingContext2D,
+    notification: TimedNotification,
+    slideProgress: number,
+    state: FrameState,
+  ): void {
+    const bannerW = this.W - 56;
+    const bannerH = 170;
+    const bannerX = 28;
+    const bannerR = 44;
+    const onscreenY = STATUS_BAR_H + 320;
+    const offscreenY = this.H + 20;
+
+    const eased = slideProgress < 0.5
+      ? 4 * slideProgress * slideProgress * slideProgress
+      : 1 - Math.pow(-2 * slideProgress + 2, 3) / 2;
+
+    const bannerY = offscreenY + (onscreenY - offscreenY) * eased;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 4;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(bannerX + bannerR, bannerY);
+    ctx.lineTo(bannerX + bannerW - bannerR, bannerY);
+    ctx.quadraticCurveTo(bannerX + bannerW, bannerY, bannerX + bannerW, bannerY + bannerR);
+    ctx.lineTo(bannerX + bannerW, bannerY + bannerH - bannerR);
+    ctx.quadraticCurveTo(bannerX + bannerW, bannerY + bannerH, bannerX + bannerW - bannerR, bannerY + bannerH);
+    ctx.lineTo(bannerX + bannerR, bannerY + bannerH);
+    ctx.quadraticCurveTo(bannerX, bannerY + bannerH, bannerX, bannerY + bannerH - bannerR);
+    ctx.lineTo(bannerX, bannerY + bannerR);
+    ctx.quadraticCurveTo(bannerX, bannerY, bannerX + bannerR, bannerY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    const iconX = bannerX + 28;
+    const iconY = bannerY + bannerH / 2 - 48;
+    const iconSize = 96;
+
+    const customIcon = notification.customIconUrl ? this.images.get(`notif_icon_${notification.id}`) : null;
+    const snapLogo = this.images.get('snapLogo');
+
+    if (customIcon) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      const imgRatio = customIcon.width / customIcon.height;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (imgRatio > 1) {
+        dh = iconSize; dw = iconSize * imgRatio;
+        dx = iconX + (iconSize - dw) / 2; dy = iconY;
+      } else {
+        dw = iconSize; dh = iconSize / imgRatio;
+        dx = iconX; dy = iconY + (iconSize - dh) / 2;
+      }
+      ctx.drawImage(customIcon, dx, dy, dw, dh);
+      ctx.restore();
+
+      if (snapLogo) {
+        const badgeSize = 40;
+        const badgeX = iconX + iconSize - badgeSize + 4;
+        const badgeY = iconY + iconSize - badgeSize + 4;
+        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+      }
+    } else {
+      ctx.fillStyle = '#FFFC00';
+      ctx.beginPath();
+      ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+      if (snapLogo) {
+        const badgeSize = 40;
+        const badgeX = iconX + iconSize - badgeSize + 4;
+        const badgeY = iconY + iconSize - badgeSize + 4;
+        ctx.drawImage(snapLogo, badgeX, badgeY, badgeSize, badgeSize);
+      }
+    }
+
+    const textX = iconX + iconSize + 24;
+    const textMaxW = bannerX + bannerW - textX - 80;
+
+    ctx.fillStyle = '#000000';
+    ctx.font = `700 36px ${FONT_SYSTEM}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const nameY = bannerY + 30;
+    const nameText = notification.senderName;
+    const measuredName = ctx.measureText(nameText).width;
+    if (measuredName > textMaxW) {
+      ctx.fillText(this.truncateText(ctx, nameText, textMaxW), textX, nameY);
+    } else {
+      ctx.fillText(nameText, textX, nameY);
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.font = `400 34px ${FONT_SYSTEM}`;
+    const msgY = nameY + 48;
+    const msgText = notification.message;
+    const measuredMsg = ctx.measureText(msgText).width;
+    if (measuredMsg > textMaxW) {
+      ctx.fillText(this.truncateText(ctx, msgText, textMaxW), textX, msgY);
+    } else {
+      ctx.fillText(msgText, textX, msgY);
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.font = `400 28px ${FONT_SYSTEM}`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText('now', bannerX + bannerW - 28, bannerY + 34);
+
+    ctx.restore();
   }
 
   private drawVideoBackground(
