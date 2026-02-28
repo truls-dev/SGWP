@@ -12,13 +12,14 @@ const s3 = new S3Client({
 
 const BUCKET = process.env.R2_BUCKET_NAME!;
 
-export async function getUploadUrl(key: string, contentType: string): Promise<string> {
+export async function uploadToR2(key: string, body: Buffer, contentType: string): Promise<void> {
   const command = new PutObjectCommand({
     Bucket: BUCKET,
     Key: key,
+    Body: body,
     ContentType: contentType,
   });
-  return getSignedUrl(s3, command, { expiresIn: 3600 });
+  await s3.send(command);
 }
 
 export async function getDownloadUrl(key: string): Promise<string> {

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { getUploadUrl, getDownloadUrl, deleteObject } from "./r2";
+import { uploadToR2, getDownloadUrl, deleteObject } from "./r2";
 import { insertExportSchema } from "@shared/schema";
 
 export async function registerRoutes(
@@ -9,29 +9,35 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.post("/api/exports/upload-url", async (req, res) => {
+  app.post("/api/exports/upload", async (req, res) => {
     try {
-      const { fileName, contentType } = req.body;
-      if (!fileName || !contentType) {
-        return res.status(400).json({ error: "fileName and contentType required" });
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(Buffer.from(chunk));
       }
-      const key = `exports/${Date.now()}_${fileName}`;
-      const uploadUrl = await getUploadUrl(key, contentType);
-      res.json({ uploadUrl, key });
-    } catch (e: any) {
-      console.error("Upload URL error:", e);
-      res.status(500).json({ error: e.message });
-    }
-  });
+      const body = Buffer.concat(chunks);
 
-  app.post("/api/exports", async (req, res) => {
-    try {
-      const parsed = insertExportSchema.parse(req.body);
-      const record = await storage.createExport(parsed);
+      const fileName = req.headers['x-file-name'] as string;
+      const durationMs = req.headers['x-duration-ms'] ? parseInt(req.headers['x-duration-ms'] as string) : null;
+
+      if (!fileName) {
+        return res.status(400).json({ error: "x-file-name header required" });
+      }
+
+      const key = `exports/${Date.now()}_${fileName}`;
+      await uploadToR2(key, body, 'video/mp4');
+
+      const record = await storage.createExport({
+        fileName,
+        r2Key: key,
+        fileSize: body.length,
+        durationMs,
+      });
+
       res.json(record);
     } catch (e: any) {
-      console.error("Create export error:", e);
-      res.status(400).json({ error: e.message });
+      console.error("Upload error:", e);
+      res.status(500).json({ error: e.message });
     }
   });
 

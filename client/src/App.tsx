@@ -1476,28 +1476,20 @@ const App: React.FC = () => {
             document.body.removeChild(a);
 
             try {
-              const urlRes = await fetch('/api/exports/upload-url', {
+              const uploadRes = await fetch('/api/exports/upload', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileName, contentType: 'video/mp4' })
+                headers: {
+                  'Content-Type': 'video/mp4',
+                  'X-File-Name': fileName,
+                  'X-Duration-Ms': String(Math.round(frameCount / 60 * 1000))
+                },
+                body: blob
               });
-              const { uploadUrl, key } = await urlRes.json();
-              await fetch(uploadUrl, {
-                method: 'PUT',
-                body: blob,
-                headers: { 'Content-Type': 'video/mp4' }
-              });
-              await fetch('/api/exports', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  fileName,
-                  r2Key: key,
-                  fileSize: blob.size,
-                  durationMs: Math.round(frameCount / 60 * 1000)
-                })
-              });
-              console.log('[Export] Uploaded to cloud storage');
+              if (uploadRes.ok) {
+                console.log('[Export] Uploaded to cloud storage');
+              } else {
+                console.warn('[Export] Cloud upload failed:', await uploadRes.text());
+              }
             } catch (uploadErr) {
               console.warn('[Export] Cloud upload failed, local download still succeeded:', uploadErr);
             }

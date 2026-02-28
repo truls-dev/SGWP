@@ -1,5 +1,11 @@
-import { type User, type InsertUser, type Export, type InsertExport } from "@shared/schema";
+import { type User, type InsertUser, type Export, type InsertExport, users, exports } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { randomUUID } from "crypto";
+
+neonConfig.webSocketConstructor = ws;
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -11,57 +17,46 @@ export interface IStorage {
   deleteExport(id: string): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private exportRecords: Map<string, Export>;
+export class DatabaseStorage implements IStorage {
+  private db;
 
   constructor() {
-    this.users = new Map();
-    this.exportRecords = new Map();
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+    this.db = drizzle(pool);
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await this.db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await this.db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await this.db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async createExport(data: InsertExport): Promise<Export> {
-    const id = randomUUID();
-    const record: Export = {
-      ...data,
-      id,
-      durationMs: data.durationMs ?? null,
-      createdAt: new Date(),
-    };
-    this.exportRecords.set(id, record);
+    const [record] = await this.db.insert(exports).values(data).returning();
     return record;
   }
 
   async getExports(): Promise<Export[]> {
-    return Array.from(this.exportRecords.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return this.db.select().from(exports).orderBy(desc(exports.createdAt));
   }
 
   async getExport(id: string): Promise<Export | undefined> {
-    return this.exportRecords.get(id);
+    const [record] = await this.db.select().from(exports).where(eq(exports.id, id));
+    return record;
   }
 
   async deleteExport(id: string): Promise<void> {
-    this.exportRecords.delete(id);
+    await this.db.delete(exports).where(eq(exports.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
