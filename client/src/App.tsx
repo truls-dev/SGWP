@@ -16,6 +16,7 @@ import {
   getPeekingUrlForAvatar
 } from './services/bitmojiService';
 import { findCustomojiSuggestion, getCustomojiUrl, preloadImage, initCatalog } from './services/customojiService';
+import { ExportHistoryPanel } from './components/ExportHistoryPanel';
 
 const MIN_STICKER_DISPLAY_TIME = 500; 
 
@@ -137,7 +138,7 @@ const App: React.FC = () => {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkImportValue, setBulkImportValue] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script'>('script');
+  const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script' | 'exports'>('script');
   
   const [typingParticipantIds, setTypingParticipantIds] = useState<string[]>([]);
   const [activeParticipantIds, setActiveParticipantIds] = useState<string[]>([]);
@@ -1466,12 +1467,40 @@ const App: React.FC = () => {
             const buffer = muxer.target.buffer;
             const blob = new Blob([buffer], { type: 'video/mp4' });
             const url = URL.createObjectURL(blob);
+            const fileName = `SnapGen_HD_${Date.now()}.mp4`;
             const a = document.createElement('a');
             a.href = url;
-            a.download = `SnapGen_HD_${Date.now()}.mp4`;
+            a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+
+            try {
+              const urlRes = await fetch('/api/exports/upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName, contentType: 'video/mp4' })
+              });
+              const { uploadUrl, key } = await urlRes.json();
+              await fetch(uploadUrl, {
+                method: 'PUT',
+                body: blob,
+                headers: { 'Content-Type': 'video/mp4' }
+              });
+              await fetch('/api/exports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  fileName,
+                  r2Key: key,
+                  fileSize: blob.size,
+                  durationMs: Math.round(frameCount / 60 * 1000)
+                })
+              });
+              console.log('[Export] Uploaded to cloud storage');
+            } catch (uploadErr) {
+              console.warn('[Export] Cloud upload failed, local download still succeeded:', uploadErr);
+            }
         } catch (e) {
             console.error("Finalization failed:", e);
         }
@@ -1637,14 +1666,14 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 no-scrollbar">
 
         <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1 gap-1">
-          {(['script', 'cast', 'settings'] as const).map(tab => (
+          {(['script', 'cast', 'settings', 'exports'] as const).map(tab => (
             <button
               key={tab}
               data-testid={`tab-${tab}`}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-[#33B5FF] text-white shadow-lg shadow-[#33B5FF]/20' : 'text-gray-400 hover:text-gray-200'}`}
             >
-              {tab === 'script' ? 'Script' : tab === 'cast' ? 'Cast' : 'Settings'}
+              {tab === 'script' ? 'Script' : tab === 'cast' ? 'Cast' : tab === 'settings' ? 'Settings' : 'Exports'}
             </button>
           ))}
         </div>
@@ -2729,6 +2758,15 @@ const App: React.FC = () => {
               </div>
             </section>
           </div>
+          </>
+          )}
+
+          {activeTab === 'exports' && (
+          <>
+          <section className="space-y-4">
+            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Export History</h3>
+            <ExportHistoryPanel />
+          </section>
           </>
           )}
         </div>

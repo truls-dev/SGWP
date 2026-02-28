@@ -1,20 +1,23 @@
-import { type User, type InsertUser } from "@shared/schema";
+import { type User, type InsertUser, type Export, type InsertExport } from "@shared/schema";
 import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createExport(data: InsertExport): Promise<Export>;
+  getExports(): Promise<Export[]>;
+  getExport(id: string): Promise<Export | undefined>;
+  deleteExport(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
+  private exportRecords: Map<string, Export>;
 
   constructor() {
     this.users = new Map();
+    this.exportRecords = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -32,6 +35,32 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
+  }
+
+  async createExport(data: InsertExport): Promise<Export> {
+    const id = randomUUID();
+    const record: Export = {
+      ...data,
+      id,
+      durationMs: data.durationMs ?? null,
+      createdAt: new Date(),
+    };
+    this.exportRecords.set(id, record);
+    return record;
+  }
+
+  async getExports(): Promise<Export[]> {
+    return Array.from(this.exportRecords.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+  }
+
+  async getExport(id: string): Promise<Export | undefined> {
+    return this.exportRecords.get(id);
+  }
+
+  async deleteExport(id: string): Promise<void> {
+    this.exportRecords.delete(id);
   }
 }
 

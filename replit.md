@@ -57,11 +57,11 @@ Preferred communication style: Simple, everyday language.
 
 ### Database
 - **ORM**: Drizzle ORM with PostgreSQL dialect
-- **Schema**: Defined in `shared/schema.ts` — currently has a `users` table (id, username, password)
+- **Schema**: Defined in `shared/schema.ts` — has `users` table (id, username, password) and `exports` table (id, file_name, r2_key, file_size, duration_ms, created_at)
 - **Validation**: Zod schemas generated from Drizzle schemas via `drizzle-zod`
 - **Migrations**: Managed via `drizzle-kit push` (schema push, no migration files)
 - **Connection**: Requires `DATABASE_URL` environment variable
-- **Note**: The in-memory storage is currently active. To use Postgres, swap `MemStorage` for a Drizzle-backed implementation.
+- **Note**: The in-memory storage is currently active for both users and export records. Export records persist within session but reset on server restart.
 
 ### Build System
 - **Client Build**: Vite builds to `dist/public/`
@@ -71,6 +71,10 @@ Preferred communication style: Simple, everyday language.
 ### Environment Variables
 - `DATABASE_URL` — PostgreSQL connection string (required for DB features)
 - `VITE_GEMINI_API_KEY` — Google Gemini API key (used client-side for AI features)
+- `R2_ACCESS_KEY_ID` — Cloudflare R2 access key
+- `R2_SECRET_ACCESS_KEY` — Cloudflare R2 secret key
+- `R2_ENDPOINT` — Cloudflare R2 endpoint URL
+- `R2_BUCKET_NAME` — Cloudflare R2 bucket name (default: snapgen-exports)
 
 ## External Dependencies
 
