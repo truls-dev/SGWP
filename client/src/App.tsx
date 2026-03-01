@@ -1060,18 +1060,13 @@ const App: React.FC = () => {
           updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
 
           if (nextIsMeDuringPrev) {
-            const halfDelay = Math.floor(state.chat.messageDelay * 0.6);
-            await delay(halfDelay);
-
             const meFirstChar = (nextEvent.text || "")[0];
             setIsShiftActive(meFirstChar ? /[A-Z]/.test(meFirstChar) : true);
             setIsMeTyping(true);
             setCompositionText('');
-
-            await delay(state.chat.messageDelay - halfDelay);
-          } else {
-            await delay(state.chat.messageDelay);
           }
+
+          await delay(state.chat.messageDelay);
 
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
           
