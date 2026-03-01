@@ -946,6 +946,11 @@ const App: React.FC = () => {
 
         if (sender.isMe) {
           const doMeTyping = async () => {
+            const ts = state.chat.typingSpeed;
+            const sf = Math.min(1, Math.max(0.05, ts / 70));
+            const keyDelay = Math.round(70 * sf);
+            const layoutDelay = Math.round(80 * sf);
+
             setIsMeTyping(true);
             const chars = Array.from(event.text || "");
             let currentString = "";
@@ -962,12 +967,12 @@ const App: React.FC = () => {
               if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
                   setKeyboardLayout('NUMERIC');
                   currentLayout = 'NUMERIC';
-                  await delay(80);
+                  await delay(layoutDelay);
               } 
               else if (isAlpha && currentLayout !== 'ALPHA') {
                   setKeyboardLayout('ALPHA');
                   currentLayout = 'ALPHA';
-                  await delay(80);
+                  await delay(layoutDelay);
               }
 
               if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
@@ -978,12 +983,12 @@ const App: React.FC = () => {
               
               setActiveKey(char);
               if (state.system.isSoundEnabled) soundService.playClick();
-              await delay(70);
+              await delay(keyDelay);
               setActiveKey(null);
               
               currentString += char; 
               setCompositionText(currentString);
-              await delay(i === 0 ? 0 : state.chat.typingSpeed);
+              await delay(i === 0 ? 0 : ts);
             }
 
             if ((runningStatusRef.current as string) === 'idle') return currentString;
@@ -992,40 +997,40 @@ const App: React.FC = () => {
               if (currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
                 currentLayout = 'ALPHA';
-                await delay(80);
+                await delay(layoutDelay);
               }
 
-              await delay(300);
+              await delay(Math.round(300 * sf));
               let graphemes = Array.from(currentString);
               for (let i = graphemes.length; i > 0; i--) {
                   if ((runningStatusRef.current as string) === 'idle') break;
                   
                   setActiveKey('backspace');
                   if (state.system.isSoundEnabled) soundService.playBackspace();
-                  await delay(70);
+                  await delay(keyDelay);
                   setActiveKey(null);
                   
                   graphemes.pop();
                   currentString = graphemes.join('');
                   setCompositionText(currentString);
-                  await delay(state.chat.typingSpeed);
+                  await delay(ts);
               }
               setCompositionText('');
               setIsMeTyping(false);
               setIsShiftActive(true); 
-              await delay(400);
+              await delay(Math.round(400 * sf));
             } else {
               if (currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
                 currentLayout = 'ALPHA';
-                await delay(300);
+                await delay(Math.round(300 * sf));
               }
 
-              await delay(120);
+              await delay(Math.round(120 * sf));
               setActiveKey('Enter');
               setIsShiftActive(false);
               if (state.system.isSoundEnabled) soundService.playClick();
-              await delay(70);
+              await delay(keyDelay);
               setActiveKey(null);
               
               setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
@@ -1044,12 +1049,12 @@ const App: React.FC = () => {
               if (!state.chat.isGroup) {
                 const them = state.cast.find(c => !c.isMe);
                 if (them && !localActiveParticipantIds.includes(them.id)) {
-                   await delay(500);
+                   await delay(Math.round(500 * sf));
                    updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
-                   await delay(400);
+                   await delay(Math.round(400 * sf));
                 }
               }
-              await delay(400);
+              await delay(Math.round(400 * sf));
             }
             return currentString;
           };
@@ -1079,6 +1084,11 @@ const App: React.FC = () => {
             const nextMeEvent = nextEvent;
             const partnerDelay = delay(state.chat.messageDelay);
 
+            const ts = state.chat.typingSpeed;
+            const sf = Math.min(1, Math.max(0.05, ts / 70));
+            const keyDelay = Math.round(70 * sf);
+            const layoutDelay = Math.round(80 * sf);
+
             pendingMeTyping = (async () => {
               setIsMeTyping(true);
               const chars = Array.from(nextMeEvent.text || "");
@@ -1096,12 +1106,12 @@ const App: React.FC = () => {
                 if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
                     setKeyboardLayout('NUMERIC');
                     currentLayout = 'NUMERIC';
-                    await delay(80);
+                    await delay(layoutDelay);
                 } 
                 else if (isAlpha && currentLayout !== 'ALPHA') {
                     setKeyboardLayout('ALPHA');
                     currentLayout = 'ALPHA';
-                    await delay(80);
+                    await delay(layoutDelay);
                 }
 
                 if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
@@ -1112,12 +1122,12 @@ const App: React.FC = () => {
                 
                 setActiveKey(char);
                 if (state.system.isSoundEnabled) soundService.playClick();
-                await delay(70);
+                await delay(keyDelay);
                 setActiveKey(null);
                 
                 currentString += char; 
                 setCompositionText(currentString);
-                await delay(i === 0 ? 0 : state.chat.typingSpeed);
+                await delay(i === 0 ? 0 : ts);
               }
 
               if ((runningStatusRef.current as string) === 'idle') return;
@@ -1126,38 +1136,38 @@ const App: React.FC = () => {
                 if (currentLayout !== 'ALPHA') {
                   setKeyboardLayout('ALPHA');
                   currentLayout = 'ALPHA';
-                  await delay(80);
+                  await delay(layoutDelay);
                 }
 
-                await delay(300);
+                await delay(Math.round(300 * sf));
                 let graphemes = Array.from(currentString);
                 for (let i = graphemes.length; i > 0; i--) {
                     if ((runningStatusRef.current as string) === 'idle') break;
                     setActiveKey('backspace');
                     if (state.system.isSoundEnabled) soundService.playBackspace();
-                    await delay(70);
+                    await delay(keyDelay);
                     setActiveKey(null);
                     graphemes.pop();
                     currentString = graphemes.join('');
                     setCompositionText(currentString);
-                    await delay(state.chat.typingSpeed);
+                    await delay(ts);
                 }
                 setCompositionText('');
                 setIsMeTyping(false);
                 setIsShiftActive(true); 
-                await delay(400);
+                await delay(Math.round(400 * sf));
               } else {
                 if (currentLayout !== 'ALPHA') {
                   setKeyboardLayout('ALPHA');
                   currentLayout = 'ALPHA';
-                  await delay(300);
+                  await delay(Math.round(300 * sf));
                 }
 
-                await delay(120);
+                await delay(Math.round(120 * sf));
                 setActiveKey('Enter');
                 setIsShiftActive(false);
                 if (state.system.isSoundEnabled) soundService.playClick();
-                await delay(70);
+                await delay(keyDelay);
                 setActiveKey(null);
                 
                 setPlaybackItems(prev => [...prev, { ...nextMeEvent, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
@@ -1176,12 +1186,12 @@ const App: React.FC = () => {
                 if (!state.chat.isGroup) {
                   const them = state.cast.find(c => !c.isMe);
                   if (them && !localActiveParticipantIds.includes(them.id)) {
-                     await delay(500);
+                     await delay(Math.round(500 * sf));
                      updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
-                     await delay(400);
+                     await delay(Math.round(400 * sf));
                   }
                 }
-                await delay(400);
+                await delay(Math.round(400 * sf));
               }
             })();
 
