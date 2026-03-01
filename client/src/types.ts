@@ -41,6 +41,7 @@ export interface ScriptEvent {
   notifMessage?: string;
   notifDurationMs?: number;
   notifIconUrl?: string;
+  meTypingStart?: 'default' | 'during_previous';
 }
 
 export interface SystemConfig {

@@ -836,6 +836,10 @@ const App: React.FC = () => {
 
       if (lockscreenFirstEventId && event.id === lockscreenFirstEventId) continue;
       
+      const isMeDuringPrev = event.type === MessageType.TEXT
+        && state.cast.find(c => c.id === event.senderId)?.isMe
+        && event.meTypingStart === 'during_previous';
+
       if (event.type === MessageType.TEXT && event.senderId === 'me') {
         const firstChar = event.text?.[0];
         setIsShiftActive(firstChar ? /[A-Z]/.test(firstChar) : true);
@@ -843,7 +847,9 @@ const App: React.FC = () => {
         setIsShiftActive(true);
       }
 
-      await delay(300);
+      if (!isMeDuringPrev) {
+        await delay(300);
+      }
 
       if (event.type === MessageType.PRESENCE && event.senderId) {
         if (event.presenceAction === 'ENTER') {
@@ -1045,8 +1051,28 @@ const App: React.FC = () => {
           }
         } else {
           // PARTNER SENDER
+          const nextEvent = scriptToPlay[idx + 1];
+          const nextIsMeDuringPrev = nextEvent
+            && nextEvent.type === MessageType.TEXT
+            && state.cast.find(c => c.id === nextEvent.senderId)?.isMe
+            && nextEvent.meTypingStart === 'during_previous';
+
           updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
-          await delay(state.chat.messageDelay);
+
+          if (nextIsMeDuringPrev) {
+            const halfDelay = Math.floor(state.chat.messageDelay * 0.6);
+            await delay(halfDelay);
+
+            const meFirstChar = (nextEvent.text || "")[0];
+            setIsShiftActive(meFirstChar ? /[A-Z]/.test(meFirstChar) : true);
+            setIsMeTyping(true);
+            setCompositionText('');
+
+            await delay(state.chat.messageDelay - halfDelay);
+          } else {
+            await delay(state.chat.messageDelay);
+          }
+
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
           
           if (!event.isBackspaced) {
@@ -1066,7 +1092,7 @@ const App: React.FC = () => {
               }
             }
           }
-          await delay(800);
+          await delay(nextIsMeDuringPrev ? 200 : 800);
         }
       }
     }
@@ -2710,6 +2736,23 @@ const App: React.FC = () => {
                               <div className="space-y-2">
                                 <textarea rows={2} className="bg-transparent w-full text-xs font-medium focus:outline-none resize-none placeholder-gray-600" value={item.text} placeholder="Enter chat message content..." onChange={e => { const newScript = [...state.script]; newScript[idx].text = e.target.value; setState(prev => ({ ...prev, script: newScript })); }} />
                                 {state.cast.find(c => c.id === item.senderId)?.isMe && (
+                                  <>
+                                  <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-2">
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Start typing</span>
+                                    <select
+                                      data-testid={`select-typing-start-${item.id}`}
+                                      value={item.meTypingStart || 'default'}
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, meTypingStart: e.target.value as 'default' | 'during_previous' };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                      className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold outline-none cursor-pointer focus:border-[#33B5FF]"
+                                    >
+                                      <option value="default">After previous</option>
+                                      <option value="during_previous">During previous</option>
+                                    </select>
+                                  </div>
                                   <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-2">
                                     <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Backspace mode</span>
                                     <button 
@@ -2723,6 +2766,7 @@ const App: React.FC = () => {
                                       <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${item.isBackspaced ? 'right-0.5' : 'left-0.5'}`} />
                                     </button>
                                   </div>
+                                  </>
                                 )}
                               </div>
                             )}
