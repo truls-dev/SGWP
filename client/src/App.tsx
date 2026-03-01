@@ -830,6 +830,8 @@ const App: React.FC = () => {
       startIdx = i + 1;
     }
 
+    let pendingMeTyping: Promise<any> | null = null;
+
     for (let idx = startIdx; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];
       if ((runningStatusRef.current as string) === 'idle') break;
@@ -943,111 +945,120 @@ const App: React.FC = () => {
         if (!sender) continue;
 
         if (sender.isMe) {
-          setIsMeTyping(true);
-          const chars = Array.from(event.text || "");
-          let currentString = "";
-          let currentLayout: KeyboardLayout = 'ALPHA';
+          const doMeTyping = async () => {
+            setIsMeTyping(true);
+            const chars = Array.from(event.text || "");
+            let currentString = "";
+            let currentLayout: KeyboardLayout = 'ALPHA';
 
-          for (let i = 0; i < chars.length; i++) {
-            if ((runningStatusRef.current as string) === 'idle') break;
+            for (let i = 0; i < chars.length; i++) {
+              if ((runningStatusRef.current as string) === 'idle') break;
+              
+              const char = chars[i];
+              const isAlpha = /[a-zA-Z]/.test(char);
+              const isSpace = char === ' ';
+              const isNumericOrSymbol = !isAlpha && !isSpace;
+              
+              if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
+                  setKeyboardLayout('NUMERIC');
+                  currentLayout = 'NUMERIC';
+                  await delay(80);
+              } 
+              else if (isAlpha && currentLayout !== 'ALPHA') {
+                  setKeyboardLayout('ALPHA');
+                  currentLayout = 'ALPHA';
+                  await delay(80);
+              }
+
+              if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
+                setIsShiftActive(true);
+              } else {
+                setIsShiftActive(false);
+              }
+              
+              setActiveKey(char);
+              if (state.system.isSoundEnabled) soundService.playClick();
+              await delay(70);
+              setActiveKey(null);
+              
+              currentString += char; 
+              setCompositionText(currentString);
+              await delay(i === 0 ? 0 : state.chat.typingSpeed);
+            }
+
+            if ((runningStatusRef.current as string) === 'idle') return currentString;
             
-            const char = chars[i];
-            const isAlpha = /[a-zA-Z]/.test(char);
-            const isSpace = char === ' ';
-            const isNumericOrSymbol = !isAlpha && !isSpace;
-            
-            if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
-                setKeyboardLayout('NUMERIC');
-                currentLayout = 'NUMERIC';
-                await delay(80);
-            } 
-            else if (isAlpha && currentLayout !== 'ALPHA') {
+            if (event.isBackspaced) {
+              if (currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
                 currentLayout = 'ALPHA';
                 await delay(80);
-            }
+              }
 
-            if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
-              setIsShiftActive(true);
-            } else {
-              setIsShiftActive(false);
-            }
-            
-            setActiveKey(char);
-            if (state.system.isSoundEnabled) soundService.playClick();
-            await delay(70);
-            setActiveKey(null);
-            
-            currentString += char; 
-            setCompositionText(currentString);
-            await delay(i === 0 ? 0 : state.chat.typingSpeed);
-          }
-
-          if ((runningStatusRef.current as string) === 'idle') break;
-          
-          if (event.isBackspaced) {
-            if (currentLayout !== 'ALPHA') {
-              setKeyboardLayout('ALPHA');
-              currentLayout = 'ALPHA';
-              await delay(80);
-            }
-
-            await delay(300);
-            let graphemes = Array.from(currentString);
-            for (let i = graphemes.length; i > 0; i--) {
-                if ((runningStatusRef.current as string) === 'idle') break;
-                
-                setActiveKey('backspace');
-                if (state.system.isSoundEnabled) soundService.playBackspace();
-                await delay(70);
-                setActiveKey(null);
-                
-                graphemes.pop();
-                currentString = graphemes.join('');
-                setCompositionText(currentString);
-                await delay(state.chat.typingSpeed);
-            }
-            setCompositionText('');
-            setIsMeTyping(false);
-            setIsShiftActive(true); 
-            await delay(400);
-          } else {
-            if (currentLayout !== 'ALPHA') {
-              setKeyboardLayout('ALPHA');
-              currentLayout = 'ALPHA';
               await delay(300);
-            }
-
-            await delay(120);
-            setActiveKey('Enter');
-            setIsShiftActive(false);
-            if (state.system.isSoundEnabled) soundService.playClick();
-            await delay(70);
-            setActiveKey(null);
-            
-            setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
-            setCompositionText(''); 
-            setIsMeTyping(false);
-            setIsShiftActive(true); 
-
-            if (state.system.isSoundEnabled) {
-              if (event.soundEffect) {
-                await soundService.playEffect(event.soundEffect);
-              } else {
-                soundService.playSubsequentNotification();
+              let graphemes = Array.from(currentString);
+              for (let i = graphemes.length; i > 0; i--) {
+                  if ((runningStatusRef.current as string) === 'idle') break;
+                  
+                  setActiveKey('backspace');
+                  if (state.system.isSoundEnabled) soundService.playBackspace();
+                  await delay(70);
+                  setActiveKey(null);
+                  
+                  graphemes.pop();
+                  currentString = graphemes.join('');
+                  setCompositionText(currentString);
+                  await delay(state.chat.typingSpeed);
               }
-            }
-
-            // POST-SEND REALISM: Arrival logic for Them noticing my text
-            if (!state.chat.isGroup) {
-              const them = state.cast.find(c => !c.isMe);
-              if (them && !localActiveParticipantIds.includes(them.id)) {
-                 await delay(500);
-                 updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
-                 await delay(400);
+              setCompositionText('');
+              setIsMeTyping(false);
+              setIsShiftActive(true); 
+              await delay(400);
+            } else {
+              if (currentLayout !== 'ALPHA') {
+                setKeyboardLayout('ALPHA');
+                currentLayout = 'ALPHA';
+                await delay(300);
               }
+
+              await delay(120);
+              setActiveKey('Enter');
+              setIsShiftActive(false);
+              if (state.system.isSoundEnabled) soundService.playClick();
+              await delay(70);
+              setActiveKey(null);
+              
+              setPlaybackItems(prev => [...prev, { ...event, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
+              setCompositionText(''); 
+              setIsMeTyping(false);
+              setIsShiftActive(true); 
+
+              if (state.system.isSoundEnabled) {
+                if (event.soundEffect) {
+                  await soundService.playEffect(event.soundEffect);
+                } else {
+                  soundService.playSubsequentNotification();
+                }
+              }
+
+              if (!state.chat.isGroup) {
+                const them = state.cast.find(c => !c.isMe);
+                if (them && !localActiveParticipantIds.includes(them.id)) {
+                   await delay(500);
+                   updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
+                   await delay(400);
+                }
+              }
+              await delay(400);
             }
-            await delay(400);
+            return currentString;
+          };
+
+          if (pendingMeTyping) {
+            await pendingMeTyping;
+            pendingMeTyping = null;
+          } else {
+            await doMeTyping();
           }
         } else {
           // PARTNER SENDER
@@ -1062,11 +1073,122 @@ const App: React.FC = () => {
           if (nextIsMeDuringPrev) {
             const meFirstChar = (nextEvent.text || "")[0];
             setIsShiftActive(meFirstChar ? /[A-Z]/.test(meFirstChar) : true);
-            setIsMeTyping(true);
-            setCompositionText('');
           }
 
-          await delay(state.chat.messageDelay);
+          if (nextIsMeDuringPrev) {
+            const nextMeEvent = nextEvent;
+            const partnerDelay = delay(state.chat.messageDelay);
+
+            pendingMeTyping = (async () => {
+              setIsMeTyping(true);
+              const chars = Array.from(nextMeEvent.text || "");
+              let currentString = "";
+              let currentLayout: KeyboardLayout = 'ALPHA';
+
+              for (let i = 0; i < chars.length; i++) {
+                if ((runningStatusRef.current as string) === 'idle') break;
+                
+                const char = chars[i];
+                const isAlpha = /[a-zA-Z]/.test(char);
+                const isSpace = char === ' ';
+                const isNumericOrSymbol = !isAlpha && !isSpace;
+                
+                if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
+                    setKeyboardLayout('NUMERIC');
+                    currentLayout = 'NUMERIC';
+                    await delay(80);
+                } 
+                else if (isAlpha && currentLayout !== 'ALPHA') {
+                    setKeyboardLayout('ALPHA');
+                    currentLayout = 'ALPHA';
+                    await delay(80);
+                }
+
+                if (isAlpha && char !== char.toLowerCase() && char === char.toUpperCase()) {
+                  setIsShiftActive(true);
+                } else {
+                  setIsShiftActive(false);
+                }
+                
+                setActiveKey(char);
+                if (state.system.isSoundEnabled) soundService.playClick();
+                await delay(70);
+                setActiveKey(null);
+                
+                currentString += char; 
+                setCompositionText(currentString);
+                await delay(i === 0 ? 0 : state.chat.typingSpeed);
+              }
+
+              if ((runningStatusRef.current as string) === 'idle') return;
+              
+              if (nextMeEvent.isBackspaced) {
+                if (currentLayout !== 'ALPHA') {
+                  setKeyboardLayout('ALPHA');
+                  currentLayout = 'ALPHA';
+                  await delay(80);
+                }
+
+                await delay(300);
+                let graphemes = Array.from(currentString);
+                for (let i = graphemes.length; i > 0; i--) {
+                    if ((runningStatusRef.current as string) === 'idle') break;
+                    setActiveKey('backspace');
+                    if (state.system.isSoundEnabled) soundService.playBackspace();
+                    await delay(70);
+                    setActiveKey(null);
+                    graphemes.pop();
+                    currentString = graphemes.join('');
+                    setCompositionText(currentString);
+                    await delay(state.chat.typingSpeed);
+                }
+                setCompositionText('');
+                setIsMeTyping(false);
+                setIsShiftActive(true); 
+                await delay(400);
+              } else {
+                if (currentLayout !== 'ALPHA') {
+                  setKeyboardLayout('ALPHA');
+                  currentLayout = 'ALPHA';
+                  await delay(300);
+                }
+
+                await delay(120);
+                setActiveKey('Enter');
+                setIsShiftActive(false);
+                if (state.system.isSoundEnabled) soundService.playClick();
+                await delay(70);
+                setActiveKey(null);
+                
+                setPlaybackItems(prev => [...prev, { ...nextMeEvent, text: currentString, instanceId: uuidv4(), revealedAt: Date.now() }]);
+                setCompositionText(''); 
+                setIsMeTyping(false);
+                setIsShiftActive(true); 
+
+                if (state.system.isSoundEnabled) {
+                  if (nextMeEvent.soundEffect) {
+                    await soundService.playEffect(nextMeEvent.soundEffect);
+                  } else {
+                    soundService.playSubsequentNotification();
+                  }
+                }
+
+                if (!state.chat.isGroup) {
+                  const them = state.cast.find(c => !c.isMe);
+                  if (them && !localActiveParticipantIds.includes(them.id)) {
+                     await delay(500);
+                     updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
+                     await delay(400);
+                  }
+                }
+                await delay(400);
+              }
+            })();
+
+            await partnerDelay;
+          } else {
+            await delay(state.chat.messageDelay);
+          }
 
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
           
