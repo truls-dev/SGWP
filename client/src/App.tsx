@@ -109,7 +109,7 @@ const App: React.FC = () => {
       contactName: 'Kenny Lin',
       isGroup: false,
       groupName: 'The Squad',
-      typingSpeed: 1,
+      typingSpeed: 30,
       messageDelay: 500,
       groupIconUrl: undefined,
       isKeyboardCropped: false,
