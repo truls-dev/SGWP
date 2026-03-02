@@ -171,11 +171,12 @@ const App: React.FC = () => {
 
   const addSequence = () => {
     saveCurrentSequence();
+    const meChar = state.cast.find(c => c.isMe) || { id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1] };
     const newSeq: Sequence = {
       id: uuidv4(),
       label: `Sequence ${sequences.length + 1}`,
       cast: [
-        { id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1] },
+        { ...meChar },
         { id: uuidv4(), name: 'Person', bitmojiAvatarId: getRandomAvatarId(), isMe: false, color: GROUP_COLORS[0] },
       ],
       script: [],
@@ -860,7 +861,10 @@ const App: React.FC = () => {
       if ((runningStatusRef.current as string) === 'idle') break;
 
       const currentSeq = allSequences[seqIndex];
-      const seqCast = currentSeq.cast;
+      const seq1Me = allSequences[0].cast.find(c => c.isMe);
+      const seqCast = seqIndex > 0 && seq1Me
+        ? currentSeq.cast.map(c => c.isMe ? { ...c, bitmojiAvatarId: seq1Me.bitmojiAvatarId } : c)
+        : currentSeq.cast;
       const seqChat = currentSeq.chat;
       const seqScript = currentSeq.script;
 
@@ -1387,6 +1391,18 @@ const App: React.FC = () => {
     } else {
         soundService.stopMusicPreview();
         setIsMusicPreviewing(false);
+
+        const latestSeqs = sequencesRef.current.map((seq, i) =>
+          i === activeSequenceIndexRef.current
+            ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+            : seq
+        );
+        sequencesRef.current = latestSeqs;
+        const seq1 = latestSeqs[0];
+        setState(prev => ({ ...prev, cast: seq1.cast, script: seq1.script, chat: seq1.chat }));
+        frameStateRef.current.cast = seq1.cast;
+        frameStateRef.current.chatConfig = seq1.chat;
+
         setPlaybackMode(true);
         runningStatusRef.current = 'previewing';
         await soundService.prepare();
@@ -1399,13 +1415,9 @@ const App: React.FC = () => {
 
         const renderer = new CanvasRenderer();
         canvasRendererRef.current = renderer;
-        const allCast = sequencesRef.current.length > 1
-          ? sequencesRef.current.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i)
-          : state.cast;
-        const allScriptEvents = sequencesRef.current.length > 1
-          ? sequencesRef.current.flatMap(s => s.script)
-          : state.script;
-        await renderer.preload(allCast, allScriptEvents, state.chat);
+        const allCast = latestSeqs.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i);
+        const allScriptEvents = latestSeqs.flatMap(s => s.script);
+        await renderer.preload(allCast, allScriptEvents, seq1.chat);
         renderer.enablePresence();
         if (frameStateRef.current.activeParticipantIds.length > 0) {
           renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
@@ -1505,6 +1517,18 @@ const App: React.FC = () => {
     const win = window as any;
     try {
       resetSimulationState();
+
+      const latestSeqs = sequencesRef.current.map((seq, i) =>
+        i === activeSequenceIndexRef.current
+          ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+          : seq
+      );
+      sequencesRef.current = latestSeqs;
+      const seq1 = latestSeqs[0];
+      setState(prev => ({ ...prev, cast: seq1.cast, script: seq1.script, chat: seq1.chat }));
+      frameStateRef.current.cast = seq1.cast;
+      frameStateRef.current.chatConfig = seq1.chat;
+
       setPlaybackMode(true);
 
       const MuxerLib = await import('mp4-muxer');
@@ -1524,13 +1548,9 @@ const App: React.FC = () => {
 
       const renderer = new CanvasRenderer();
       canvasRendererRef.current = renderer;
-      const allCastRec = sequencesRef.current.length > 1
-        ? sequencesRef.current.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i)
-        : state.cast;
-      const allScriptRec = sequencesRef.current.length > 1
-        ? sequencesRef.current.flatMap(s => s.script)
-        : state.script;
-      await renderer.preload(allCastRec, allScriptRec, state.chat);
+      const allCastRec = latestSeqs.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i);
+      const allScriptRec = latestSeqs.flatMap(s => s.script);
+      await renderer.preload(allCastRec, allScriptRec, seq1.chat);
       renderer.enablePresence();
       if (frameStateRef.current.activeParticipantIds.length > 0) {
         renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
