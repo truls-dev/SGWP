@@ -2414,6 +2414,22 @@ const App: React.FC = () => {
                   )}
                 </div>
 
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">Safe Area Padding</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Prevents YouTube/TikTok edge crop</span>
+                    </div>
+                    <span className="text-[10px] font-black text-[#33B5FF]">{state.chat.safeAreaPadding || 0}px</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="80" step="2" 
+                    value={state.chat.safeAreaPadding || 0} 
+                    onChange={e => updateChat('safeAreaPadding', parseInt(e.target.value))}
+                    className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+
                 <div className="flex items-center justify-between pt-2 border-t border-white/10">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold">Export 16:9</span>
