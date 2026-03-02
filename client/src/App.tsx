@@ -742,8 +742,19 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, system: { ...prev.system, [key]: value } }));
   };
 
+  const GLOBAL_CHAT_KEYS: Set<string> = new Set([
+    'isVideoBackgroundMode', 'videoModeScale', 'isShortCrop',
+    'exportBackgroundVideoUrl', 'exportBackgroundUrl', 'exportBackgroundImageUrl',
+  ]);
+
   const updateChat = (key: keyof typeof state.chat, value: any) => {
     setState(prev => ({ ...prev, chat: { ...prev.chat, [key]: value } }));
+    if (GLOBAL_CHAT_KEYS.has(key)) {
+      setSequences(prev => prev.map(seq => ({
+        ...seq,
+        chat: { ...seq.chat, [key]: value },
+      })));
+    }
   };
 
   const handleCustomojiSelect = () => {
@@ -2518,6 +2529,14 @@ const App: React.FC = () => {
                             isShortCrop: nextVal ? true : prev.chat.isShortCrop 
                           }
                         }));
+                        setSequences(prev => prev.map(seq => ({
+                          ...seq,
+                          chat: {
+                            ...seq.chat,
+                            isVideoBackgroundMode: nextVal,
+                            isShortCrop: nextVal ? true : seq.chat.isShortCrop,
+                          },
+                        })));
                       }}
                       className={`w-14 h-7 rounded-full transition-all relative ${state.chat.isVideoBackgroundMode ? 'bg-[#FF0054]' : 'bg-gray-600'}`}
                     >
