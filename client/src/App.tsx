@@ -3498,8 +3498,8 @@ const App: React.FC = () => {
               <i className="fa-solid fa-xmark text-xl"></i>
             </button>
             
-            <div className="space-y-10">
-              <div className="text-center">
+            <div className="space-y-8 max-h-[80vh] overflow-y-auto pr-2">
+              <div className="text-center pt-2">
                 <h2 className="text-3xl font-black uppercase tracking-tighter mb-2 flex items-center justify-center gap-3">
                    <span className="text-[#FFFC00]">👻</span> SnapGen Pro Guide
                 </h2>
@@ -3508,37 +3508,125 @@ const App: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-[#33B5FF] uppercase tracking-[0.2em]">Simulation Performance</h4>
-                  <ul className="space-y-4 text-xs font-bold text-gray-300">
+                  <h4 className="text-[10px] font-black text-[#33B5FF] uppercase tracking-[0.2em]">Cast & Script</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-keyboard text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">Typing Speed:</b> Controls how fast characters are typed when "Me" is the sender.</span>
+                      <i className="fa-solid fa-user-plus text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Cast Members:</b> Add up to 6 participants. Each gets a unique Bitmoji avatar and color. Click the avatar to randomize it. "ME" is always you.</span>
                     </li>
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-hourglass-half text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">Msg Wait:</b> The duration the typing bubble stays visible before a message is received from others.</span>
+                      <i className="fa-solid fa-list text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Script Events:</b> Build your conversation step by step. Message types include text, stickers, saved messages, system events, and iOS notifications.</span>
                     </li>
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-expand text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">UI Scale:</b> Global zoom. Use ~1.5x with keyboard and ~1.8x without for the cleanest "full screen" look.</span>
+                      <i className="fa-solid fa-delete-left text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Backspace Mode:</b> Types a message, pauses, then deletes it character by character with realistic key sounds. Great for storytelling tension.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-users text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Presence Events:</b> Use "Arrival" and "Departure" events to make participants peek into the chat or leave, updating the presence pills at the top.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-bell text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">iOS Notifications:</b> Add banner notifications (Snapchat or Messages style) that slide in over the chat at any point in your script.</span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-[#33B5FF] uppercase tracking-[0.2em]">Exclusive Features</h4>
-                  <ul className="space-y-4 text-xs font-bold text-gray-300">
+                  <h4 className="text-[10px] font-black text-[#33B5FF] uppercase tracking-[0.2em]">Typing & Timing</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-delete-left text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">Backspace Mode:</b> Simulation Types the message, pauses, then deletes it character-by-character with realistic audio. Ideal for "story-telling" tension.</span>
+                      <i className="fa-solid fa-keyboard text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Typing Speed:</b> Controls how fast keys are pressed when "Me" types. Lower = faster. All animation delays scale proportionally.</span>
                     </li>
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-crop-simple text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">Keyboard Crop:</b> Vertically aligns the chat and removes side padding. Designed specifically for TikTok and Reels overlays.</span>
+                      <i className="fa-solid fa-hourglass-half text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Msg Wait:</b> How long the typing bubble stays visible before the other person's message appears.</span>
                     </li>
                     <li className="flex gap-3">
-                      <i className="fa-solid fa-users text-[#33B5FF] mt-0.5"></i>
-                      <span><b className="text-white">Presence Events:</b> Use "Arrival" and "Departure" to make participants peek into the chat or leave, updating the Presence Pills.</span>
+                      <i className="fa-solid fa-arrows-left-right text-[#33B5FF] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Typing Overlap:</b> Per-message control for when "Me" starts typing. "After previous" waits for the last message, "During previous" starts simultaneously with the partner's typing.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-[#FF0054] uppercase tracking-[0.2em]">Multi-Sequence</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-layer-group text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Sequences:</b> Combine multiple conversations into one video. Each sequence has its own cast and script but shares all settings globally.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-clock text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Transition Delay:</b> Set the pause between sequences (0-5 seconds). The chat clears and loads the next conversation automatically.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-ghost text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Shared Avatar:</b> Your "ME" Bitmoji stays the same across all sequences. Only the other participants change.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-[#FF0054] uppercase tracking-[0.2em]">Visual Settings</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-expand text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">UI Scale:</b> Global zoom for the phone interface. Use ~1.5x with keyboard visible, ~1.8x without.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-text-height text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Font Size:</b> Adjust message text size. Sender names scale automatically at 75% of your chosen size.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-crop-simple text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Crop Modes:</b> "Keyboard Crop" removes the keyboard for a cleaner look. "Short Crop" reduces the overall height with an adjustable slider.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-square-up-right text-[#FF0054] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Corner Radius:</b> Round the top corners of the phone frame for a realistic device look.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-[#FFFC00] uppercase tracking-[0.2em]">Video & Audio</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-video text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Video Background:</b> Enable cinematic mode to place the chat over a looping MP4 video. Adjust the phone scale to control how much background is visible.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-music text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Background Music:</b> Paste a music URL to add a soundtrack. Adjust volume independently. Music loops automatically if your video is longer than the track.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-volume-high text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Sound Effects:</b> Add timed sound effects at specific timestamps. They fire independently from the script timeline.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-film text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Outro Video:</b> Append a subscribe animation or outro clip to the end of your export. Audio from the outro is stitched in automatically.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-[#FFFC00] uppercase tracking-[0.2em]">Lockscreen & Notifications</h4>
+                  <ul className="space-y-3 text-xs font-bold text-gray-300">
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-lock text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Lockscreen Intro:</b> Start your video on a realistic iPhone lockscreen. Shows the date, clock, and a Snapchat notification banner before transitioning to the chat. Customize the wallpaper, date, and duration.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <i className="fa-solid fa-bell text-[#FFFC00] mt-0.5 shrink-0"></i>
+                      <span><b className="text-white">Timed Notifications:</b> Schedule iOS notification banners at specific timestamps from the Settings tab, separate from script-based notifications.</span>
                     </li>
                   </ul>
                 </div>
@@ -3546,7 +3634,7 @@ const App: React.FC = () => {
 
               <div className="bg-white/5 border border-white/5 p-6 rounded-3xl space-y-3">
                 <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">How to Export</h4>
-                <p className="text-xs text-gray-400 lordship-relaxed font-medium">Click <b className="text-[#FFFC00]">Export Video</b> to enter Fullscreen mode. When prompted by your browser, select <b className="text-white">"Entire Screen"</b> or the browser window. The app will automatically crop the recording to a perfect 9:16 vertical aspect ratio, synchronize the audio, and trigger a high-quality download once the timeline finishes.</p>
+                <p className="text-xs text-gray-400 leading-relaxed font-medium">Click <b className="text-[#FFFC00]">Export Video</b> to render your video at native <b className="text-white">1080x1920 HD</b> resolution directly on canvas -- no screen capture needed. The export runs in the background even if you switch tabs. Your video is automatically saved to cloud history and downloaded as an MP4. Use <b className="text-white">Preview</b> to watch your video first without exporting.</p>
               </div>
 
               <button 
