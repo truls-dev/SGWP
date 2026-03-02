@@ -207,13 +207,10 @@ const App: React.FC = () => {
     setActiveSequenceIndex(newIndex);
   };
 
-  useEffect(() => {
-    setSequences(prev => prev.map((seq, i) =>
-      i === activeSequenceIndex
-        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
-        : seq
-    ));
-  }, [state.cast, state.script, state.chat, activeSequenceIndex]);
+  const sequencesRef = useRef(sequences);
+  sequencesRef.current = sequences;
+  const activeSequenceIndexRef = useRef(activeSequenceIndex);
+  activeSequenceIndexRef.current = activeSequenceIndex;
 
   const [playbackMode, setPlaybackMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -852,7 +849,12 @@ const App: React.FC = () => {
       }
     }
 
-    const allSequences = sequences.length > 1 ? [...sequences] : [{ ...sequences[0], cast: state.cast, script: state.script, chat: state.chat }];
+    const latestSequences = sequencesRef.current.map((seq, i) =>
+      i === activeSequenceIndexRef.current
+        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+        : seq
+    );
+    const allSequences = latestSequences;
 
     for (let seqIndex = 0; seqIndex < allSequences.length; seqIndex++) {
       if ((runningStatusRef.current as string) === 'idle') break;
@@ -1343,7 +1345,7 @@ const App: React.FC = () => {
     } // end sequences loop
 
     if (allSequences.length > 1) {
-      const activeSeq = sequences[activeSequenceIndex];
+      const activeSeq = latestSequences[activeSequenceIndexRef.current];
       if (activeSeq) {
         setState(prev => ({ ...prev, cast: activeSeq.cast, script: activeSeq.script, chat: activeSeq.chat }));
         frameStateRef.current.cast = activeSeq.cast;
