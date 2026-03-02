@@ -459,6 +459,12 @@ export class CanvasRenderer {
 
     const ctx = this.ctx;
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
+    if (!isVideoMode) {
+      state = {
+        ...state,
+        chatConfig: { ...state.chatConfig, isKeyboardCropped: true },
+      };
+    }
     const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
 
     if (isVideoMode) {
