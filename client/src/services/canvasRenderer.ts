@@ -518,7 +518,6 @@ export class CanvasRenderer {
 
       if (safePad > 0 || state.chatConfig.isShortCrop) {
         const phoneW = safePad > 0 ? this.W - safePad * 2 : this.W;
-        const scaleX = phoneW / this.W;
         const phoneH = state.chatConfig.isShortCrop
           ? this.H * (state.chatConfig.shortCropHeight / 1920)
           : this.H;
@@ -537,8 +536,13 @@ export class CanvasRenderer {
         ctx.closePath();
         ctx.clip();
         ctx.translate(phoneX, phoneY);
-        ctx.scale(scaleX, 1);
+        const origW = this.W;
+        const origH = this.H;
+        (this as any).W = phoneW;
+        (this as any).H = phoneH;
         this.drawPhoneUI(ctx, state, kbH);
+        (this as any).W = origW;
+        (this as any).H = origH;
         ctx.restore();
       } else {
         this.drawPhoneUI(ctx, state, kbH);
