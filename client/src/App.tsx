@@ -1344,17 +1344,20 @@ const App: React.FC = () => {
     }
     } // end sequences loop
 
-    if (allSequences.length > 1) {
-      const activeSeq = latestSequences[activeSequenceIndexRef.current];
-      if (activeSeq) {
-        setState(prev => ({ ...prev, cast: activeSeq.cast, script: activeSeq.script, chat: activeSeq.chat }));
-        frameStateRef.current.cast = activeSeq.cast;
-        frameStateRef.current.chatConfig = activeSeq.chat;
+    const restoreActiveSequence = () => {
+      if (allSequences.length > 1) {
+        const activeSeq = latestSequences[activeSequenceIndexRef.current];
+        if (activeSeq) {
+          setState(prev => ({ ...prev, cast: activeSeq.cast, script: activeSeq.script, chat: activeSeq.chat }));
+          frameStateRef.current.cast = activeSeq.cast;
+          frameStateRef.current.chatConfig = activeSeq.chat;
+        }
       }
-    }
+    };
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
       await delay(3000);
+      restoreActiveSequence();
       stopRecordingSession();
     } else {
       if (previewAnimFrameRef.current) {
@@ -1365,6 +1368,7 @@ const App: React.FC = () => {
         previewCanvasContainerRef.current.innerHTML = '';
       }
       canvasRendererRef.current = null;
+      restoreActiveSequence();
       setPlaybackMode(false);
       runningStatusRef.current = 'idle';
       setIsShiftActive(true); 
@@ -1395,7 +1399,13 @@ const App: React.FC = () => {
 
         const renderer = new CanvasRenderer();
         canvasRendererRef.current = renderer;
-        await renderer.preload(state.cast, state.script, state.chat);
+        const allCast = sequencesRef.current.length > 1
+          ? sequencesRef.current.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i)
+          : state.cast;
+        const allScriptEvents = sequencesRef.current.length > 1
+          ? sequencesRef.current.flatMap(s => s.script)
+          : state.script;
+        await renderer.preload(allCast, allScriptEvents, state.chat);
         renderer.enablePresence();
         if (frameStateRef.current.activeParticipantIds.length > 0) {
           renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
@@ -1514,7 +1524,13 @@ const App: React.FC = () => {
 
       const renderer = new CanvasRenderer();
       canvasRendererRef.current = renderer;
-      await renderer.preload(state.cast, state.script, state.chat);
+      const allCastRec = sequencesRef.current.length > 1
+        ? sequencesRef.current.flatMap(s => s.cast).filter((c, i, arr) => arr.findIndex(x => x.bitmojiAvatarId === c.bitmojiAvatarId) === i)
+        : state.cast;
+      const allScriptRec = sequencesRef.current.length > 1
+        ? sequencesRef.current.flatMap(s => s.script)
+        : state.script;
+      await renderer.preload(allCastRec, allScriptRec, state.chat);
       renderer.enablePresence();
       if (frameStateRef.current.activeParticipantIds.length > 0) {
         renderer.preArriveParticipants(frameStateRef.current.activeParticipantIds);
