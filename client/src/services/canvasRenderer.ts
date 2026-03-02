@@ -459,12 +459,6 @@ export class CanvasRenderer {
 
     const ctx = this.ctx;
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
-    if (!isVideoMode) {
-      state = {
-        ...state,
-        chatConfig: { ...state.chatConfig, isKeyboardCropped: true },
-      };
-    }
     const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
 
     if (isVideoMode) {
@@ -520,56 +514,23 @@ export class CanvasRenderer {
         ctx.fillRect(0, 0, this.W, this.H);
       }
 
-      const safePad = state.chatConfig.safeAreaPadding || 0;
-
       if (state.chatConfig.isShortCrop) {
-        const phoneH = this.H * (state.chatConfig.shortCropHeight / 1920);
+        const phoneH = this.H * 0.75;
         const phoneY = (this.H - phoneH) / 2;
-        const phoneW = safePad > 0 ? this.W - safePad * 2 : this.W;
-        const phoneX = (this.W - phoneW) / 2;
-        const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
+        const cr = state.chatConfig.topCornerRadius * 2.77;
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(phoneX + cr, phoneY);
-        ctx.lineTo(phoneX + phoneW - cr, phoneY);
-        ctx.quadraticCurveTo(phoneX + phoneW, phoneY, phoneX + phoneW, phoneY + cr);
-        ctx.lineTo(phoneX + phoneW, phoneY + phoneH);
-        ctx.lineTo(phoneX, phoneY + phoneH);
-        ctx.lineTo(phoneX, phoneY + cr);
-        ctx.quadraticCurveTo(phoneX, phoneY, phoneX + cr, phoneY);
+        ctx.moveTo(cr, phoneY);
+        ctx.lineTo(this.W - cr, phoneY);
+        ctx.quadraticCurveTo(this.W, phoneY, this.W, phoneY + cr);
+        ctx.lineTo(this.W, phoneY + phoneH);
+        ctx.lineTo(0, phoneY + phoneH);
+        ctx.lineTo(0, phoneY + cr);
+        ctx.quadraticCurveTo(0, phoneY, cr, phoneY);
         ctx.closePath();
         ctx.clip();
-        ctx.translate(phoneX, phoneY);
-        const origW = this.W;
-        const origH = this.H;
-        (this as any).W = phoneW;
-        (this as any).H = phoneH;
+        ctx.translate(0, phoneY);
         this.drawPhoneUI(ctx, state, kbH);
-        (this as any).W = origW;
-        (this as any).H = origH;
-        ctx.restore();
-      } else if (safePad > 0) {
-        const phoneW = this.W - safePad * 2;
-        const phoneX = safePad;
-        const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
-        ctx.save();
-        if (cr > 0) {
-          ctx.beginPath();
-          ctx.moveTo(phoneX + cr, 0);
-          ctx.lineTo(phoneX + phoneW - cr, 0);
-          ctx.quadraticCurveTo(phoneX + phoneW, 0, phoneX + phoneW, cr);
-          ctx.lineTo(phoneX + phoneW, this.H);
-          ctx.lineTo(phoneX, this.H);
-          ctx.lineTo(phoneX, cr);
-          ctx.quadraticCurveTo(phoneX, 0, phoneX + cr, 0);
-          ctx.closePath();
-          ctx.clip();
-        }
-        ctx.translate(phoneX, 0);
-        const origW = this.W;
-        (this as any).W = phoneW;
-        this.drawPhoneUI(ctx, state, kbH);
-        (this as any).W = origW;
         ctx.restore();
       } else {
         this.drawPhoneUI(ctx, state, kbH);

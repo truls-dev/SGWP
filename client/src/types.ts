@@ -75,7 +75,6 @@ export interface ChatConfig {
   lockscreenDate?: string;
   lockscreenDurationMs?: number;
   export16x9?: boolean;
-  safeAreaPadding?: number;
 }
 
 export interface TimedSoundEffect {
