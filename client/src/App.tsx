@@ -865,7 +865,15 @@ const App: React.FC = () => {
       const seqCast = seqIndex > 0 && seq1Me
         ? currentSeq.cast.map(c => c.isMe ? { ...c, bitmojiAvatarId: seq1Me.bitmojiAvatarId } : c)
         : currentSeq.cast;
-      const seqChat = currentSeq.chat;
+      const seq1Chat = allSequences[0].chat;
+      const seqChat = seqIndex > 0
+        ? {
+            ...currentSeq.chat,
+            isVideoBackgroundMode: seq1Chat.isVideoBackgroundMode,
+            videoModeScale: seq1Chat.videoModeScale,
+            isShortCrop: seq1Chat.isShortCrop,
+          }
+        : currentSeq.chat;
       const seqScript = currentSeq.script;
 
       if (seqIndex > 0) {
