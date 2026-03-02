@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect, TimedNotification, NotificationPlatform } from './types';
+import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect, TimedNotification, NotificationPlatform, Sequence, ChatConfig } from './types';
 import StatusBar from './components/StatusBar';
 import ChatHeader from './components/ChatHeader';
 import ChatInput from './components/ChatInput';
@@ -127,6 +127,93 @@ const App: React.FC = () => {
       lockscreenDurationMs: 2000,
     }
   });
+
+  const defaultChatConfig: ChatConfig = { ...state.chat };
+
+  const [sequences, setSequences] = useState<Sequence[]>([
+    {
+      id: 'seq-1',
+      label: 'Sequence 1',
+      cast: state.cast,
+      script: state.script,
+      chat: state.chat,
+      transitionDelayMs: 1500,
+    }
+  ]);
+  const [activeSequenceIndex, setActiveSequenceIndex] = useState(0);
+
+  const saveCurrentSequence = () => {
+    setSequences(prev => prev.map((seq, i) =>
+      i === activeSequenceIndex
+        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+        : seq
+    ));
+  };
+
+  const switchToSequence = (index: number) => {
+    const updated = sequences.map((seq, i) =>
+      i === activeSequenceIndex
+        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+        : seq
+    );
+    setSequences(updated);
+    const target = updated[index];
+    if (target) {
+      setState(prev => ({
+        ...prev,
+        cast: target.cast,
+        script: target.script,
+        chat: target.chat,
+      }));
+      setActiveSequenceIndex(index);
+    }
+  };
+
+  const addSequence = () => {
+    saveCurrentSequence();
+    const newSeq: Sequence = {
+      id: uuidv4(),
+      label: `Sequence ${sequences.length + 1}`,
+      cast: [
+        { id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1] },
+        { id: uuidv4(), name: 'Person', bitmojiAvatarId: getRandomAvatarId(), isMe: false, color: GROUP_COLORS[0] },
+      ],
+      script: [],
+      chat: { ...defaultChatConfig, contactName: 'Person' },
+      transitionDelayMs: 1500,
+    };
+    setSequences(prev => [...prev, newSeq]);
+    setState(prev => ({
+      ...prev,
+      cast: newSeq.cast,
+      script: newSeq.script,
+      chat: newSeq.chat,
+    }));
+    setActiveSequenceIndex(sequences.length);
+  };
+
+  const removeSequence = (index: number) => {
+    if (sequences.length <= 1) return;
+    const newSequences = sequences.filter((_, i) => i !== index);
+    setSequences(newSequences);
+    const newIndex = index >= newSequences.length ? newSequences.length - 1 : index;
+    const target = newSequences[newIndex];
+    setState(prev => ({
+      ...prev,
+      cast: target.cast,
+      script: target.script,
+      chat: target.chat,
+    }));
+    setActiveSequenceIndex(newIndex);
+  };
+
+  useEffect(() => {
+    setSequences(prev => prev.map((seq, i) =>
+      i === activeSequenceIndex
+        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+        : seq
+    ));
+  }, [state.cast, state.script, state.chat, activeSequenceIndex]);
 
   const [playbackMode, setPlaybackMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -765,24 +852,54 @@ const App: React.FC = () => {
       }
     }
 
-    const scriptToPlay = state.script;
+    const allSequences = sequences.length > 1 ? [...sequences] : [{ ...sequences[0], cast: state.cast, script: state.script, chat: state.chat }];
+
+    for (let seqIndex = 0; seqIndex < allSequences.length; seqIndex++) {
+      if ((runningStatusRef.current as string) === 'idle') break;
+
+      const currentSeq = allSequences[seqIndex];
+      const seqCast = currentSeq.cast;
+      const seqChat = currentSeq.chat;
+      const seqScript = currentSeq.script;
+
+      if (seqIndex > 0) {
+        await delay(currentSeq.transitionDelayMs);
+        if ((runningStatusRef.current as string) === 'idle') break;
+
+        setPlaybackItems([]);
+        updateActiveIds([]);
+        updateTypingIds([]);
+        setIsMeTyping(false);
+        setCompositionText('');
+        setIsShiftActive(true);
+        hasPlayedFirstNotif = false;
+
+        frameStateRef.current.messages = [];
+        frameStateRef.current.cast = seqCast;
+        frameStateRef.current.chatConfig = seqChat;
+      } else {
+        frameStateRef.current.cast = seqCast;
+        frameStateRef.current.chatConfig = seqChat;
+      }
+
+    const scriptToPlay = seqScript;
     let lockscreenFirstEventId: string | null = null;
 
-    if (state.chat.lockscreenEnabled) {
-      const firstNonMeEvent = state.script.find(e =>
+    if (seqIndex === 0 && seqChat.lockscreenEnabled) {
+      const firstNonMeEvent = seqScript.find(e =>
         (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
         e.senderId && e.senderId !== 'me'
       );
-      const lockDurationMs = state.chat.lockscreenDurationMs || 2000;
+      const lockDurationMs = seqChat.lockscreenDurationMs || 2000;
 
       if (firstNonMeEvent) {
-        const sender = state.cast.find(c => c.id === firstNonMeEvent.senderId);
+        const sender = seqCast.find(c => c.id === firstNonMeEvent.senderId);
         const bitmojiUrl = sender ? getSelfieUrlForAvatar(sender.bitmojiAvatarId) : undefined;
         const notifStartTime = performance.now() - playbackStartTimeRef.current;
         lockscreenNotifRef.current = {
           id: 'lockscreen_notif',
           platform: 'Snapchat',
-          senderName: sender?.name || state.chat.contactName || 'Unknown',
+          senderName: sender?.name || seqChat.contactName || 'Unknown',
           message: firstNonMeEvent.text || 'Sent a snap',
           timeMs: notifStartTime,
           durationMs: lockDurationMs + 5000,
@@ -839,7 +956,7 @@ const App: React.FC = () => {
       if (lockscreenFirstEventId && event.id === lockscreenFirstEventId) continue;
       
       const isMeDuringPrev = event.type === MessageType.TEXT
-        && state.cast.find(c => c.id === event.senderId)?.isMe
+        && seqCast.find(c => c.id === event.senderId)?.isMe
         && event.meTypingStart === 'during_previous';
 
       if (event.type === MessageType.TEXT && event.senderId === 'me') {
@@ -903,12 +1020,12 @@ const App: React.FC = () => {
         }
         await delay(1000);
       } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
-        const sender = state.cast.find(c => c.id === event.senderId);
+        const sender = seqCast.find(c => c.id === event.senderId);
         if (!sender) continue;
         
         if (!sender.isMe) {
             updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
-            await delay(state.chat.messageDelay);
+            await delay(seqChat.messageDelay);
             updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
         }
 
@@ -916,9 +1033,8 @@ const App: React.FC = () => {
           setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
         }
 
-        // POST-SEND REALISM: Arrival logic for "Kenny" reacting to "Me"
-        if (sender.isMe && !state.chat.isGroup) {
-           const them = state.cast.find(c => !c.isMe);
+        if (sender.isMe && !seqChat.isGroup) {
+           const them = seqCast.find(c => !c.isMe);
            if (them && !localActiveParticipantIds.includes(them.id)) {
               await delay(500);
               updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
@@ -941,12 +1057,12 @@ const App: React.FC = () => {
         }
         await delay(800);
       } else if (event.type === MessageType.TEXT) {
-        const sender = state.cast.find(c => c.id === event.senderId);
+        const sender = seqCast.find(c => c.id === event.senderId);
         if (!sender) continue;
 
         if (sender.isMe) {
           const doMeTyping = async () => {
-            const ts = state.chat.typingSpeed;
+            const ts = seqChat.typingSpeed;
             const sf = Math.min(1, Math.max(0.05, ts / 70));
             const keyDelay = Math.round(70 * sf);
             const layoutDelay = Math.round(80 * sf);
@@ -1046,8 +1162,8 @@ const App: React.FC = () => {
                 }
               }
 
-              if (!state.chat.isGroup) {
-                const them = state.cast.find(c => !c.isMe);
+              if (!seqChat.isGroup) {
+                const them = seqCast.find(c => !c.isMe);
                 if (them && !localActiveParticipantIds.includes(them.id)) {
                    await delay(Math.round(500 * sf));
                    updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
@@ -1070,7 +1186,7 @@ const App: React.FC = () => {
           const nextEvent = scriptToPlay[idx + 1];
           const nextIsMeDuringPrev = nextEvent
             && nextEvent.type === MessageType.TEXT
-            && state.cast.find(c => c.id === nextEvent.senderId)?.isMe
+            && seqCast.find(c => c.id === nextEvent.senderId)?.isMe
             && nextEvent.meTypingStart === 'during_previous';
 
           updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
@@ -1082,9 +1198,9 @@ const App: React.FC = () => {
 
           if (nextIsMeDuringPrev) {
             const nextMeEvent = nextEvent;
-            const partnerDelay = delay(state.chat.messageDelay);
+            const partnerDelay = delay(seqChat.messageDelay);
 
-            const ts = state.chat.typingSpeed;
+            const ts = seqChat.typingSpeed;
             const sf = Math.min(1, Math.max(0.05, ts / 70));
             const keyDelay = Math.round(70 * sf);
             const layoutDelay = Math.round(80 * sf);
@@ -1183,8 +1299,8 @@ const App: React.FC = () => {
                   }
                 }
 
-                if (!state.chat.isGroup) {
-                  const them = state.cast.find(c => !c.isMe);
+                if (!seqChat.isGroup) {
+                  const them = seqCast.find(c => !c.isMe);
                   if (them && !localActiveParticipantIds.includes(them.id)) {
                      await delay(Math.round(500 * sf));
                      updateActiveIds(Array.from(new Set([...localActiveParticipantIds, them.id])));
@@ -1197,7 +1313,7 @@ const App: React.FC = () => {
 
             await partnerDelay;
           } else {
-            await delay(state.chat.messageDelay);
+            await delay(seqChat.messageDelay);
           }
 
           updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
@@ -1223,6 +1339,7 @@ const App: React.FC = () => {
         }
       }
     }
+    } // end sequences loop
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
       await delay(3000);
@@ -1809,6 +1926,54 @@ const App: React.FC = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 no-scrollbar">
+
+        {sequences.length > 1 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 bg-white/5 rounded-2xl border border-white/10 p-1 gap-1">
+              {sequences.map((seq, i) => (
+                <button
+                  key={seq.id}
+                  data-testid={`sequence-tab-${i}`}
+                  onClick={() => switchToSequence(i)}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative group ${activeSequenceIndex === i ? 'bg-[#FFFC00] text-black shadow-lg shadow-[#FFFC00]/20' : 'text-gray-400 hover:text-gray-200'}`}
+                >
+                  {seq.label}
+                  {sequences.length > 1 && activeSequenceIndex === i && (
+                    <span
+                      role="button"
+                      onClick={(e) => { e.stopPropagation(); removeSequence(i); }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      data-testid={`remove-sequence-${i}`}
+                    >
+                      ×
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={addSequence}
+              className="w-8 h-8 rounded-xl bg-[#FFFC00] text-black flex items-center justify-center text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#FFFC00]/20"
+              data-testid="add-sequence"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        )}
+
+        {sequences.length === 1 && (
+          <div className="flex justify-end">
+            <button
+              onClick={addSequence}
+              className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#FFFC00]/30 text-[#FFFC00] hover:bg-[#FFFC00] hover:text-black transition-all"
+              data-testid="add-sequence"
+            >
+              + Add Sequence
+            </button>
+          </div>
+        )}
 
         <div className="flex bg-white/5 rounded-2xl border border-white/10 p-1 gap-1">
           {(['script', 'cast', 'settings', 'exports'] as const).map(tab => (
@@ -2920,6 +3085,63 @@ const App: React.FC = () => {
                 )}
               </div>
             </section>
+
+            {sequences.length > 1 && sequences.map((seq, seqIdx) => {
+              if (seqIdx === activeSequenceIndex) return null;
+              return (
+                <div key={seq.id} className="space-y-4">
+                  <div className="flex items-center gap-3 py-4">
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFFC00]/40 to-transparent" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-[#FFFC00] uppercase tracking-widest">{seq.label}</span>
+                      <span className="text-[9px] text-gray-500">·</span>
+                      <span className="text-[9px] text-gray-400">{seq.chat.contactName}</span>
+                    </div>
+                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#FFFC00]/40 to-transparent" />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase whitespace-nowrap">Delay before</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={5000}
+                      step={100}
+                      value={seq.transitionDelayMs}
+                      onChange={e => {
+                        const val = parseInt(e.target.value);
+                        setSequences(prev => prev.map((s, i) => i === seqIdx ? { ...s, transitionDelayMs: val } : s));
+                      }}
+                      className="flex-1 accent-[#FFFC00]"
+                      data-testid={`transition-delay-${seqIdx}`}
+                    />
+                    <span className="text-[10px] font-bold text-[#FFFC00] min-w-[40px] text-right">{seq.transitionDelayMs}ms</span>
+                  </div>
+
+                  <div className="space-y-2 opacity-60">
+                    {seq.script.length === 0 ? (
+                      <div className="text-[10px] text-gray-500 italic text-center py-4">No events in this sequence</div>
+                    ) : (
+                      seq.script.map(item => {
+                        const sender = seq.cast.find(c => c.id === item.senderId);
+                        return (
+                          <div key={item.id} className="bg-black/20 border border-white/5 p-3 rounded-xl">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-gray-400 uppercase">
+                                {item.type === MessageType.NOTIFICATION ? 'SYSTEM' : item.type === MessageType.PRESENCE ? 'PRESENCE' : item.type === MessageType.IOS_NOTIFICATION ? 'iOS NOTIF' : (sender?.name || 'Unknown')}
+                              </span>
+                              <span className="text-[10px] text-gray-500 truncate flex-1">
+                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.STICKER ? '🎨 Sticker' : (item.text || '')}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           </>
           )}

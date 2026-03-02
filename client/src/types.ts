@@ -95,6 +95,15 @@ export interface TimedNotification {
   customIconUrl?: string;
 }
 
+export interface Sequence {
+  id: string;
+  label: string;
+  cast: CastMember[];
+  script: ScriptEvent[];
+  chat: ChatConfig;
+  transitionDelayMs: number;
+}
+
 export interface AppState {
   cast: CastMember[];
   script: ScriptEvent[];
