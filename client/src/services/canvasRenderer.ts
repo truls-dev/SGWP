@@ -516,13 +516,11 @@ export class CanvasRenderer {
 
       const safePad = state.chatConfig.safeAreaPadding || 0;
 
-      if (safePad > 0 || state.chatConfig.isShortCrop) {
-        const phoneW = safePad > 0 ? this.W - safePad * 2 : this.W;
-        const phoneH = state.chatConfig.isShortCrop
-          ? this.H * (state.chatConfig.shortCropHeight / 1920)
-          : this.H;
-        const phoneX = (this.W - phoneW) / 2;
+      if (state.chatConfig.isShortCrop) {
+        const phoneH = this.H * (state.chatConfig.shortCropHeight / 1920);
         const phoneY = (this.H - phoneH) / 2;
+        const phoneW = safePad > 0 ? this.W - safePad * 2 : this.W;
+        const phoneX = (this.W - phoneW) / 2;
         const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
         ctx.save();
         ctx.beginPath();
@@ -543,6 +541,29 @@ export class CanvasRenderer {
         this.drawPhoneUI(ctx, state, kbH);
         (this as any).W = origW;
         (this as any).H = origH;
+        ctx.restore();
+      } else if (safePad > 0) {
+        const phoneW = this.W - safePad * 2;
+        const phoneX = safePad;
+        const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
+        ctx.save();
+        if (cr > 0) {
+          ctx.beginPath();
+          ctx.moveTo(phoneX + cr, 0);
+          ctx.lineTo(phoneX + phoneW - cr, 0);
+          ctx.quadraticCurveTo(phoneX + phoneW, 0, phoneX + phoneW, cr);
+          ctx.lineTo(phoneX + phoneW, this.H);
+          ctx.lineTo(phoneX, this.H);
+          ctx.lineTo(phoneX, cr);
+          ctx.quadraticCurveTo(phoneX, 0, phoneX + cr, 0);
+          ctx.closePath();
+          ctx.clip();
+        }
+        ctx.translate(phoneX, 0);
+        const origW = this.W;
+        (this as any).W = phoneW;
+        this.drawPhoneUI(ctx, state, kbH);
+        (this as any).W = origW;
         ctx.restore();
       } else {
         this.drawPhoneUI(ctx, state, kbH);
