@@ -517,11 +517,11 @@ export class CanvasRenderer {
       const safePad = state.chatConfig.safeAreaPadding || 0;
 
       if (safePad > 0 || state.chatConfig.isShortCrop) {
-        const padScale = safePad > 0 ? (this.W - safePad * 2) / this.W : 1;
-        const phoneW = this.W * padScale;
+        const phoneW = safePad > 0 ? this.W - safePad * 2 : this.W;
+        const scaleX = phoneW / this.W;
         const phoneH = state.chatConfig.isShortCrop
-          ? this.H * (state.chatConfig.shortCropHeight / 1920) * padScale
-          : this.H * padScale;
+          ? this.H * (state.chatConfig.shortCropHeight / 1920)
+          : this.H;
         const phoneX = (this.W - phoneW) / 2;
         const phoneY = (this.H - phoneH) / 2;
         const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
@@ -537,7 +537,7 @@ export class CanvasRenderer {
         ctx.closePath();
         ctx.clip();
         ctx.translate(phoneX, phoneY);
-        ctx.scale(padScale, padScale);
+        ctx.scale(scaleX, 1);
         this.drawPhoneUI(ctx, state, kbH);
         ctx.restore();
       } else {
