@@ -874,6 +874,7 @@ const App: React.FC = () => {
         setIsShiftActive(true);
         hasPlayedFirstNotif = false;
 
+        setState(prev => ({ ...prev, cast: seqCast, chat: seqChat }));
         frameStateRef.current.messages = [];
         frameStateRef.current.cast = seqCast;
         frameStateRef.current.chatConfig = seqChat;
@@ -1340,6 +1341,15 @@ const App: React.FC = () => {
       }
     }
     } // end sequences loop
+
+    if (allSequences.length > 1) {
+      const activeSeq = sequences[activeSequenceIndex];
+      if (activeSeq) {
+        setState(prev => ({ ...prev, cast: activeSeq.cast, script: activeSeq.script, chat: activeSeq.chat }));
+        frameStateRef.current.cast = activeSeq.cast;
+        frameStateRef.current.chatConfig = activeSeq.chat;
+      }
+    }
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
       await delay(3000);
