@@ -488,74 +488,88 @@ const App: React.FC = () => {
         id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1],
       };
 
-      const aiCast: CastMember[] = [meChar];
-      const castNameToId: Record<string, string> = { ME: meChar.id };
-
-      if (data.cast) {
-        for (const c of data.cast) {
-          if (c.isMe) continue;
-          const id = uuidv4();
-          const colorIdx = aiCast.length - 1;
-          aiCast.push({
-            id,
-            name: c.name,
-            bitmojiAvatarId: getRandomAvatarId(),
-            isMe: false,
-            color: GROUP_COLORS[colorIdx % GROUP_COLORS.length],
-          });
-          castNameToId[c.name] = id;
-        }
-      }
-
-      const aiScript: ScriptEvent[] = [];
-      if (data.script) {
-        for (const ev of data.script) {
-          if (ev.type === 'IOS_NOTIFICATION') {
-            aiScript.push({
-              id: uuidv4(),
-              type: MessageType.IOS_NOTIFICATION,
-              notifPlatform: ev.notifPlatform || 'Snapchat',
-              notifSenderName: ev.notifSenderName || 'Unknown',
-              notifMessage: ev.notifMessage || '',
-              notifDurationMs: ev.notifDurationMs || 3000,
+      const parseSequenceData = (seqData: any) => {
+        const cast: CastMember[] = [{ ...meChar }];
+        const nameToId: Record<string, string> = { ME: meChar.id };
+        if (seqData.cast) {
+          for (const c of seqData.cast) {
+            if (c.isMe) continue;
+            const id = uuidv4();
+            cast.push({
+              id, name: c.name, bitmojiAvatarId: getRandomAvatarId(),
+              isMe: false, color: GROUP_COLORS[(cast.length - 1) % GROUP_COLORS.length],
             });
-          } else if (ev.type === 'PRESENCE') {
-            const senderId = castNameToId[ev.sender] || ev.sender;
-            aiScript.push({
-              id: uuidv4(),
-              type: MessageType.PRESENCE,
-              senderId,
-              presenceAction: ev.presenceAction || 'ENTER',
-            });
-          } else {
-            const senderId = castNameToId[ev.sender] || ev.sender;
-            aiScript.push({
-              id: uuidv4(),
-              type: MessageType.TEXT,
-              senderId,
-              text: ev.text || '',
-              soundEffect: ev.soundEffect || undefined,
-              isBackspaced: ev.isBackspaced || undefined,
-              meTypingStart: ev.meTypingStart || undefined,
-            });
+            nameToId[c.name] = id;
           }
         }
+        const script: ScriptEvent[] = [];
+        if (seqData.script) {
+          for (const ev of seqData.script) {
+            if (ev.type === 'IOS_NOTIFICATION') {
+              script.push({
+                id: uuidv4(), type: MessageType.IOS_NOTIFICATION,
+                notifPlatform: ev.notifPlatform || 'Snapchat',
+                notifSenderName: ev.notifSenderName || 'Unknown',
+                notifMessage: ev.notifMessage || '', notifDurationMs: ev.notifDurationMs || 3000,
+              });
+            } else if (ev.type === 'PRESENCE') {
+              script.push({
+                id: uuidv4(), type: MessageType.PRESENCE,
+                senderId: nameToId[ev.sender] || ev.sender,
+                presenceAction: ev.presenceAction || 'ENTER',
+              });
+            } else {
+              script.push({
+                id: uuidv4(), type: MessageType.TEXT,
+                senderId: nameToId[ev.sender] || ev.sender,
+                text: ev.text || '',
+                soundEffect: ev.soundEffect || undefined,
+                isBackspaced: ev.isBackspaced || undefined,
+                meTypingStart: ev.meTypingStart || undefined,
+              });
+            }
+          }
+        }
+        const contactName = seqData.contactName || cast.find(c => !c.isMe)?.name || 'Person';
+        return { cast, script, contactName };
+      };
+
+      if (data.sequences && Array.isArray(data.sequences) && data.sequences.length > 1) {
+        const newSequences: Sequence[] = data.sequences.map((seqData: any, idx: number) => {
+          const parsed = parseSequenceData(seqData);
+          return {
+            id: uuidv4(),
+            label: `Sequence ${idx + 1}`,
+            cast: parsed.cast,
+            script: parsed.script,
+            chat: { ...state.chat, contactName: parsed.contactName },
+            transitionDelayMs: 1500,
+          };
+        });
+        const first = newSequences[0];
+        setState(prev => ({
+          ...prev,
+          cast: first.cast,
+          script: first.script,
+          chat: { ...prev.chat, contactName: first.chat.contactName },
+        }));
+        setSequences(newSequences);
+        setActiveSequenceIndex(0);
+      } else {
+        const seqData = data.sequences ? data.sequences[0] : data;
+        const parsed = parseSequenceData(seqData);
+        setState(prev => ({
+          ...prev,
+          cast: parsed.cast,
+          script: parsed.script,
+          chat: { ...prev.chat, contactName: parsed.contactName },
+        }));
+        setSequences(prev => prev.map((seq, i) =>
+          i === activeSequenceIndexRef.current
+            ? { ...seq, cast: parsed.cast, script: parsed.script, chat: { ...seq.chat, contactName: parsed.contactName } }
+            : seq
+        ));
       }
-
-      const contactName = data.contactName || aiCast.find(c => !c.isMe)?.name || 'Person';
-
-      setState(prev => ({
-        ...prev,
-        cast: aiCast,
-        script: aiScript,
-        chat: { ...prev.chat, contactName },
-      }));
-
-      setSequences(prev => prev.map((seq, i) =>
-        i === activeSequenceIndexRef.current
-          ? { ...seq, cast: aiCast, script: aiScript, chat: { ...seq.chat, contactName } }
-          : seq
-      ));
 
       setShowAiModal(false);
       setAiPrompt('');
