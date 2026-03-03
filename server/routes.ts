@@ -5,7 +5,10 @@ import { uploadToR2, getDownloadUrl, deleteObject } from "./r2";
 import { insertExportSchema } from "@shared/schema";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || undefined,
+});
 
 const AI_SYSTEM_PROMPT = `You are a script writer for SnapGen Pro, a Snapchat chat simulator that creates realistic vertical videos of chat conversations. You generate JSON scripts that the app uses to render fake Snapchat conversations.
 
