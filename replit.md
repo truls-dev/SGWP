@@ -52,7 +52,7 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: Express.js on Node.js with TypeScript
 - **Runtime**: `tsx` for development, esbuild for production builds
 - **Entry Point**: `server/index.ts` creates HTTP server, registers routes, serves static files
-- **Routes**: `server/routes.ts` — currently a skeleton, all routes should be prefixed with `/api`
+- **Routes**: `server/routes.ts` — API routes prefixed with `/api`. Includes export upload/download/delete endpoints and AI script generation (`POST /api/ai/generate-script`)
 - **Storage**: `server/storage.ts` — implements an `IStorage` interface with an in-memory implementation (`MemStorage`). Designed to be swapped for a database-backed implementation.
 - **Static Serving**: In production, serves built client from `dist/public/`. In development, uses Vite dev server middleware (`server/vite.ts`).
 
@@ -76,10 +76,12 @@ Preferred communication style: Simple, everyday language.
 - `R2_SECRET_ACCESS_KEY` — Cloudflare R2 secret key
 - `R2_ENDPOINT` — Cloudflare R2 endpoint URL
 - `R2_BUCKET_NAME` — Cloudflare R2 bucket name (default: snapgen-exports)
+- `OPENAI_API_KEY` — OpenAI API key (used server-side for AI script generation)
 
 ## External Dependencies
 
 ### AI / Generative
+- **OpenAI API** (`openai`): Used server-side for AI script generation. The `POST /api/ai/generate-script` endpoint uses GPT-4o to create complete Snapchat conversation scripts with cast, messages, sound effects, iOS notifications, backspace mode, and typing overlap. Requires `OPENAI_API_KEY`.
 - **Google Gemini API** (`@google/genai`): Used client-side for conversation generation and AI avatar/profile picture creation. Requires `VITE_GEMINI_API_KEY`.
 
 ### External Assets (CDN)

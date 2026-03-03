@@ -223,6 +223,10 @@ const App: React.FC = () => {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkImportValue, setBulkImportValue] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script' | 'exports'>('script');
   
   const [typingParticipantIds, setTypingParticipantIds] = useState<string[]>([]);
@@ -461,6 +465,105 @@ const App: React.FC = () => {
       if (playbackMode) {
         safePlayVideo(previewVideoRef.current);
       }
+    }
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim() || aiLoading) return;
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const resp = await fetch('/api/ai/generate-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: aiPrompt.trim() }),
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || 'Failed to generate script');
+      }
+      const data = await resp.json();
+
+      const meChar = state.cast.find(c => c.isMe) || {
+        id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1],
+      };
+
+      const aiCast: CastMember[] = [meChar];
+      const castNameToId: Record<string, string> = { ME: meChar.id };
+
+      if (data.cast) {
+        for (const c of data.cast) {
+          if (c.isMe) continue;
+          const id = uuidv4();
+          const colorIdx = aiCast.length - 1;
+          aiCast.push({
+            id,
+            name: c.name,
+            bitmojiAvatarId: getRandomAvatarId(),
+            isMe: false,
+            color: GROUP_COLORS[colorIdx % GROUP_COLORS.length],
+          });
+          castNameToId[c.name] = id;
+        }
+      }
+
+      const aiScript: ScriptEvent[] = [];
+      if (data.script) {
+        for (const ev of data.script) {
+          if (ev.type === 'IOS_NOTIFICATION') {
+            aiScript.push({
+              id: uuidv4(),
+              type: MessageType.IOS_NOTIFICATION,
+              notifPlatform: ev.notifPlatform || 'Snapchat',
+              notifSenderName: ev.notifSenderName || 'Unknown',
+              notifMessage: ev.notifMessage || '',
+              notifDurationMs: ev.notifDurationMs || 3000,
+            });
+          } else if (ev.type === 'PRESENCE') {
+            const senderId = castNameToId[ev.sender] || ev.sender;
+            aiScript.push({
+              id: uuidv4(),
+              type: MessageType.PRESENCE,
+              senderId,
+              presenceAction: ev.presenceAction || 'ENTER',
+            });
+          } else {
+            const senderId = castNameToId[ev.sender] || ev.sender;
+            aiScript.push({
+              id: uuidv4(),
+              type: MessageType.TEXT,
+              senderId,
+              text: ev.text || '',
+              soundEffect: ev.soundEffect || undefined,
+              isBackspaced: ev.isBackspaced || undefined,
+              meTypingStart: ev.meTypingStart || undefined,
+            });
+          }
+        }
+      }
+
+      const contactName = data.contactName || aiCast.find(c => !c.isMe)?.name || 'Person';
+
+      setState(prev => ({
+        ...prev,
+        cast: aiCast,
+        script: aiScript,
+        chat: { ...prev.chat, contactName },
+      }));
+
+      setSequences(prev => prev.map((seq, i) =>
+        i === activeSequenceIndexRef.current
+          ? { ...seq, cast: aiCast, script: aiScript, chat: { ...seq.chat, contactName } }
+          : seq
+      ));
+
+      setShowAiModal(false);
+      setAiPrompt('');
+      setActiveTab('script');
+    } catch (e: any) {
+      setAiError(e.message || 'Something went wrong');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -1981,7 +2084,14 @@ const App: React.FC = () => {
                 <i className="fa-solid fa-circle-info text-sm"></i>
               </button>
             </div>
-            <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em] font-bold">Studio Dashboard</p>
+            <button
+              data-testid="button-ai-generate"
+              onClick={() => setShowAiModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-500/20"
+            >
+              <i className="fa-solid fa-wand-magic-sparkles"></i>
+              AI Script
+            </button>
           </div>
         </div>
 
@@ -3472,6 +3582,88 @@ const App: React.FC = () => {
         </div>
       </div>
       
+      {showAiModal && (
+        <div className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-8">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-[48px] p-10 max-w-lg w-full space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative">
+            <button
+              onClick={() => { setShowAiModal(false); setAiError(''); }}
+              className="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all text-gray-400 hover:text-white"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-500 rounded-[24px] mx-auto flex items-center justify-center text-3xl shadow-[0_0_40px_rgba(168,85,247,0.3)]">
+                <i className="fa-solid fa-wand-magic-sparkles text-white"></i>
+              </div>
+              <h2 className="text-2xl font-black uppercase tracking-tight">AI Script Generator</h2>
+              <p className="text-gray-400 text-xs leading-relaxed">Describe your conversation idea and AI will generate a complete script with cast, messages, sound effects, notifications, and more.</p>
+            </div>
+
+            <div className="space-y-3">
+              <textarea
+                data-testid="input-ai-prompt"
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                placeholder="e.g. A girl catches her boyfriend cheating through his Snap score going up at 3am. Include a dramatic notification from the other girl. Make it go viral."
+                className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-sm font-medium outline-none focus:border-purple-500/50 resize-none h-32 placeholder:text-gray-600"
+                onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleAiGenerate(); }}
+              />
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
+                  {aiPrompt.length > 0 ? `${aiPrompt.length} chars` : 'Cmd+Enter to submit'}
+                </span>
+                {aiError && (
+                  <span className="text-[10px] text-red-400 font-bold">{aiError}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-2">
+              <h4 className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em]">Prompt Ideas</h4>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Caught cheating through Snap score",
+                  "Wrong number text turns into a love story",
+                  "Group chat plans surprise party but the birthday person is in the chat",
+                  "Best friend confesses feelings",
+                  "Mom finds out about secret tattoo",
+                  "Ex texts after 2 years",
+                ].map((idea, i) => (
+                  <button
+                    key={i}
+                    data-testid={`button-ai-idea-${i}`}
+                    onClick={() => setAiPrompt(idea)}
+                    className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-bold text-gray-400 hover:text-white hover:border-purple-500/50 hover:bg-purple-500/10 transition-all active:scale-95"
+                  >
+                    {idea}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              data-testid="button-ai-submit"
+              onClick={handleAiGenerate}
+              disabled={aiLoading || !aiPrompt.trim()}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-xs hover:from-purple-500 hover:to-pink-400 transition-all active:scale-95 shadow-xl shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              {aiLoading ? (
+                <>
+                  <i className="fa-solid fa-spinner fa-spin"></i>
+                  Generating Script...
+                </>
+              ) : (
+                <>
+                  <i className="fa-solid fa-wand-magic-sparkles"></i>
+                  Generate Script
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {showRecInstructions && (
         <div className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-8">
            <div className="bg-[#1a1a1a] border border-white/10 rounded-[48px] p-12 max-w-xl w-full text-center space-y-8 animate-in zoom-in-95 duration-500 shadow-2xl">
