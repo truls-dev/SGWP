@@ -63,11 +63,21 @@ Optional fields:
 
 RULES:
 1. NEVER use it on the FIRST ME message in a conversation — ME hasn't received a message yet, so there's nothing to react to
-2. NEVER use it on the first ME message after a long gap — it would feel unrealistic
-3. DO use it when ME is eagerly responding, arguing, or in a heated back-and-forth
-4. DO use it when ME already knows what they want to say (e.g., they're lying, deflecting, or excited)
-5. Use it on roughly 20-40% of ME messages, not every single one
-6. It only works when the PREVIOUS event is a partner TEXT message (not a notification or presence event)
+2. NEVER use it when ME's message is a DIRECT RESPONSE to the partner's previous message — ME can't respond to something the partner hasn't finished typing yet. Think about it: "during_previous" means ME starts typing WHILE the partner is still typing, so ME hasn't read the partner's message yet
+3. DO use it when ME is continuing their OWN train of thought unrelated to whatever the partner is typing (e.g., ME sends a follow-up to their own earlier message)
+4. DO use it on messages that will be backspaced ("isBackspaced": true) — ME starts typing an impulsive reaction but deletes it
+5. DO use it when ME is sending something pre-planned or unrelated (e.g., changing the subject, sending a link, saying something they were already going to say regardless)
+6. Use it SPARINGLY — roughly 10-20% of ME messages at most
+7. It only works when the PREVIOUS event is a partner TEXT message (not a notification or presence event)
+
+EXAMPLES of CORRECT usage:
+- Partner is typing → ME sends a follow-up to ME's own earlier message (unrelated to what partner is typing)
+- Partner is typing → ME types "i cant believe u" then backspaces it (impulsive reaction, isBackspaced: true)
+- Partner is typing → ME sends "oh btw check this out" (changing subject, unrelated)
+
+EXAMPLES of WRONG usage:
+- Partner types "who were u with last night" → ME responds "wym i was home" with during_previous (this is a DIRECT answer to the partner's question — ME can't answer before reading it)
+- Partner types "im at the store" → ME responds "what r u getting" with during_previous (this is a response TO that message)
 
 ## Writing Style — How Real People Text on Snapchat
 
@@ -143,12 +153,12 @@ Example: "Who's that in your story?" → "that's my cousin" → "your cousin has
     { "type": "TEXT", "sender": "ME", "text": "at the library studying" },
     { "type": "TEXT", "sender": "Sarah", "text": "oh ok" },
     { "type": "TEXT", "sender": "Sarah", "text": "which library" },
-    { "type": "TEXT", "sender": "ME", "text": "the one on campus why", "meTypingStart": "during_previous" },
+    { "type": "TEXT", "sender": "ME", "text": "the one on campus why" },
     { "type": "TEXT", "sender": "Sarah", "text": "interesting" },
     { "type": "TEXT", "sender": "ME", "text": "??" },
     { "type": "TEXT", "sender": "Sarah", "text": "because im literally at that library rn" },
     { "type": "TEXT", "sender": "Sarah", "text": "and u are not here", "soundEffect": "Shocked" },
-    { "type": "TEXT", "sender": "ME", "text": "i meant the other one", "meTypingStart": "during_previous" },
+    { "type": "TEXT", "sender": "ME", "text": "i meant the other one" },
     { "type": "TEXT", "sender": "Sarah", "text": "there is no other one" },
     { "type": "TEXT", "sender": "ME", "text": "ok fine i need to tell u something", "isBackspaced": true },
     { "type": "TEXT", "sender": "ME", "text": "i just got here ur probably on a different floor" },
@@ -170,7 +180,7 @@ Example: "Who's that in your story?" → "that's my cousin" → "your cousin has
         { "type": "TEXT", "sender": "Emma", "text": "aww good morning 🥰" },
         { "type": "TEXT", "sender": "ME", "text": "i had a dream about u last night" },
         { "type": "TEXT", "sender": "Emma", "text": "omg really what was it about" },
-        { "type": "TEXT", "sender": "ME", "text": "we were on a beach and u were laughing", "meTypingStart": "during_previous" },
+        { "type": "TEXT", "sender": "ME", "text": "we were on a beach and u were laughing" },
         { "type": "TEXT", "sender": "ME", "text": "and i just remember thinking i never wanna lose this" },
         { "type": "TEXT", "sender": "Emma", "text": "stop im gonna cry 😭" },
         { "type": "TEXT", "sender": "Emma", "text": "ur literally the sweetest person ever" },
@@ -204,7 +214,7 @@ Example: "Who's that in your story?" → "that's my cousin" → "your cousin has
   "script": [
     { "type": "TEXT", "sender": "Tyler", "text": "who told coach i skipped practice" },
     { "type": "TEXT", "sender": "ME", "text": "wasnt me" },
-    { "type": "TEXT", "sender": "Jade", "text": "wasnt me either", "meTypingStart": "during_previous" },
+    { "type": "TEXT", "sender": "Jade", "text": "wasnt me either" },
     { "type": "TEXT", "sender": "Nick", "text": "why would any of us snitch" },
     { "type": "TEXT", "sender": "Tyler", "text": "well someone did because he benched me" },
     { "type": "TEXT", "sender": "Tyler", "text": "for the championship game", "soundEffect": "Shocked" },

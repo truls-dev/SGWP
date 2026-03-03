@@ -488,6 +488,40 @@ const App: React.FC = () => {
         id: 'me', name: 'ME', bitmojiAvatarId: getRandomAvatarId(), isMe: true, color: GROUP_COLORS[1],
       };
 
+      const allSeqDatas = data.sequences && Array.isArray(data.sequences)
+        ? data.sequences
+        : [data];
+
+      const stripEmoji = (s: string) => s.replace(/[^\w\s'-]/g, '').trim();
+
+      const globalNameToBitmoji: Record<string, string> = {};
+      for (const seqData of allSeqDatas) {
+        if (seqData.cast) {
+          for (const c of seqData.cast) {
+            if (c.isMe) continue;
+            const baseName = stripEmoji(c.name);
+            if (baseName && !globalNameToBitmoji[baseName]) {
+              globalNameToBitmoji[baseName] = getRandomAvatarId();
+            }
+          }
+        }
+        if (seqData.script) {
+          for (const ev of seqData.script) {
+            if (ev.type === 'IOS_NOTIFICATION' && ev.notifSenderName) {
+              const baseName = stripEmoji(ev.notifSenderName);
+              if (baseName && !globalNameToBitmoji[baseName]) {
+                globalNameToBitmoji[baseName] = getRandomAvatarId();
+              }
+            }
+          }
+        }
+      }
+
+      const findBitmojiForName = (name: string): string => {
+        const baseName = stripEmoji(name);
+        return (baseName && globalNameToBitmoji[baseName]) || getRandomAvatarId();
+      };
+
       const parseSequenceData = (seqData: any) => {
         const cast: CastMember[] = [{ ...meChar }];
         const nameToId: Record<string, string> = { ME: meChar.id };
@@ -496,7 +530,7 @@ const App: React.FC = () => {
             if (c.isMe) continue;
             const id = uuidv4();
             cast.push({
-              id, name: c.name, bitmojiAvatarId: getRandomAvatarId(),
+              id, name: c.name, bitmojiAvatarId: findBitmojiForName(c.name),
               isMe: false, color: GROUP_COLORS[(cast.length - 1) % GROUP_COLORS.length],
             });
             nameToId[c.name] = id;
@@ -506,11 +540,14 @@ const App: React.FC = () => {
         if (seqData.script) {
           for (const ev of seqData.script) {
             if (ev.type === 'IOS_NOTIFICATION') {
+              const senderName = ev.notifSenderName || 'Unknown';
+              const bitmojiId = findBitmojiForName(senderName);
               script.push({
                 id: uuidv4(), type: MessageType.IOS_NOTIFICATION,
                 notifPlatform: ev.notifPlatform || 'Snapchat',
-                notifSenderName: ev.notifSenderName || 'Unknown',
+                notifSenderName: senderName,
                 notifMessage: ev.notifMessage || '', notifDurationMs: ev.notifDurationMs || 3000,
+                notifIconUrl: getSelfieUrlForAvatar(bitmojiId),
               });
             } else if (ev.type === 'PRESENCE') {
               script.push({
@@ -534,8 +571,8 @@ const App: React.FC = () => {
         return { cast, script, contactName };
       };
 
-      if (data.sequences && Array.isArray(data.sequences) && data.sequences.length > 1) {
-        const newSequences: Sequence[] = data.sequences.map((seqData: any, idx: number) => {
+      if (allSeqDatas.length > 1) {
+        const newSequences: Sequence[] = allSeqDatas.map((seqData: any, idx: number) => {
           const parsed = parseSequenceData(seqData);
           return {
             id: uuidv4(),
@@ -556,8 +593,7 @@ const App: React.FC = () => {
         setSequences(newSequences);
         setActiveSequenceIndex(0);
       } else {
-        const seqData = data.sequences ? data.sequences[0] : data;
-        const parsed = parseSequenceData(seqData);
+        const parsed = parseSequenceData(allSeqDatas[0]);
         setState(prev => ({
           ...prev,
           cast: parsed.cast,
