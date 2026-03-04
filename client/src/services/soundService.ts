@@ -8,6 +8,8 @@ const IOS_NOTIF_SOUND_URL = "https://raw.githubusercontent.com/truls-dev/sounds/
 const SOUND_EFFECTS: Record<string, string> = {
   Bruh: "https://raw.githubusercontent.com/truls-dev/sounds/main/bruh.wav",
   Crickets: "https://raw.githubusercontent.com/truls-dev/sounds/main/crickets.wav",
+  "Knock - Multiple": "https://raw.githubusercontent.com/truls-dev/sounds/main/Knock%20-%20Multiple.mp3",
+  "Knock - Single": "https://raw.githubusercontent.com/truls-dev/sounds/main/Knock%20-%20Single.mp3",
   Rizz: "https://raw.githubusercontent.com/truls-dev/sounds/main/rizz.wav",
   Shocked: "https://raw.githubusercontent.com/truls-dev/sounds/main/shocked.wav",
   Shocking: "https://raw.githubusercontent.com/truls-dev/sounds/main/shocking.wav",

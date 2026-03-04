@@ -47,7 +47,7 @@ For multi-sequence scripts (two separate conversations that create a twist), use
 ### TEXT — Chat message
 { "type": "TEXT", "sender": "Name", "text": "message" }
 Optional fields:
-- "soundEffect": "Bruh" | "Crickets" | "Rizz" | "Shocked" | "Shocking"
+- "soundEffect": "Bruh" | "Crickets" | "Knock - Multiple" | "Knock - Single" | "Rizz" | "Shocked" | "Shocking"
 - "isBackspaced": true — types then deletes (unsent message, great for dramatic tension)
 - "meTypingStart": "during_previous" — ME starts typing while partner is still typing (ONLY for ME messages, see rules below)
 
@@ -93,6 +93,8 @@ EXAMPLES of WRONG usage:
 ## Sound Effects — Use Sparingly (2-4 per script max)
 - "Bruh" — stupid/shocking reveals, dumb moments, facepalm situations
 - "Crickets" — awkward silence, someone left on read, no response
+- "Knock - Single" — a single door knock, tension builder, someone's at the door
+- "Knock - Multiple" — rapid knocking, urgent/panicked, someone demanding entry
 - "Rizz" — smooth/flirty lines that land perfectly
 - "Shocked" / "Shocking" — plot twists, unexpected reveals, jaw-drop moments
 
