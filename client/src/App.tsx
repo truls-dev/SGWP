@@ -1238,7 +1238,7 @@ const App: React.FC = () => {
         scriptNotificationsRef.current = [...scriptNotificationsRef.current, scriptNotif];
         if (state.system.isSoundEnabled) {
           if (event.soundEffect) {
-            await soundService.playEffect(event.soundEffect);
+            soundService.playEffect(event.soundEffect);
           } else {
             soundService.playIosNotification();
           }
@@ -1252,7 +1252,7 @@ const App: React.FC = () => {
           setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
         }
         if (state.system.isSoundEnabled && event.soundEffect) {
-          await soundService.playEffect(event.soundEffect);
+          soundService.playEffect(event.soundEffect);
         }
         await delay(1000);
       } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
@@ -1280,7 +1280,7 @@ const App: React.FC = () => {
         
         if (state.system.isSoundEnabled) {
           if (event.soundEffect) {
-            await soundService.playEffect(event.soundEffect);
+            soundService.playEffect(event.soundEffect);
           } else if (!sender.isMe && !event.isBackspaced) {
             if (!hasPlayedFirstNotif) {
               soundService.playNotification();
@@ -1392,7 +1392,7 @@ const App: React.FC = () => {
 
               if (state.system.isSoundEnabled) {
                 if (event.soundEffect) {
-                  await soundService.playEffect(event.soundEffect);
+                  soundService.playEffect(event.soundEffect);
                 } else {
                   soundService.playSubsequentNotification();
                 }
@@ -1529,7 +1529,7 @@ const App: React.FC = () => {
 
                 if (state.system.isSoundEnabled) {
                   if (nextMeEvent.soundEffect) {
-                    await soundService.playEffect(nextMeEvent.soundEffect);
+                    soundService.playEffect(nextMeEvent.soundEffect);
                   } else {
                     soundService.playSubsequentNotification();
                   }
@@ -1560,7 +1560,7 @@ const App: React.FC = () => {
 
           if (state.system.isSoundEnabled) {
             if (event.soundEffect) {
-              await soundService.playEffect(event.soundEffect);
+              soundService.playEffect(event.soundEffect);
             } else if (!event.isBackspaced) {
               if (!hasPlayedFirstNotif) {
                 soundService.playNotification();
