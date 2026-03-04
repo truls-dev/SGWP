@@ -1595,7 +1595,7 @@ const App: React.FC = () => {
     };
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
-      await delay(3000);
+      await delay(1000);
       restoreActiveSequence();
       stopRecordingSession();
     } else {
