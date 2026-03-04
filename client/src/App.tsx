@@ -453,12 +453,13 @@ const App: React.FC = () => {
     videoEl.play().catch(() => {});
   };
 
-  const resetSimulationState = () => {
+  const resetSimulationState = (scriptOverride?: ScriptEvent[]) => {
+    const scriptToUse = scriptOverride || state.script;
     const preShownItems: ScriptEvent[] = [];
     const preShownActiveIds: string[] = [];
-    for (let i = 0; i < state.script.length; i++) {
-      if (!state.script[i].isPreShown) break;
-      const preEvent = state.script[i];
+    for (let i = 0; i < scriptToUse.length; i++) {
+      if (!scriptToUse[i].isPreShown) break;
+      const preEvent = scriptToUse[i];
       if (preEvent.type === MessageType.PRESENCE && preEvent.senderId) {
         if (preEvent.presenceAction === 'ENTER') {
           if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
@@ -1095,6 +1096,23 @@ const App: React.FC = () => {
         setState(prev => ({ ...prev, cast: seqCast, chat: seqChat }));
         frameStateRef.current.cast = seqCast;
         frameStateRef.current.chatConfig = seqChat;
+
+        const preShownIds: string[] = savedState ? [...savedState.activeIds] : [];
+        for (let pi = 0; pi < seqScript.length; pi++) {
+          if (!seqScript[pi].isPreShown) break;
+          const pe = seqScript[pi];
+          if (pe.type === MessageType.PRESENCE && pe.senderId) {
+            if (pe.presenceAction === 'ENTER' && !preShownIds.includes(pe.senderId)) preShownIds.push(pe.senderId);
+          } else if (pe.type !== MessageType.NOTIFICATION && pe.senderId && pe.senderId !== 'me') {
+            if (!preShownIds.includes(pe.senderId)) preShownIds.push(pe.senderId);
+          }
+          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.NOTIFICATION) && !pe.isBackspaced) {
+            setPlaybackItems(prev => [...prev, { ...pe, instanceId: uuidv4(), revealedAt: Date.now() }]);
+          }
+        }
+        if (preShownIds.length > 0) {
+          updateActiveIds(preShownIds);
+        }
       } else {
         frameStateRef.current.cast = seqCast;
         frameStateRef.current.chatConfig = seqChat;
@@ -1616,6 +1634,9 @@ const App: React.FC = () => {
         );
         sequencesRef.current = latestSeqs;
         const seq1 = latestSeqs[0];
+
+        resetSimulationState(seq1.script);
+
         setState(prev => ({ ...prev, cast: seq1.cast, script: seq1.script, chat: seq1.chat }));
         frameStateRef.current.cast = seq1.cast;
         frameStateRef.current.chatConfig = seq1.chat;
@@ -1733,8 +1754,6 @@ const App: React.FC = () => {
     setShowRecInstructions(false);
     const win = window as any;
     try {
-      resetSimulationState();
-
       const latestSeqs = sequencesRef.current.map((seq, i) =>
         i === activeSequenceIndexRef.current
           ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
@@ -1742,6 +1761,9 @@ const App: React.FC = () => {
       );
       sequencesRef.current = latestSeqs;
       const seq1 = latestSeqs[0];
+
+      resetSimulationState(seq1.script);
+
       setState(prev => ({ ...prev, cast: seq1.cast, script: seq1.script, chat: seq1.chat }));
       frameStateRef.current.cast = seq1.cast;
       frameStateRef.current.chatConfig = seq1.chat;
