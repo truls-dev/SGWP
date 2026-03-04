@@ -193,6 +193,29 @@ const App: React.FC = () => {
     setActiveSequenceIndex(sequences.length);
   };
 
+  const addReturnSequence = (returnToIdx: number) => {
+    saveCurrentSequence();
+    const targetSeq = sequences[returnToIdx];
+    if (!targetSeq) return;
+    const newSeq: Sequence = {
+      id: uuidv4(),
+      label: `↩ Back to Seq ${returnToIdx + 1}`,
+      cast: targetSeq.cast,
+      script: [],
+      chat: targetSeq.chat,
+      transitionDelayMs: 1500,
+      returnToSeqIndex: returnToIdx,
+    };
+    setSequences(prev => [...prev, newSeq]);
+    setActiveSequenceIndex(sequences.length);
+    setState(prev => ({
+      ...prev,
+      cast: newSeq.cast,
+      script: newSeq.script,
+      chat: newSeq.chat,
+    }));
+  };
+
   const removeSequence = (index: number) => {
     if (sequences.length <= 1) return;
     const newSequences = sequences.filter((_, i) => i !== index);
@@ -215,7 +238,15 @@ const App: React.FC = () => {
 
   const [playbackMode, setPlaybackMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [playbackItems, setPlaybackItems] = useState<ScriptEvent[]>([]);
+  const [playbackItems, setPlaybackItemsRaw] = useState<ScriptEvent[]>([]);
+  const playbackItemsRef = useRef<ScriptEvent[]>([]);
+  const setPlaybackItems = (val: ScriptEvent[] | ((prev: ScriptEvent[]) => ScriptEvent[])) => {
+    setPlaybackItemsRaw(prev => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      playbackItemsRef.current = next;
+      return next;
+    });
+  };
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [isShiftActive, setIsShiftActive] = useState(true);
   const [compositionText, setCompositionText] = useState<string>('');
@@ -1014,31 +1045,47 @@ const App: React.FC = () => {
     );
     const allSequences = latestSequences;
 
+    const savedSeqStates: Record<number, { items: ScriptEvent[], activeIds: string[], frameMessages: any[] }> = {};
+
     for (let seqIndex = 0; seqIndex < allSequences.length; seqIndex++) {
       if ((runningStatusRef.current as string) === 'idle') break;
 
       const currentSeq = allSequences[seqIndex];
+      const isReturn = currentSeq.returnToSeqIndex != null && currentSeq.returnToSeqIndex >= 0;
+      const returnIdx = currentSeq.returnToSeqIndex ?? -1;
+      const returnTarget = isReturn ? allSequences[returnIdx] : null;
+
+      const effectiveSeq = isReturn && returnTarget ? returnTarget : currentSeq;
       const seq1Me = allSequences[0].cast.find(c => c.isMe);
       const seqCast = seqIndex > 0 && seq1Me
-        ? currentSeq.cast.map(c => c.isMe ? { ...c, bitmojiAvatarId: seq1Me.bitmojiAvatarId } : c)
-        : currentSeq.cast;
+        ? effectiveSeq.cast.map(c => c.isMe ? { ...c, bitmojiAvatarId: seq1Me.bitmojiAvatarId } : c)
+        : effectiveSeq.cast;
       const seq1Chat = allSequences[0].chat;
       const seqChat = seqIndex > 0
         ? {
-            ...currentSeq.chat,
+            ...effectiveSeq.chat,
             isVideoBackgroundMode: seq1Chat.isVideoBackgroundMode,
             videoModeScale: seq1Chat.videoModeScale,
             isShortCrop: seq1Chat.isShortCrop,
           }
-        : currentSeq.chat;
+        : effectiveSeq.chat;
       const seqScript = currentSeq.script;
 
       if (seqIndex > 0) {
         await delay(currentSeq.transitionDelayMs);
         if ((runningStatusRef.current as string) === 'idle') break;
 
-        setPlaybackItems([]);
-        updateActiveIds([]);
+        const savedState = isReturn ? savedSeqStates[returnIdx] : null;
+
+        if (savedState) {
+          setPlaybackItems(savedState.items);
+          updateActiveIds(savedState.activeIds);
+          frameStateRef.current.messages = [...savedState.frameMessages];
+        } else {
+          setPlaybackItems([]);
+          updateActiveIds([]);
+          frameStateRef.current.messages = [];
+        }
         updateTypingIds([]);
         setIsMeTyping(false);
         setCompositionText('');
@@ -1046,7 +1093,6 @@ const App: React.FC = () => {
         hasPlayedFirstNotif = false;
 
         setState(prev => ({ ...prev, cast: seqCast, chat: seqChat }));
-        frameStateRef.current.messages = [];
         frameStateRef.current.cast = seqCast;
         frameStateRef.current.chatConfig = seqChat;
       } else {
@@ -1511,6 +1557,12 @@ const App: React.FC = () => {
         }
       }
     }
+
+    savedSeqStates[seqIndex] = {
+      items: [...(playbackItemsRef.current || [])],
+      activeIds: [...localActiveParticipantIds],
+      frameMessages: [...(frameStateRef.current.messages || [])],
+    };
     } // end sequences loop
 
     const restoreActiveSequence = () => {
@@ -2176,9 +2228,20 @@ const App: React.FC = () => {
               onClick={addSequence}
               className="w-8 h-8 rounded-xl bg-[#FFFC00] text-black flex items-center justify-center text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#FFFC00]/20"
               data-testid="add-sequence"
+              title="Add new sequence"
             >
               +
             </button>
+            {sequences.length >= 2 && !sequences.some(s => s.returnToSeqIndex != null) && (
+              <button
+                onClick={() => addReturnSequence(0)}
+                className="w-8 h-8 rounded-xl bg-white/10 text-[#FFFC00] flex items-center justify-center text-sm font-black hover:scale-105 active:scale-95 transition-all border border-[#FFFC00]/30"
+                data-testid="add-return-sequence"
+                title="Return to Sequence 1"
+              >
+                ↩
+              </button>
+            )}
           </div>
         </div>
         )}
@@ -2980,6 +3043,15 @@ const App: React.FC = () => {
           {activeTab === 'script' && (
           <>
           <div className="space-y-10">
+            {sequences[activeSequenceIndex]?.returnToSeqIndex != null && (
+              <div className="bg-[#FFFC00]/10 border border-[#FFFC00]/30 rounded-2xl p-4 flex items-center gap-3">
+                <span className="text-lg">↩</span>
+                <div>
+                  <p className="text-[11px] font-bold text-[#FFFC00]">Return to Sequence {(sequences[activeSequenceIndex].returnToSeqIndex ?? 0) + 1}</p>
+                  <p className="text-[10px] text-gray-400">Previous messages from Seq {(sequences[activeSequenceIndex].returnToSeqIndex ?? 0) + 1} will be restored. Add new messages below to continue the conversation.</p>
+                </div>
+              </div>
+            )}
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Story Timeline</h3>

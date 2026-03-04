@@ -102,6 +102,7 @@ export interface Sequence {
   script: ScriptEvent[];
   chat: ChatConfig;
   transitionDelayMs: number;
+  returnToSeqIndex?: number;
 }
 
 export interface AppState {
