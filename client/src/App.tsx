@@ -7,6 +7,7 @@ import ChatInput from './components/ChatInput';
 import IOSKeyboard, { KeyboardLayout } from './components/IOSKeyboard';
 import PresencePills from './components/PresencePills';
 import TypingBubble from './components/TypingBubble';
+import VideoGalleryModal from './components/VideoGalleryModal';
 import { SNAP_COLORS, GROUP_COLORS } from './constants';
 import { soundService, MUSIC_TRACKS } from './services/soundService';
 import { CanvasRenderer, FrameState } from './services/canvasRenderer';
@@ -252,6 +253,7 @@ const App: React.FC = () => {
   const [compositionText, setCompositionText] = useState<string>('');
   const [keyboardLayout, setKeyboardLayout] = useState<KeyboardLayout>('ALPHA');
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showVideoGallery, setShowVideoGallery] = useState(false);
   const [bulkImportValue, setBulkImportValue] = useState('');
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
@@ -2800,10 +2802,11 @@ const App: React.FC = () => {
                       <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                         <label className="text-[10px] font-bold text-gray-400 uppercase">Background MP4 Video</label>
                         <button 
-                          onClick={() => exportBgVideoInputRef.current?.click()}
+                          onClick={() => setShowVideoGallery(true)}
                           className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#FF0054] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
+                          data-testid="open-video-gallery"
                         >
-                          <i className="fa-solid fa-video"></i> {state.chat.exportBackgroundVideoUrl ? 'Change Video' : 'Upload BG Video'}
+                          <i className="fa-solid fa-film"></i> {state.chat.exportBackgroundVideoUrl ? 'Change Video' : 'Browse Videos'}
                         </button>
                         <input 
                           type="file" 
@@ -3985,6 +3988,14 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      <VideoGalleryModal
+        open={showVideoGallery}
+        onClose={() => setShowVideoGallery(false)}
+        onSelect={(url) => updateChat('exportBackgroundVideoUrl', url)}
+        onUpload={() => exportBgVideoInputRef.current?.click()}
+        currentVideoUrl={state.chat.exportBackgroundVideoUrl}
+      />
 
       <style>{`
         @keyframes typingDots { 0%, 60%, 100% { transform: scale(1); opacity: 0.4; } 30% { transform: scale(1.15); opacity: 1; } }
