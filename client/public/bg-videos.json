@@ -1,914 +1,1142 @@
 [
   {
     "filename": "Background 1",
-    "url": "https://backend.korpi.ai/load_bg_vid/1"
+    "url": "https://backend.korpi.ai/load_bg_vid/1",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/1-thumbnail.jpg"
   },
   {
     "filename": "Background 2",
-    "url": "https://backend.korpi.ai/load_bg_vid/2"
+    "url": "https://backend.korpi.ai/load_bg_vid/2",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/2-thumbnail.jpg"
   },
   {
     "filename": "Background 3",
-    "url": "https://backend.korpi.ai/load_bg_vid/3"
+    "url": "https://backend.korpi.ai/load_bg_vid/3",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/3-thumbnail.jpg"
   },
   {
     "filename": "Background 4",
-    "url": "https://backend.korpi.ai/load_bg_vid/4"
+    "url": "https://backend.korpi.ai/load_bg_vid/4",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/4-thumbnail.jpg"
   },
   {
     "filename": "Background 5",
-    "url": "https://backend.korpi.ai/load_bg_vid/5"
+    "url": "https://backend.korpi.ai/load_bg_vid/5",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/5-thumbnail.jpg"
   },
   {
     "filename": "Background 6",
-    "url": "https://backend.korpi.ai/load_bg_vid/6"
+    "url": "https://backend.korpi.ai/load_bg_vid/6",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/6-thumbnail.jpg"
   },
   {
     "filename": "Background 7",
-    "url": "https://backend.korpi.ai/load_bg_vid/7"
+    "url": "https://backend.korpi.ai/load_bg_vid/7",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/7-thumbnail.jpg"
   },
   {
     "filename": "Background 8",
-    "url": "https://backend.korpi.ai/load_bg_vid/8"
+    "url": "https://backend.korpi.ai/load_bg_vid/8",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/8-thumbnail.jpg"
   },
   {
     "filename": "Background 9",
-    "url": "https://backend.korpi.ai/load_bg_vid/9"
+    "url": "https://backend.korpi.ai/load_bg_vid/9",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/9-thumbnail.jpg"
   },
   {
     "filename": "Background 10",
-    "url": "https://backend.korpi.ai/load_bg_vid/10"
+    "url": "https://backend.korpi.ai/load_bg_vid/10",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/10-thumbnail.jpg"
   },
   {
     "filename": "Background 11",
-    "url": "https://backend.korpi.ai/load_bg_vid/11"
+    "url": "https://backend.korpi.ai/load_bg_vid/11",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/11-thumbnail.jpg"
   },
   {
     "filename": "Background 12",
-    "url": "https://backend.korpi.ai/load_bg_vid/12"
+    "url": "https://backend.korpi.ai/load_bg_vid/12",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/12-thumbnail.jpg"
   },
   {
     "filename": "Background 13",
-    "url": "https://backend.korpi.ai/load_bg_vid/13"
+    "url": "https://backend.korpi.ai/load_bg_vid/13",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/13-thumbnail.jpg"
   },
   {
     "filename": "Background 14",
-    "url": "https://backend.korpi.ai/load_bg_vid/14"
+    "url": "https://backend.korpi.ai/load_bg_vid/14",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/14-thumbnail.jpg"
   },
   {
     "filename": "Background 15",
-    "url": "https://backend.korpi.ai/load_bg_vid/15"
+    "url": "https://backend.korpi.ai/load_bg_vid/15",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/15-thumbnail.jpg"
   },
   {
     "filename": "Background 16",
-    "url": "https://backend.korpi.ai/load_bg_vid/16"
+    "url": "https://backend.korpi.ai/load_bg_vid/16",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/16-thumbnail.jpg"
   },
   {
     "filename": "Background 17",
-    "url": "https://backend.korpi.ai/load_bg_vid/17"
+    "url": "https://backend.korpi.ai/load_bg_vid/17",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/17-thumbnail.jpg"
   },
   {
     "filename": "Background 18",
-    "url": "https://backend.korpi.ai/load_bg_vid/18"
+    "url": "https://backend.korpi.ai/load_bg_vid/18",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/18-thumbnail.jpg"
   },
   {
     "filename": "Background 19",
-    "url": "https://backend.korpi.ai/load_bg_vid/19"
+    "url": "https://backend.korpi.ai/load_bg_vid/19",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/19-thumbnail.jpg"
   },
   {
     "filename": "Background 20",
-    "url": "https://backend.korpi.ai/load_bg_vid/20"
+    "url": "https://backend.korpi.ai/load_bg_vid/20",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/20-thumbnail.jpg"
   },
   {
     "filename": "Background 21",
-    "url": "https://backend.korpi.ai/load_bg_vid/21"
+    "url": "https://backend.korpi.ai/load_bg_vid/21",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/21-thumbnail.jpg"
   },
   {
     "filename": "Background 22",
-    "url": "https://backend.korpi.ai/load_bg_vid/22"
+    "url": "https://backend.korpi.ai/load_bg_vid/22",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/22-thumbnail.jpg"
   },
   {
     "filename": "Background 23",
-    "url": "https://backend.korpi.ai/load_bg_vid/23"
+    "url": "https://backend.korpi.ai/load_bg_vid/23",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/23-thumbnail.jpg"
   },
   {
     "filename": "Background 24",
-    "url": "https://backend.korpi.ai/load_bg_vid/24"
+    "url": "https://backend.korpi.ai/load_bg_vid/24",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/24-thumbnail.jpg"
   },
   {
     "filename": "Background 25",
-    "url": "https://backend.korpi.ai/load_bg_vid/25"
+    "url": "https://backend.korpi.ai/load_bg_vid/25",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/25-thumbnail.jpg"
   },
   {
     "filename": "Background 26",
-    "url": "https://backend.korpi.ai/load_bg_vid/26"
+    "url": "https://backend.korpi.ai/load_bg_vid/26",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/26-thumbnail.jpg"
   },
   {
     "filename": "Background 27",
-    "url": "https://backend.korpi.ai/load_bg_vid/27"
+    "url": "https://backend.korpi.ai/load_bg_vid/27",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/27-thumbnail.jpg"
   },
   {
     "filename": "Background 28",
-    "url": "https://backend.korpi.ai/load_bg_vid/28"
+    "url": "https://backend.korpi.ai/load_bg_vid/28",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/28-thumbnail.jpg"
   },
   {
     "filename": "Background 29",
-    "url": "https://backend.korpi.ai/load_bg_vid/29"
+    "url": "https://backend.korpi.ai/load_bg_vid/29",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/29-thumbnail.jpg"
   },
   {
     "filename": "Background 30",
-    "url": "https://backend.korpi.ai/load_bg_vid/30"
+    "url": "https://backend.korpi.ai/load_bg_vid/30",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/30-thumbnail.jpg"
   },
   {
     "filename": "Background 31",
-    "url": "https://backend.korpi.ai/load_bg_vid/31"
+    "url": "https://backend.korpi.ai/load_bg_vid/31",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/31-thumbnail.jpg"
   },
   {
     "filename": "Background 32",
-    "url": "https://backend.korpi.ai/load_bg_vid/32"
+    "url": "https://backend.korpi.ai/load_bg_vid/32",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/32-thumbnail.jpg"
   },
   {
     "filename": "Background 33",
-    "url": "https://backend.korpi.ai/load_bg_vid/33"
+    "url": "https://backend.korpi.ai/load_bg_vid/33",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/33-thumbnail.jpg"
   },
   {
     "filename": "Background 34",
-    "url": "https://backend.korpi.ai/load_bg_vid/34"
+    "url": "https://backend.korpi.ai/load_bg_vid/34",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/34-thumbnail.jpg"
   },
   {
     "filename": "Background 35",
-    "url": "https://backend.korpi.ai/load_bg_vid/35"
+    "url": "https://backend.korpi.ai/load_bg_vid/35",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/35-thumbnail.jpg"
   },
   {
     "filename": "Background 36",
-    "url": "https://backend.korpi.ai/load_bg_vid/36"
+    "url": "https://backend.korpi.ai/load_bg_vid/36",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/36-thumbnail.jpg"
   },
   {
     "filename": "Background 37",
-    "url": "https://backend.korpi.ai/load_bg_vid/37"
+    "url": "https://backend.korpi.ai/load_bg_vid/37",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/37-thumbnail.jpg"
   },
   {
     "filename": "Background 38",
-    "url": "https://backend.korpi.ai/load_bg_vid/38"
+    "url": "https://backend.korpi.ai/load_bg_vid/38",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/38-thumbnail.jpg"
   },
   {
     "filename": "Background 39",
-    "url": "https://backend.korpi.ai/load_bg_vid/39"
+    "url": "https://backend.korpi.ai/load_bg_vid/39",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/39-thumbnail.jpg"
   },
   {
     "filename": "Background 40",
-    "url": "https://backend.korpi.ai/load_bg_vid/40"
+    "url": "https://backend.korpi.ai/load_bg_vid/40",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/40-thumbnail.jpg"
   },
   {
     "filename": "Background 41",
-    "url": "https://backend.korpi.ai/load_bg_vid/41"
+    "url": "https://backend.korpi.ai/load_bg_vid/41",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/41-thumbnail.jpg"
   },
   {
     "filename": "Background 42",
-    "url": "https://backend.korpi.ai/load_bg_vid/42"
+    "url": "https://backend.korpi.ai/load_bg_vid/42",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/42-thumbnail.jpg"
   },
   {
     "filename": "Background 43",
-    "url": "https://backend.korpi.ai/load_bg_vid/43"
+    "url": "https://backend.korpi.ai/load_bg_vid/43",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/43-thumbnail.jpg"
   },
   {
     "filename": "Background 44",
-    "url": "https://backend.korpi.ai/load_bg_vid/44"
+    "url": "https://backend.korpi.ai/load_bg_vid/44",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/44-thumbnail.jpg"
   },
   {
     "filename": "Background 45",
-    "url": "https://backend.korpi.ai/load_bg_vid/45"
+    "url": "https://backend.korpi.ai/load_bg_vid/45",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/45-thumbnail.jpg"
   },
   {
     "filename": "Background 46",
-    "url": "https://backend.korpi.ai/load_bg_vid/46"
+    "url": "https://backend.korpi.ai/load_bg_vid/46",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/46-thumbnail.jpg"
   },
   {
     "filename": "Background 47",
-    "url": "https://backend.korpi.ai/load_bg_vid/47"
+    "url": "https://backend.korpi.ai/load_bg_vid/47",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/47-thumbnail.jpg"
   },
   {
     "filename": "Background 48",
-    "url": "https://backend.korpi.ai/load_bg_vid/48"
+    "url": "https://backend.korpi.ai/load_bg_vid/48",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/48-thumbnail.jpg"
   },
   {
     "filename": "Background 49",
-    "url": "https://backend.korpi.ai/load_bg_vid/49"
+    "url": "https://backend.korpi.ai/load_bg_vid/49",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/49-thumbnail.jpg"
   },
   {
     "filename": "Background 50",
-    "url": "https://backend.korpi.ai/load_bg_vid/50"
+    "url": "https://backend.korpi.ai/load_bg_vid/50",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/50-thumbnail.jpg"
   },
   {
     "filename": "Background 51",
-    "url": "https://backend.korpi.ai/load_bg_vid/51"
+    "url": "https://backend.korpi.ai/load_bg_vid/51",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/51-thumbnail.jpg"
   },
   {
     "filename": "Background 52",
-    "url": "https://backend.korpi.ai/load_bg_vid/52"
+    "url": "https://backend.korpi.ai/load_bg_vid/52",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/52-thumbnail.jpg"
   },
   {
     "filename": "Background 53",
-    "url": "https://backend.korpi.ai/load_bg_vid/53"
+    "url": "https://backend.korpi.ai/load_bg_vid/53",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/53-thumbnail.jpg"
   },
   {
     "filename": "Background 54",
-    "url": "https://backend.korpi.ai/load_bg_vid/54"
+    "url": "https://backend.korpi.ai/load_bg_vid/54",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/54-thumbnail.jpg"
   },
   {
     "filename": "Background 55",
-    "url": "https://backend.korpi.ai/load_bg_vid/55"
+    "url": "https://backend.korpi.ai/load_bg_vid/55",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/55-thumbnail.jpg"
   },
   {
     "filename": "Background 56",
-    "url": "https://backend.korpi.ai/load_bg_vid/56"
+    "url": "https://backend.korpi.ai/load_bg_vid/56",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/56-thumbnail.jpg"
   },
   {
     "filename": "Background 57",
-    "url": "https://backend.korpi.ai/load_bg_vid/57"
+    "url": "https://backend.korpi.ai/load_bg_vid/57",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/57-thumbnail.jpg"
   },
   {
     "filename": "Background 58",
-    "url": "https://backend.korpi.ai/load_bg_vid/58"
+    "url": "https://backend.korpi.ai/load_bg_vid/58",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/58-thumbnail.jpg"
   },
   {
     "filename": "Background 59",
-    "url": "https://backend.korpi.ai/load_bg_vid/59"
+    "url": "https://backend.korpi.ai/load_bg_vid/59",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/59-thumbnail.jpg"
   },
   {
     "filename": "Background 60",
-    "url": "https://backend.korpi.ai/load_bg_vid/60"
+    "url": "https://backend.korpi.ai/load_bg_vid/60",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/60-thumbnail.jpg"
   },
   {
     "filename": "Background 61",
-    "url": "https://backend.korpi.ai/load_bg_vid/61"
+    "url": "https://backend.korpi.ai/load_bg_vid/61",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/61-thumbnail.jpg"
   },
   {
     "filename": "Background 62",
-    "url": "https://backend.korpi.ai/load_bg_vid/62"
+    "url": "https://backend.korpi.ai/load_bg_vid/62",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/62-thumbnail.jpg"
   },
   {
     "filename": "Background 63",
-    "url": "https://backend.korpi.ai/load_bg_vid/63"
+    "url": "https://backend.korpi.ai/load_bg_vid/63",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/63-thumbnail.jpg"
   },
   {
     "filename": "Background 64",
-    "url": "https://backend.korpi.ai/load_bg_vid/64"
+    "url": "https://backend.korpi.ai/load_bg_vid/64",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/64-thumbnail.jpg"
   },
   {
     "filename": "Background 65",
-    "url": "https://backend.korpi.ai/load_bg_vid/65"
+    "url": "https://backend.korpi.ai/load_bg_vid/65",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/65-thumbnail.jpg"
   },
   {
     "filename": "Background 66",
-    "url": "https://backend.korpi.ai/load_bg_vid/66"
+    "url": "https://backend.korpi.ai/load_bg_vid/66",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/66-thumbnail.jpg"
   },
   {
     "filename": "Background 67",
-    "url": "https://backend.korpi.ai/load_bg_vid/67"
+    "url": "https://backend.korpi.ai/load_bg_vid/67",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/67-thumbnail.jpg"
   },
   {
     "filename": "Background 68",
-    "url": "https://backend.korpi.ai/load_bg_vid/68"
+    "url": "https://backend.korpi.ai/load_bg_vid/68",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/68-thumbnail.jpg"
   },
   {
     "filename": "Background 69",
-    "url": "https://backend.korpi.ai/load_bg_vid/69"
+    "url": "https://backend.korpi.ai/load_bg_vid/69",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/69-thumbnail.jpg"
   },
   {
     "filename": "Background 70",
-    "url": "https://backend.korpi.ai/load_bg_vid/70"
+    "url": "https://backend.korpi.ai/load_bg_vid/70",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/70-thumbnail.jpg"
   },
   {
     "filename": "Background 71",
-    "url": "https://backend.korpi.ai/load_bg_vid/71"
+    "url": "https://backend.korpi.ai/load_bg_vid/71",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/71-thumbnail.jpg"
   },
   {
     "filename": "Background 72",
-    "url": "https://backend.korpi.ai/load_bg_vid/72"
+    "url": "https://backend.korpi.ai/load_bg_vid/72",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/72-thumbnail.jpg"
   },
   {
     "filename": "Background 73",
-    "url": "https://backend.korpi.ai/load_bg_vid/73"
+    "url": "https://backend.korpi.ai/load_bg_vid/73",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/73-thumbnail.jpg"
   },
   {
     "filename": "Background 74",
-    "url": "https://backend.korpi.ai/load_bg_vid/74"
+    "url": "https://backend.korpi.ai/load_bg_vid/74",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/74-thumbnail.jpg"
   },
   {
     "filename": "Background 75",
-    "url": "https://backend.korpi.ai/load_bg_vid/75"
+    "url": "https://backend.korpi.ai/load_bg_vid/75",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/75-thumbnail.jpg"
   },
   {
     "filename": "Background 76",
-    "url": "https://backend.korpi.ai/load_bg_vid/76"
+    "url": "https://backend.korpi.ai/load_bg_vid/76",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/76-thumbnail.jpg"
   },
   {
     "filename": "Background 77",
-    "url": "https://backend.korpi.ai/load_bg_vid/77"
+    "url": "https://backend.korpi.ai/load_bg_vid/77",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/77-thumbnail.jpg"
   },
   {
     "filename": "Background 78",
-    "url": "https://backend.korpi.ai/load_bg_vid/78"
+    "url": "https://backend.korpi.ai/load_bg_vid/78",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/78-thumbnail.jpg"
   },
   {
     "filename": "Background 79",
-    "url": "https://backend.korpi.ai/load_bg_vid/79"
+    "url": "https://backend.korpi.ai/load_bg_vid/79",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/79-thumbnail.jpg"
   },
   {
     "filename": "Background 80",
-    "url": "https://backend.korpi.ai/load_bg_vid/80"
+    "url": "https://backend.korpi.ai/load_bg_vid/80",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/80-thumbnail.jpg"
   },
   {
     "filename": "Background 81",
-    "url": "https://backend.korpi.ai/load_bg_vid/81"
+    "url": "https://backend.korpi.ai/load_bg_vid/81",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/81-thumbnail.jpg"
   },
   {
     "filename": "Background 82",
-    "url": "https://backend.korpi.ai/load_bg_vid/82"
+    "url": "https://backend.korpi.ai/load_bg_vid/82",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/82-thumbnail.jpg"
   },
   {
     "filename": "Background 83",
-    "url": "https://backend.korpi.ai/load_bg_vid/83"
+    "url": "https://backend.korpi.ai/load_bg_vid/83",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/83-thumbnail.jpg"
   },
   {
     "filename": "Background 84",
-    "url": "https://backend.korpi.ai/load_bg_vid/84"
+    "url": "https://backend.korpi.ai/load_bg_vid/84",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/84-thumbnail.jpg"
   },
   {
     "filename": "Background 85",
-    "url": "https://backend.korpi.ai/load_bg_vid/85"
+    "url": "https://backend.korpi.ai/load_bg_vid/85",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/85-thumbnail.jpg"
   },
   {
     "filename": "Background 86",
-    "url": "https://backend.korpi.ai/load_bg_vid/86"
+    "url": "https://backend.korpi.ai/load_bg_vid/86",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/86-thumbnail.jpg"
   },
   {
     "filename": "Background 87",
-    "url": "https://backend.korpi.ai/load_bg_vid/87"
+    "url": "https://backend.korpi.ai/load_bg_vid/87",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/87-thumbnail.jpg"
   },
   {
     "filename": "Background 88",
-    "url": "https://backend.korpi.ai/load_bg_vid/88"
+    "url": "https://backend.korpi.ai/load_bg_vid/88",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/88-thumbnail.jpg"
   },
   {
     "filename": "Background 89",
-    "url": "https://backend.korpi.ai/load_bg_vid/89"
+    "url": "https://backend.korpi.ai/load_bg_vid/89",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/89-thumbnail.jpg"
   },
   {
     "filename": "Background 90",
-    "url": "https://backend.korpi.ai/load_bg_vid/90"
+    "url": "https://backend.korpi.ai/load_bg_vid/90",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/90-thumbnail.jpg"
   },
   {
     "filename": "Background 91",
-    "url": "https://backend.korpi.ai/load_bg_vid/91"
+    "url": "https://backend.korpi.ai/load_bg_vid/91",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/91-thumbnail.jpg"
   },
   {
     "filename": "Background 92",
-    "url": "https://backend.korpi.ai/load_bg_vid/92"
+    "url": "https://backend.korpi.ai/load_bg_vid/92",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/92-thumbnail.jpg"
   },
   {
     "filename": "Background 93",
-    "url": "https://backend.korpi.ai/load_bg_vid/93"
+    "url": "https://backend.korpi.ai/load_bg_vid/93",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/93-thumbnail.jpg"
   },
   {
     "filename": "Background 94",
-    "url": "https://backend.korpi.ai/load_bg_vid/94"
+    "url": "https://backend.korpi.ai/load_bg_vid/94",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/94-thumbnail.jpg"
   },
   {
     "filename": "Background 95",
-    "url": "https://backend.korpi.ai/load_bg_vid/95"
+    "url": "https://backend.korpi.ai/load_bg_vid/95",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/95-thumbnail.jpg"
   },
   {
     "filename": "Background 96",
-    "url": "https://backend.korpi.ai/load_bg_vid/96"
+    "url": "https://backend.korpi.ai/load_bg_vid/96",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/96-thumbnail.jpg"
   },
   {
     "filename": "Background 97",
-    "url": "https://backend.korpi.ai/load_bg_vid/97"
+    "url": "https://backend.korpi.ai/load_bg_vid/97",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/97-thumbnail.jpg"
   },
   {
     "filename": "Background 98",
-    "url": "https://backend.korpi.ai/load_bg_vid/98"
+    "url": "https://backend.korpi.ai/load_bg_vid/98",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/98-thumbnail.jpg"
   },
   {
     "filename": "Background 99",
-    "url": "https://backend.korpi.ai/load_bg_vid/99"
+    "url": "https://backend.korpi.ai/load_bg_vid/99",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/99-thumbnail.jpg"
   },
   {
     "filename": "Background 100",
-    "url": "https://backend.korpi.ai/load_bg_vid/100"
+    "url": "https://backend.korpi.ai/load_bg_vid/100",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/100-thumbnail.jpg"
   },
   {
     "filename": "Background 101",
-    "url": "https://backend.korpi.ai/load_bg_vid/101"
+    "url": "https://backend.korpi.ai/load_bg_vid/101",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/101-thumbnail.jpg"
   },
   {
     "filename": "Background 102",
-    "url": "https://backend.korpi.ai/load_bg_vid/102"
+    "url": "https://backend.korpi.ai/load_bg_vid/102",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/102-thumbnail.jpg"
   },
   {
     "filename": "Background 103",
-    "url": "https://backend.korpi.ai/load_bg_vid/103"
+    "url": "https://backend.korpi.ai/load_bg_vid/103",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/103-thumbnail.jpg"
   },
   {
     "filename": "Background 104",
-    "url": "https://backend.korpi.ai/load_bg_vid/104"
+    "url": "https://backend.korpi.ai/load_bg_vid/104",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/104-thumbnail.jpg"
   },
   {
     "filename": "Background 105",
-    "url": "https://backend.korpi.ai/load_bg_vid/105"
+    "url": "https://backend.korpi.ai/load_bg_vid/105",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/105-thumbnail.jpg"
   },
   {
     "filename": "Background 106",
-    "url": "https://backend.korpi.ai/load_bg_vid/106"
+    "url": "https://backend.korpi.ai/load_bg_vid/106",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/106-thumbnail.jpg"
   },
   {
     "filename": "Background 107",
-    "url": "https://backend.korpi.ai/load_bg_vid/107"
+    "url": "https://backend.korpi.ai/load_bg_vid/107",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/107-thumbnail.jpg"
   },
   {
     "filename": "Background 108",
-    "url": "https://backend.korpi.ai/load_bg_vid/108"
+    "url": "https://backend.korpi.ai/load_bg_vid/108",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/108-thumbnail.jpg"
   },
   {
     "filename": "Background 109",
-    "url": "https://backend.korpi.ai/load_bg_vid/109"
+    "url": "https://backend.korpi.ai/load_bg_vid/109",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/109-thumbnail.jpg"
   },
   {
     "filename": "Background 110",
-    "url": "https://backend.korpi.ai/load_bg_vid/110"
+    "url": "https://backend.korpi.ai/load_bg_vid/110",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/110-thumbnail.jpg"
   },
   {
     "filename": "Background 111",
-    "url": "https://backend.korpi.ai/load_bg_vid/111"
+    "url": "https://backend.korpi.ai/load_bg_vid/111",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/111-thumbnail.jpg"
   },
   {
     "filename": "Background 112",
-    "url": "https://backend.korpi.ai/load_bg_vid/112"
+    "url": "https://backend.korpi.ai/load_bg_vid/112",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/112-thumbnail.jpg"
   },
   {
     "filename": "Background 113",
-    "url": "https://backend.korpi.ai/load_bg_vid/113"
+    "url": "https://backend.korpi.ai/load_bg_vid/113",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/113-thumbnail.jpg"
   },
   {
     "filename": "Background 114",
-    "url": "https://backend.korpi.ai/load_bg_vid/114"
+    "url": "https://backend.korpi.ai/load_bg_vid/114",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/114-thumbnail.jpg"
   },
   {
     "filename": "Background 115",
-    "url": "https://backend.korpi.ai/load_bg_vid/115"
+    "url": "https://backend.korpi.ai/load_bg_vid/115",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/115-thumbnail.jpg"
   },
   {
     "filename": "Background 116",
-    "url": "https://backend.korpi.ai/load_bg_vid/116"
+    "url": "https://backend.korpi.ai/load_bg_vid/116",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/116-thumbnail.jpg"
   },
   {
     "filename": "Background 117",
-    "url": "https://backend.korpi.ai/load_bg_vid/117"
+    "url": "https://backend.korpi.ai/load_bg_vid/117",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/117-thumbnail.jpg"
   },
   {
     "filename": "Background 118",
-    "url": "https://backend.korpi.ai/load_bg_vid/118"
+    "url": "https://backend.korpi.ai/load_bg_vid/118",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/118-thumbnail.jpg"
   },
   {
     "filename": "Background 119",
-    "url": "https://backend.korpi.ai/load_bg_vid/119"
+    "url": "https://backend.korpi.ai/load_bg_vid/119",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/119-thumbnail.jpg"
   },
   {
     "filename": "Background 120",
-    "url": "https://backend.korpi.ai/load_bg_vid/120"
+    "url": "https://backend.korpi.ai/load_bg_vid/120",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/120-thumbnail.jpg"
   },
   {
     "filename": "Background 121",
-    "url": "https://backend.korpi.ai/load_bg_vid/121"
+    "url": "https://backend.korpi.ai/load_bg_vid/121",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/121-thumbnail.jpg"
   },
   {
     "filename": "Background 122",
-    "url": "https://backend.korpi.ai/load_bg_vid/122"
+    "url": "https://backend.korpi.ai/load_bg_vid/122",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/122-thumbnail.jpg"
   },
   {
     "filename": "Background 123",
-    "url": "https://backend.korpi.ai/load_bg_vid/123"
+    "url": "https://backend.korpi.ai/load_bg_vid/123",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/123-thumbnail.jpg"
   },
   {
     "filename": "Background 124",
-    "url": "https://backend.korpi.ai/load_bg_vid/124"
+    "url": "https://backend.korpi.ai/load_bg_vid/124",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/124-thumbnail.jpg"
   },
   {
     "filename": "Background 125",
-    "url": "https://backend.korpi.ai/load_bg_vid/125"
+    "url": "https://backend.korpi.ai/load_bg_vid/125",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/125-thumbnail.jpg"
   },
   {
     "filename": "Background 126",
-    "url": "https://backend.korpi.ai/load_bg_vid/126"
+    "url": "https://backend.korpi.ai/load_bg_vid/126",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/126-thumbnail.jpg"
   },
   {
     "filename": "Background 127",
-    "url": "https://backend.korpi.ai/load_bg_vid/127"
+    "url": "https://backend.korpi.ai/load_bg_vid/127",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/127-thumbnail.jpg"
   },
   {
     "filename": "Background 128",
-    "url": "https://backend.korpi.ai/load_bg_vid/128"
+    "url": "https://backend.korpi.ai/load_bg_vid/128",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/128-thumbnail.jpg"
   },
   {
     "filename": "Background 129",
-    "url": "https://backend.korpi.ai/load_bg_vid/129"
+    "url": "https://backend.korpi.ai/load_bg_vid/129",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/129-thumbnail.jpg"
   },
   {
     "filename": "Background 130",
-    "url": "https://backend.korpi.ai/load_bg_vid/130"
+    "url": "https://backend.korpi.ai/load_bg_vid/130",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/130-thumbnail.jpg"
   },
   {
     "filename": "Background 131",
-    "url": "https://backend.korpi.ai/load_bg_vid/131"
+    "url": "https://backend.korpi.ai/load_bg_vid/131",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/131-thumbnail.jpg"
   },
   {
     "filename": "Background 132",
-    "url": "https://backend.korpi.ai/load_bg_vid/132"
+    "url": "https://backend.korpi.ai/load_bg_vid/132",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/132-thumbnail.jpg"
   },
   {
     "filename": "Background 133",
-    "url": "https://backend.korpi.ai/load_bg_vid/133"
+    "url": "https://backend.korpi.ai/load_bg_vid/133",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/133-thumbnail.jpg"
   },
   {
     "filename": "Background 134",
-    "url": "https://backend.korpi.ai/load_bg_vid/134"
+    "url": "https://backend.korpi.ai/load_bg_vid/134",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/134-thumbnail.jpg"
   },
   {
     "filename": "Background 135",
-    "url": "https://backend.korpi.ai/load_bg_vid/135"
+    "url": "https://backend.korpi.ai/load_bg_vid/135",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/135-thumbnail.jpg"
   },
   {
     "filename": "Background 136",
-    "url": "https://backend.korpi.ai/load_bg_vid/136"
+    "url": "https://backend.korpi.ai/load_bg_vid/136",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/136-thumbnail.jpg"
   },
   {
     "filename": "Background 137",
-    "url": "https://backend.korpi.ai/load_bg_vid/137"
+    "url": "https://backend.korpi.ai/load_bg_vid/137",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/137-thumbnail.jpg"
   },
   {
     "filename": "Background 138",
-    "url": "https://backend.korpi.ai/load_bg_vid/138"
+    "url": "https://backend.korpi.ai/load_bg_vid/138",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/138-thumbnail.jpg"
   },
   {
     "filename": "Background 139",
-    "url": "https://backend.korpi.ai/load_bg_vid/139"
+    "url": "https://backend.korpi.ai/load_bg_vid/139",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/139-thumbnail.jpg"
   },
   {
     "filename": "Background 140",
-    "url": "https://backend.korpi.ai/load_bg_vid/140"
+    "url": "https://backend.korpi.ai/load_bg_vid/140",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/140-thumbnail.jpg"
   },
   {
     "filename": "Background 141",
-    "url": "https://backend.korpi.ai/load_bg_vid/141"
+    "url": "https://backend.korpi.ai/load_bg_vid/141",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/141-thumbnail.jpg"
   },
   {
     "filename": "Background 142",
-    "url": "https://backend.korpi.ai/load_bg_vid/142"
+    "url": "https://backend.korpi.ai/load_bg_vid/142",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/142-thumbnail.jpg"
   },
   {
     "filename": "Background 143",
-    "url": "https://backend.korpi.ai/load_bg_vid/143"
+    "url": "https://backend.korpi.ai/load_bg_vid/143",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/143-thumbnail.jpg"
   },
   {
     "filename": "Background 144",
-    "url": "https://backend.korpi.ai/load_bg_vid/144"
+    "url": "https://backend.korpi.ai/load_bg_vid/144",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/144-thumbnail.jpg"
   },
   {
     "filename": "Background 145",
-    "url": "https://backend.korpi.ai/load_bg_vid/145"
+    "url": "https://backend.korpi.ai/load_bg_vid/145",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/145-thumbnail.jpg"
   },
   {
     "filename": "Background 146",
-    "url": "https://backend.korpi.ai/load_bg_vid/146"
+    "url": "https://backend.korpi.ai/load_bg_vid/146",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/146-thumbnail.jpg"
   },
   {
     "filename": "Background 147",
-    "url": "https://backend.korpi.ai/load_bg_vid/147"
+    "url": "https://backend.korpi.ai/load_bg_vid/147",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/147-thumbnail.jpg"
   },
   {
     "filename": "Background 148",
-    "url": "https://backend.korpi.ai/load_bg_vid/148"
+    "url": "https://backend.korpi.ai/load_bg_vid/148",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/148-thumbnail.jpg"
   },
   {
     "filename": "Background 149",
-    "url": "https://backend.korpi.ai/load_bg_vid/149"
+    "url": "https://backend.korpi.ai/load_bg_vid/149",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/149-thumbnail.jpg"
   },
   {
     "filename": "Background 150",
-    "url": "https://backend.korpi.ai/load_bg_vid/150"
+    "url": "https://backend.korpi.ai/load_bg_vid/150",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/150-thumbnail.jpg"
   },
   {
     "filename": "Background 151",
-    "url": "https://backend.korpi.ai/load_bg_vid/151"
+    "url": "https://backend.korpi.ai/load_bg_vid/151",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/151-thumbnail.jpg"
   },
   {
     "filename": "Background 152",
-    "url": "https://backend.korpi.ai/load_bg_vid/152"
+    "url": "https://backend.korpi.ai/load_bg_vid/152",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/152-thumbnail.jpg"
   },
   {
     "filename": "Background 153",
-    "url": "https://backend.korpi.ai/load_bg_vid/153"
+    "url": "https://backend.korpi.ai/load_bg_vid/153",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/153-thumbnail.jpg"
   },
   {
     "filename": "Background 154",
-    "url": "https://backend.korpi.ai/load_bg_vid/154"
+    "url": "https://backend.korpi.ai/load_bg_vid/154",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/154-thumbnail.jpg"
   },
   {
     "filename": "Background 155",
-    "url": "https://backend.korpi.ai/load_bg_vid/155"
+    "url": "https://backend.korpi.ai/load_bg_vid/155",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/155-thumbnail.jpg"
   },
   {
     "filename": "Background 156",
-    "url": "https://backend.korpi.ai/load_bg_vid/156"
+    "url": "https://backend.korpi.ai/load_bg_vid/156",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/156-thumbnail.jpg"
   },
   {
     "filename": "Background 157",
-    "url": "https://backend.korpi.ai/load_bg_vid/157"
+    "url": "https://backend.korpi.ai/load_bg_vid/157",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/157-thumbnail.jpg"
   },
   {
     "filename": "Background 158",
-    "url": "https://backend.korpi.ai/load_bg_vid/158"
+    "url": "https://backend.korpi.ai/load_bg_vid/158",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/158-thumbnail.jpg"
   },
   {
     "filename": "Background 159",
-    "url": "https://backend.korpi.ai/load_bg_vid/159"
+    "url": "https://backend.korpi.ai/load_bg_vid/159",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/159-thumbnail.jpg"
   },
   {
     "filename": "Background 160",
-    "url": "https://backend.korpi.ai/load_bg_vid/160"
+    "url": "https://backend.korpi.ai/load_bg_vid/160",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/160-thumbnail.jpg"
   },
   {
     "filename": "Background 161",
-    "url": "https://backend.korpi.ai/load_bg_vid/161"
+    "url": "https://backend.korpi.ai/load_bg_vid/161",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/161-thumbnail.jpg"
   },
   {
     "filename": "Background 162",
-    "url": "https://backend.korpi.ai/load_bg_vid/162"
+    "url": "https://backend.korpi.ai/load_bg_vid/162",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/162-thumbnail.jpg"
   },
   {
     "filename": "Background 163",
-    "url": "https://backend.korpi.ai/load_bg_vid/163"
+    "url": "https://backend.korpi.ai/load_bg_vid/163",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/163-thumbnail.jpg"
   },
   {
     "filename": "Background 164",
-    "url": "https://backend.korpi.ai/load_bg_vid/164"
+    "url": "https://backend.korpi.ai/load_bg_vid/164",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/164-thumbnail.jpg"
   },
   {
     "filename": "Background 165",
-    "url": "https://backend.korpi.ai/load_bg_vid/165"
+    "url": "https://backend.korpi.ai/load_bg_vid/165",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/165-thumbnail.jpg"
   },
   {
     "filename": "Background 166",
-    "url": "https://backend.korpi.ai/load_bg_vid/166"
+    "url": "https://backend.korpi.ai/load_bg_vid/166",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/166-thumbnail.jpg"
   },
   {
     "filename": "Background 167",
-    "url": "https://backend.korpi.ai/load_bg_vid/167"
+    "url": "https://backend.korpi.ai/load_bg_vid/167",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/167-thumbnail.jpg"
   },
   {
     "filename": "Background 168",
-    "url": "https://backend.korpi.ai/load_bg_vid/168"
+    "url": "https://backend.korpi.ai/load_bg_vid/168",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/168-thumbnail.jpg"
   },
   {
     "filename": "Background 169",
-    "url": "https://backend.korpi.ai/load_bg_vid/169"
+    "url": "https://backend.korpi.ai/load_bg_vid/169",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/169-thumbnail.jpg"
   },
   {
     "filename": "Background 170",
-    "url": "https://backend.korpi.ai/load_bg_vid/170"
+    "url": "https://backend.korpi.ai/load_bg_vid/170",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/170-thumbnail.jpg"
   },
   {
     "filename": "Background 171",
-    "url": "https://backend.korpi.ai/load_bg_vid/171"
+    "url": "https://backend.korpi.ai/load_bg_vid/171",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/171-thumbnail.jpg"
   },
   {
     "filename": "Background 172",
-    "url": "https://backend.korpi.ai/load_bg_vid/172"
+    "url": "https://backend.korpi.ai/load_bg_vid/172",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/172-thumbnail.jpg"
   },
   {
     "filename": "Background 173",
-    "url": "https://backend.korpi.ai/load_bg_vid/173"
+    "url": "https://backend.korpi.ai/load_bg_vid/173",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/173-thumbnail.jpg"
   },
   {
     "filename": "Background 174",
-    "url": "https://backend.korpi.ai/load_bg_vid/174"
+    "url": "https://backend.korpi.ai/load_bg_vid/174",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/174-thumbnail.jpg"
   },
   {
     "filename": "Background 175",
-    "url": "https://backend.korpi.ai/load_bg_vid/175"
+    "url": "https://backend.korpi.ai/load_bg_vid/175",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/175-thumbnail.jpg"
   },
   {
     "filename": "Background 176",
-    "url": "https://backend.korpi.ai/load_bg_vid/176"
+    "url": "https://backend.korpi.ai/load_bg_vid/176",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/176-thumbnail.jpg"
   },
   {
     "filename": "Background 177",
-    "url": "https://backend.korpi.ai/load_bg_vid/177"
+    "url": "https://backend.korpi.ai/load_bg_vid/177",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/177-thumbnail.jpg"
   },
   {
     "filename": "Background 178",
-    "url": "https://backend.korpi.ai/load_bg_vid/178"
+    "url": "https://backend.korpi.ai/load_bg_vid/178",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/178-thumbnail.jpg"
   },
   {
     "filename": "Background 179",
-    "url": "https://backend.korpi.ai/load_bg_vid/179"
+    "url": "https://backend.korpi.ai/load_bg_vid/179",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/179-thumbnail.jpg"
   },
   {
     "filename": "Background 180",
-    "url": "https://backend.korpi.ai/load_bg_vid/180"
+    "url": "https://backend.korpi.ai/load_bg_vid/180",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/180-thumbnail.jpg"
   },
   {
     "filename": "Background 181",
-    "url": "https://backend.korpi.ai/load_bg_vid/181"
+    "url": "https://backend.korpi.ai/load_bg_vid/181",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/181-thumbnail.jpg"
   },
   {
     "filename": "Background 182",
-    "url": "https://backend.korpi.ai/load_bg_vid/182"
+    "url": "https://backend.korpi.ai/load_bg_vid/182",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/182-thumbnail.jpg"
   },
   {
     "filename": "Background 183",
-    "url": "https://backend.korpi.ai/load_bg_vid/183"
+    "url": "https://backend.korpi.ai/load_bg_vid/183",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/183-thumbnail.jpg"
   },
   {
     "filename": "Background 184",
-    "url": "https://backend.korpi.ai/load_bg_vid/184"
+    "url": "https://backend.korpi.ai/load_bg_vid/184",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/184-thumbnail.jpg"
   },
   {
     "filename": "Background 185",
-    "url": "https://backend.korpi.ai/load_bg_vid/185"
+    "url": "https://backend.korpi.ai/load_bg_vid/185",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/185-thumbnail.jpg"
   },
   {
     "filename": "Background 186",
-    "url": "https://backend.korpi.ai/load_bg_vid/186"
+    "url": "https://backend.korpi.ai/load_bg_vid/186",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/186-thumbnail.jpg"
   },
   {
     "filename": "Background 187",
-    "url": "https://backend.korpi.ai/load_bg_vid/187"
+    "url": "https://backend.korpi.ai/load_bg_vid/187",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/187-thumbnail.jpg"
   },
   {
     "filename": "Background 188",
-    "url": "https://backend.korpi.ai/load_bg_vid/188"
+    "url": "https://backend.korpi.ai/load_bg_vid/188",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/188-thumbnail.jpg"
   },
   {
     "filename": "Background 189",
-    "url": "https://backend.korpi.ai/load_bg_vid/189"
+    "url": "https://backend.korpi.ai/load_bg_vid/189",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/189-thumbnail.jpg"
   },
   {
     "filename": "Background 190",
-    "url": "https://backend.korpi.ai/load_bg_vid/190"
+    "url": "https://backend.korpi.ai/load_bg_vid/190",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/190-thumbnail.jpg"
   },
   {
     "filename": "Background 191",
-    "url": "https://backend.korpi.ai/load_bg_vid/191"
+    "url": "https://backend.korpi.ai/load_bg_vid/191",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/191-thumbnail.jpg"
   },
   {
     "filename": "Background 192",
-    "url": "https://backend.korpi.ai/load_bg_vid/192"
+    "url": "https://backend.korpi.ai/load_bg_vid/192",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/192-thumbnail.jpg"
   },
   {
     "filename": "Background 193",
-    "url": "https://backend.korpi.ai/load_bg_vid/193"
+    "url": "https://backend.korpi.ai/load_bg_vid/193",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/193-thumbnail.jpg"
   },
   {
     "filename": "Background 194",
-    "url": "https://backend.korpi.ai/load_bg_vid/194"
+    "url": "https://backend.korpi.ai/load_bg_vid/194",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/194-thumbnail.jpg"
   },
   {
     "filename": "Background 195",
-    "url": "https://backend.korpi.ai/load_bg_vid/195"
+    "url": "https://backend.korpi.ai/load_bg_vid/195",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/195-thumbnail.jpg"
   },
   {
     "filename": "Background 196",
-    "url": "https://backend.korpi.ai/load_bg_vid/196"
+    "url": "https://backend.korpi.ai/load_bg_vid/196",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/196-thumbnail.jpg"
   },
   {
     "filename": "Background 197",
-    "url": "https://backend.korpi.ai/load_bg_vid/197"
+    "url": "https://backend.korpi.ai/load_bg_vid/197",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/197-thumbnail.jpg"
   },
   {
     "filename": "Background 198",
-    "url": "https://backend.korpi.ai/load_bg_vid/198"
+    "url": "https://backend.korpi.ai/load_bg_vid/198",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/198-thumbnail.jpg"
   },
   {
     "filename": "Background 199",
-    "url": "https://backend.korpi.ai/load_bg_vid/199"
+    "url": "https://backend.korpi.ai/load_bg_vid/199",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/199-thumbnail.jpg"
   },
   {
     "filename": "Background 200",
-    "url": "https://backend.korpi.ai/load_bg_vid/200"
+    "url": "https://backend.korpi.ai/load_bg_vid/200",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/200-thumbnail.jpg"
   },
   {
     "filename": "Background 201",
-    "url": "https://backend.korpi.ai/load_bg_vid/201"
+    "url": "https://backend.korpi.ai/load_bg_vid/201",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/201-thumbnail.jpg"
   },
   {
     "filename": "Background 202",
-    "url": "https://backend.korpi.ai/load_bg_vid/202"
+    "url": "https://backend.korpi.ai/load_bg_vid/202",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/202-thumbnail.jpg"
   },
   {
     "filename": "Background 203",
-    "url": "https://backend.korpi.ai/load_bg_vid/203"
+    "url": "https://backend.korpi.ai/load_bg_vid/203",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/203-thumbnail.jpg"
   },
   {
     "filename": "Background 204",
-    "url": "https://backend.korpi.ai/load_bg_vid/204"
+    "url": "https://backend.korpi.ai/load_bg_vid/204",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/204-thumbnail.jpg"
   },
   {
     "filename": "Background 205",
-    "url": "https://backend.korpi.ai/load_bg_vid/205"
+    "url": "https://backend.korpi.ai/load_bg_vid/205",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/205-thumbnail.jpg"
   },
   {
     "filename": "Background 206",
-    "url": "https://backend.korpi.ai/load_bg_vid/206"
+    "url": "https://backend.korpi.ai/load_bg_vid/206",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/206-thumbnail.jpg"
   },
   {
     "filename": "Background 207",
-    "url": "https://backend.korpi.ai/load_bg_vid/207"
+    "url": "https://backend.korpi.ai/load_bg_vid/207",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/207-thumbnail.jpg"
   },
   {
     "filename": "Background 208",
-    "url": "https://backend.korpi.ai/load_bg_vid/208"
+    "url": "https://backend.korpi.ai/load_bg_vid/208",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/208-thumbnail.jpg"
   },
   {
     "filename": "Background 209",
-    "url": "https://backend.korpi.ai/load_bg_vid/209"
+    "url": "https://backend.korpi.ai/load_bg_vid/209",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/209-thumbnail.jpg"
   },
   {
     "filename": "Background 210",
-    "url": "https://backend.korpi.ai/load_bg_vid/210"
+    "url": "https://backend.korpi.ai/load_bg_vid/210",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/210-thumbnail.jpg"
   },
   {
     "filename": "Background 211",
-    "url": "https://backend.korpi.ai/load_bg_vid/211"
+    "url": "https://backend.korpi.ai/load_bg_vid/211",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/211-thumbnail.jpg"
   },
   {
     "filename": "Background 212",
-    "url": "https://backend.korpi.ai/load_bg_vid/212"
+    "url": "https://backend.korpi.ai/load_bg_vid/212",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/212-thumbnail.jpg"
   },
   {
     "filename": "Background 213",
-    "url": "https://backend.korpi.ai/load_bg_vid/213"
+    "url": "https://backend.korpi.ai/load_bg_vid/213",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/213-thumbnail.jpg"
   },
   {
     "filename": "Background 214",
-    "url": "https://backend.korpi.ai/load_bg_vid/214"
+    "url": "https://backend.korpi.ai/load_bg_vid/214",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/214-thumbnail.jpg"
   },
   {
     "filename": "Background 215",
-    "url": "https://backend.korpi.ai/load_bg_vid/215"
+    "url": "https://backend.korpi.ai/load_bg_vid/215",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/215-thumbnail.jpg"
   },
   {
     "filename": "Background 216",
-    "url": "https://backend.korpi.ai/load_bg_vid/216"
+    "url": "https://backend.korpi.ai/load_bg_vid/216",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/216-thumbnail.jpg"
   },
   {
     "filename": "Background 217",
-    "url": "https://backend.korpi.ai/load_bg_vid/217"
+    "url": "https://backend.korpi.ai/load_bg_vid/217",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/217-thumbnail.jpg"
   },
   {
     "filename": "Background 218",
-    "url": "https://backend.korpi.ai/load_bg_vid/218"
+    "url": "https://backend.korpi.ai/load_bg_vid/218",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/218-thumbnail.jpg"
   },
   {
     "filename": "Background 219",
-    "url": "https://backend.korpi.ai/load_bg_vid/219"
+    "url": "https://backend.korpi.ai/load_bg_vid/219",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/219-thumbnail.jpg"
   },
   {
     "filename": "Background 220",
-    "url": "https://backend.korpi.ai/load_bg_vid/220"
+    "url": "https://backend.korpi.ai/load_bg_vid/220",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/220-thumbnail.jpg"
   },
   {
     "filename": "Background 221",
-    "url": "https://backend.korpi.ai/load_bg_vid/221"
+    "url": "https://backend.korpi.ai/load_bg_vid/221",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/221-thumbnail.jpg"
   },
   {
     "filename": "Background 222",
-    "url": "https://backend.korpi.ai/load_bg_vid/222"
+    "url": "https://backend.korpi.ai/load_bg_vid/222",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/222-thumbnail.jpg"
   },
   {
     "filename": "Background 223",
-    "url": "https://backend.korpi.ai/load_bg_vid/223"
+    "url": "https://backend.korpi.ai/load_bg_vid/223",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/223-thumbnail.jpg"
   },
   {
     "filename": "Background 224",
-    "url": "https://backend.korpi.ai/load_bg_vid/224"
+    "url": "https://backend.korpi.ai/load_bg_vid/224",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/224-thumbnail.jpg"
   },
   {
     "filename": "Background 225",
-    "url": "https://backend.korpi.ai/load_bg_vid/225"
+    "url": "https://backend.korpi.ai/load_bg_vid/225",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/225-thumbnail.jpg"
   },
   {
     "filename": "Background 226",
-    "url": "https://backend.korpi.ai/load_bg_vid/226"
+    "url": "https://backend.korpi.ai/load_bg_vid/226",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/226-thumbnail.jpg"
   },
   {
     "filename": "Background 227",
-    "url": "https://backend.korpi.ai/load_bg_vid/227"
+    "url": "https://backend.korpi.ai/load_bg_vid/227",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/227-thumbnail.jpg"
   },
   {
     "filename": "Background 228",
-    "url": "https://backend.korpi.ai/load_bg_vid/228"
+    "url": "https://backend.korpi.ai/load_bg_vid/228",
+    "thumbnail": "https://korpi.ai/assets/dashboard/template_videos/new/228-thumbnail.jpg"
   }
 ]
