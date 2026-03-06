@@ -14,6 +14,7 @@ export interface IStorage {
   createExport(data: InsertExport): Promise<Export>;
   getExports(): Promise<Export[]>;
   getExport(id: string): Promise<Export | undefined>;
+  updateExportScript(id: string, scriptData: string): Promise<void>;
   deleteExport(id: string): Promise<void>;
 }
 
@@ -52,6 +53,10 @@ export class DatabaseStorage implements IStorage {
   async getExport(id: string): Promise<Export | undefined> {
     const [record] = await this.db.select().from(exports).where(eq(exports.id, id));
     return record;
+  }
+
+  async updateExportScript(id: string, scriptData: string): Promise<void> {
+    await this.db.update(exports).set({ scriptData }).where(eq(exports.id, id));
   }
 
   async deleteExport(id: string): Promise<void> {

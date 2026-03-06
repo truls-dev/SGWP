@@ -651,6 +651,41 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLoadExportScript = (scriptDataJson: string) => {
+    try {
+      const data = JSON.parse(scriptDataJson);
+      const seqArray = data.sequences || [data];
+      if (seqArray.length > 1) {
+        const newSequences: Sequence[] = seqArray.map((s: any, idx: number) => ({
+          id: uuidv4(),
+          label: `Sequence ${idx + 1}`,
+          cast: s.cast || [],
+          script: (s.script || []).map((ev: any) => ({ ...ev, id: ev.id || uuidv4() })),
+          chat: s.chat || { ...state.chat },
+          transitionDelayMs: s.transitionDelayMs ?? 1500,
+          returnToSeqIndex: s.returnToSeqIndex,
+        }));
+        const first = newSequences[0];
+        setState(prev => ({ ...prev, cast: first.cast, script: first.script, chat: first.chat }));
+        setSequences(newSequences);
+        setActiveSequenceIndex(0);
+      } else {
+        const s = seqArray[0];
+        const cast = s.cast || [];
+        const script = (s.script || []).map((ev: any) => ({ ...ev, id: ev.id || uuidv4() }));
+        const chat = s.chat || state.chat;
+        setState(prev => ({ ...prev, cast, script, chat }));
+        setSequences(prev => prev.map((seq, i) =>
+          i === activeSequenceIndexRef.current ? { ...seq, cast, script, chat } : seq
+        ));
+      }
+      setActiveTab('script');
+    } catch (e) {
+      console.error('Failed to load script data:', e);
+      alert('Failed to load script data from this export.');
+    }
+  };
+
   const handleNewChat = () => {
     runningStatusRef.current = 'idle';
     setPlaybackMode(false);
@@ -1598,6 +1633,16 @@ const App: React.FC = () => {
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
       await delay(1000);
+      if (appendOutro && outroActiveRef.current) {
+        await new Promise<void>(resolve => {
+          const checkOutro = () => {
+            if (!outroActiveRef.current) { resolve(); return; }
+            setTimeout(checkOutro, 100);
+          };
+          checkOutro();
+        });
+        await delay(500);
+      }
       restoreActiveSequence();
       stopRecordingSession();
     } else {
@@ -2046,6 +2091,24 @@ const App: React.FC = () => {
               });
               if (uploadRes.ok) {
                 console.log('[Export] Uploaded to cloud storage');
+                const exportRecord = await uploadRes.json();
+                try {
+                  const seqData = sequencesRef.current.map(s => ({
+                    cast: s.cast,
+                    script: s.script,
+                    chat: s.chat,
+                    transitionDelayMs: s.transitionDelayMs,
+                    returnToSeqIndex: s.returnToSeqIndex
+                  }));
+                  await fetch(`/api/exports/${exportRecord.id}/script`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sequences: seqData })
+                  });
+                  console.log('[Export] Script data saved');
+                } catch (scriptErr) {
+                  console.warn('[Export] Failed to save script data:', scriptErr);
+                }
               } else {
                 console.warn('[Export] Cloud upload failed:', await uploadRes.text());
               }
@@ -3477,7 +3540,7 @@ const App: React.FC = () => {
           <>
           <section className="space-y-4">
             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Export History</h3>
-            <ExportHistoryPanel />
+            <ExportHistoryPanel onLoadScript={handleLoadExportScript} />
           </section>
           </>
           )}

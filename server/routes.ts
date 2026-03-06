@@ -335,6 +335,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/exports/:id/script", async (req, res) => {
+    try {
+      const record = await storage.getExport(req.params.id);
+      if (!record) return res.status(404).json({ error: "Not found" });
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk.toString();
+      }
+      await storage.updateExportScript(req.params.id, body);
+      res.json({ success: true });
+    } catch (e: any) {
+      console.error("Update script error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.delete("/api/exports/:id", async (req, res) => {
     try {
       const record = await storage.getExport(req.params.id);

@@ -21,7 +21,11 @@ function formatDuration(ms: number | null): string {
   return `${mins}:${remainSecs.toString().padStart(2, '0')}`;
 }
 
-export function ExportHistoryPanel() {
+interface ExportHistoryPanelProps {
+  onLoadScript?: (scriptData: string) => void;
+}
+
+export function ExportHistoryPanel({ onLoadScript }: ExportHistoryPanelProps) {
   const [exports, setExports] = useState<Export[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -82,6 +86,12 @@ export function ExportHistoryPanel() {
     }
   };
 
+  const handleLoadScript = (exp: Export) => {
+    if (!exp.scriptData || !onLoadScript) return;
+    if (!confirm('Load this script? This will replace your current script and cast.')) return;
+    onLoadScript(exp.scriptData);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -129,6 +139,15 @@ export function ExportHistoryPanel() {
             >
               {downloading === exp.id ? 'Getting link...' : 'Download'}
             </button>
+            {exp.scriptData && onLoadScript && (
+              <button
+                data-testid={`load-script-${exp.id}`}
+                onClick={() => handleLoadScript(exp)}
+                className="py-2 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-[#FFFC00]/10 border border-[#FFFC00]/30 text-[#FFFC00] hover:bg-[#FFFC00]/20 transition-all"
+              >
+                Load Script
+              </button>
+            )}
             <button
               data-testid={`delete-export-${exp.id}`}
               onClick={() => handleDelete(exp)}

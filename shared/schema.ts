@@ -15,6 +15,7 @@ export const exports = pgTable("exports", {
   r2Key: text("r2_key").notNull(),
   fileSize: integer("file_size").notNull(),
   durationMs: integer("duration_ms"),
+  scriptData: text("script_data"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
