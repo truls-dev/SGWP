@@ -236,6 +236,8 @@ const App: React.FC = () => {
   sequencesRef.current = sequences;
   const activeSequenceIndexRef = useRef(activeSequenceIndex);
   activeSequenceIndexRef.current = activeSequenceIndex;
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const [playbackMode, setPlaybackMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -2106,13 +2108,25 @@ const App: React.FC = () => {
                 console.log('[Export] Uploaded to cloud storage');
                 const exportRecord = await uploadRes.json();
                 try {
-                  const seqData = sequencesRef.current.map(s => ({
-                    cast: s.cast,
-                    script: s.script,
-                    chat: s.chat,
-                    transitionDelayMs: s.transitionDelayMs,
-                    returnToSeqIndex: s.returnToSeqIndex
-                  }));
+                  const currentSeqs = sequencesRef.current.map((s, i) => {
+                    if (i === activeSequenceIndexRef.current) {
+                      return {
+                        cast: stateRef.current.cast,
+                        script: stateRef.current.script,
+                        chat: stateRef.current.chat,
+                        transitionDelayMs: s.transitionDelayMs,
+                        returnToSeqIndex: s.returnToSeqIndex
+                      };
+                    }
+                    return {
+                      cast: s.cast,
+                      script: s.script,
+                      chat: s.chat,
+                      transitionDelayMs: s.transitionDelayMs,
+                      returnToSeqIndex: s.returnToSeqIndex
+                    };
+                  });
+                  const seqData = currentSeqs;
                   await fetch(`/api/exports/${exportRecord.id}/script`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
