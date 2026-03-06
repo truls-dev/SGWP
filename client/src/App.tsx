@@ -655,30 +655,35 @@ const App: React.FC = () => {
     try {
       const data = JSON.parse(scriptDataJson);
       const seqArray = data.sequences || [data];
-      if (seqArray.length > 1) {
-        const newSequences: Sequence[] = seqArray.map((s: any, idx: number) => ({
-          id: uuidv4(),
-          label: `Sequence ${idx + 1}`,
-          cast: s.cast || [],
-          script: (s.script || []).map((ev: any) => ({ ...ev, id: ev.id || uuidv4() })),
-          chat: s.chat || { ...state.chat },
-          transitionDelayMs: s.transitionDelayMs ?? 1500,
-          returnToSeqIndex: s.returnToSeqIndex,
-        }));
-        const first = newSequences[0];
-        setState(prev => ({ ...prev, cast: first.cast, script: first.script, chat: first.chat }));
-        setSequences(newSequences);
-        setActiveSequenceIndex(0);
-      } else {
-        const s = seqArray[0];
-        const cast = s.cast || [];
-        const script = (s.script || []).map((ev: any) => ({ ...ev, id: ev.id || uuidv4() }));
-        const chat = s.chat || state.chat;
-        setState(prev => ({ ...prev, cast, script, chat }));
-        setSequences(prev => prev.map((seq, i) =>
-          i === activeSequenceIndexRef.current ? { ...seq, cast, script, chat } : seq
-        ));
-      }
+
+      runningStatusRef.current = 'idle';
+      setPlaybackMode(false);
+      setIsRecording(false);
+
+      const newSequences: Sequence[] = seqArray.map((s: any, idx: number) => ({
+        id: uuidv4(),
+        label: `Sequence ${idx + 1}`,
+        cast: s.cast || [],
+        script: (s.script || []).map((ev: any) => ({ ...ev, id: ev.id || uuidv4() })),
+        chat: { ...state.chat, ...s.chat },
+        transitionDelayMs: s.transitionDelayMs ?? 1500,
+        returnToSeqIndex: s.returnToSeqIndex,
+      }));
+
+      const first = newSequences[0];
+      setState(prev => ({
+        ...prev,
+        cast: first.cast,
+        script: first.script,
+        chat: { ...prev.chat, ...first.chat },
+      }));
+      setSequences(newSequences);
+      setActiveSequenceIndex(0);
+
+      setTimeout(() => {
+        resetSimulationState(first.script);
+      }, 0);
+
       setActiveTab('script');
     } catch (e) {
       console.error('Failed to load script data:', e);
