@@ -1998,7 +1998,7 @@ const App: React.FC = () => {
         outroVideo.onloadeddata = () => {
           outroVideoElRef.current = outroVideo;
           const outroDurationMs = (outroVideo.duration || 4) * 1000;
-          const adjustedEndMs = estimatedDurationMs * 0.85;
+          const adjustedEndMs = estimatedDurationMs * 0.80;
           const outroStartMs = Math.max(0, adjustedEndMs - outroDurationMs);
           const elapsedSinceStart = performance.now() - startTime;
           const remainingDelay = Math.max(0, outroStartMs - elapsedSinceStart);
