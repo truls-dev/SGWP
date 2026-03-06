@@ -757,7 +757,7 @@ const App: React.FC = () => {
     }
   };
 
-  const OUTRO_WEBM_URL = 'https://raw.githubusercontent.com/truls-dev/images/main/animationsubscribe.webm';
+  const OUTRO_WEBM_URL = 'https://raw.githubusercontent.com/truls-dev/images/main/animation%20effect.webm';
 
   const handleTimelineImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
