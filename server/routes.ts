@@ -63,12 +63,18 @@ Optional fields:
 
 RULES:
 1. NEVER use it on the FIRST ME message in a conversation
-2. NEVER use it when ME's message is a DIRECT RESPONSE to the partner's previous message — ME can't respond before reading it
-3. DO use it when ME is continuing their OWN train of thought unrelated to what the partner is typing
+2. NEVER use it when ME's message RESPONDS TO, ANSWERS, or ACKNOWLEDGES the previous message in ANY way. "during_previous" means ME starts typing BEFORE the previous message appears on screen — so ME literally cannot have read it yet. If ME's message makes sense as a reply to the previous message, DO NOT use during_previous. Ask yourself: "Would ME send this exact message even if they hadn't seen what the other person just typed?" If NO, don't use it.
+3. DO use it when ME is continuing their OWN train of thought unrelated to whatever the partner is typing (e.g., ME sends a follow-up to ME's own earlier message)
 4. DO use it on messages with "isBackspaced": true (impulsive reaction ME deletes)
 5. DO use it when ME is sending something pre-planned or unrelated (changing subject, etc.)
-6. Use SPARINGLY — 10-20% of ME messages at most
+6. Use SPARINGLY — roughly 10-15% of ME messages at most
 7. Only works when the PREVIOUS event is a partner TEXT message
+
+BAD EXAMPLES (NEVER do this):
+- Partner: "Who were you with last night?" → ME: "I was home" (during_previous) ❌ This is an ANSWER to the question
+- Partner: "I found your vape" → ME: "That's my inhaler" (during_previous) ❌ This is a RESPONSE to the accusation
+- Partner: "Can you come over?" → ME: "When?" (during_previous) ❌ This is a follow-up TO that message
+- Partner: "I like her!" → ME: "SHES MY BEST FRIEND" (during_previous) ❌ This reacts to what partner said
 
 ## Writing Style — How Real People Actually Text
 
@@ -115,11 +121,17 @@ Study these patterns from REAL viral scripts:
 The message types out then deletes itself — viewer sees what someone ALMOST sent. Use 0-2 times per script.
 
 ## iOS Notifications — The Twist Maker
-Notifications from OUTSIDE the current chat. The viewer sees it but the chat partner doesn't. Use 0-2 per script. This is often the PUNCHLINE.
+Notifications from OUTSIDE the current chat that pop up on ME's screen. ONLY THE VIEWER sees the notification — the other person in the chat CANNOT see it and has NO IDEA it appeared. This means:
+- The chat partner must NEVER react to, mention, or acknowledge the notification in any way
+- The chat partner must NEVER say things like "I saw that notification" or "what was that?" — they literally cannot see ME's phone screen
+- The notification is dramatic irony for the VIEWER only — it gives the viewer extra context that the characters don't have
+- If you want someone to SEE a notification (like catching a lie), that must happen in a DIFFERENT sequence/conversation, not in the same chat
+
+Use 0-2 per script. This is often the PUNCHLINE.
 Examples from winning scripts:
-- Mom notification: "This is very bad!" (after kid's secret is exposed)
-- Boyfriend texts sweetly while ME is in a different chat about him
-- Someone's lie gets exposed by a notification from the wrong person
+- Mom notification: "This is very bad!" appears while ME is frantically DMing their sibling — the viewer knows ME is in trouble, but the sibling doesn't see Mom's text
+- Boyfriend texts sweetly while ME is in a different chat talking about him — the viewer sees the contrast
+- A notification from the wrong person exposes a lie TO THE VIEWER (not to the chat partner)
 
 ## VIRAL SCRIPT PATTERNS — Based on Real Winning Scripts
 
