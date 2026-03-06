@@ -1642,23 +1642,9 @@ const App: React.FC = () => {
 
     if (isRecordingMode && runningStatusRef.current === 'recording') {
       await delay(1000);
-      if (appendOutro) {
-        if (!outroActiveRef.current && outroVideoElRef.current) {
-          outroActiveRef.current = true;
-          outroVideoElRef.current.currentTime = 0;
-          outroVideoElRef.current.play().catch(() => {});
-          console.log('[Outro] Overlay started (triggered by script end)');
-        }
-        if (outroActiveRef.current) {
-          await new Promise<void>(resolve => {
-            const checkOutro = () => {
-              if (!outroActiveRef.current) { resolve(); return; }
-              setTimeout(checkOutro, 100);
-            };
-            checkOutro();
-          });
-          await delay(500);
-        }
+      outroActiveRef.current = false;
+      if (outroVideoElRef.current) {
+        outroVideoElRef.current.pause();
       }
       restoreActiveSequence();
       stopRecordingSession();
