@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { AppState, CastMember, ScriptEvent, MessageType, TimedSoundEffect, TimedNotification, NotificationPlatform, Sequence, ChatConfig } from './types';
 import StatusBar from './components/StatusBar';
@@ -1998,11 +1998,20 @@ const App: React.FC = () => {
         outroVideo.onloadeddata = () => {
           outroVideoElRef.current = outroVideo;
           const outroDurationMs = (outroVideo.duration || 4) * 1000;
-          const adjustedEndMs = estimatedDurationMs * 0.80;
+          let totalEstimatedMs = 0;
+          const seqs = sequencesRef.current;
+          for (let si = 0; si < seqs.length; si++) {
+            const seq = si === activeSequenceIndexRef.current
+              ? { script: stateRef.current.script, cast: stateRef.current.cast, chat: stateRef.current.chat }
+              : seqs[si];
+            totalEstimatedMs += estimateSequenceDuration(seq.script, seq.cast, seq.chat);
+            if (si < seqs.length - 1) totalEstimatedMs += (seqs[si].transitionDelayMs || 1500);
+          }
+          const adjustedEndMs = totalEstimatedMs * 0.80;
           const outroStartMs = Math.max(0, adjustedEndMs - outroDurationMs);
           const elapsedSinceStart = performance.now() - startTime;
           const remainingDelay = Math.max(0, outroStartMs - elapsedSinceStart);
-          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Outro=${(outroDurationMs/1000).toFixed(1)}s, est=${(estimatedDurationMs/1000).toFixed(1)}s, adj=${(adjustedEndMs/1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
+          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Outro=${(outroDurationMs/1000).toFixed(1)}s, totalEst=${(totalEstimatedMs/1000).toFixed(1)}s, adj=${(adjustedEndMs/1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
           const wt = workerTimerRef.current;
           const scheduleOutro = wt ? wt.setTimeout.bind(wt) : (fn: () => void, ms: number) => window.setTimeout(fn, ms);
           scheduleOutro(() => {
@@ -2159,9 +2168,8 @@ const App: React.FC = () => {
     }
   };
 
-  const estimatedDurationMs = useMemo(() => {
+  const estimateSequenceDuration = useCallback((script: ScriptEvent[], cast: CastMember[], chat: ChatConfig) => {
     let totalMs = 0;
-    const { script, cast, chat } = state;
     const isGroup = chat.isGroup;
     const activeIds: string[] = [];
 
@@ -2170,7 +2178,6 @@ const App: React.FC = () => {
       if (!script[i].isPreShown) break;
       estStartIdx = i + 1;
     }
-    
 
     for (let idx = estStartIdx; idx < script.length; idx++) {
       const event = script[idx];
@@ -2252,7 +2259,11 @@ const App: React.FC = () => {
     }
     totalMs += 3000;
     return totalMs;
-  }, [state.script, state.cast, state.chat.messageDelay, state.chat.typingSpeed, state.chat.isGroup]);
+  }, []);
+
+  const estimatedDurationMs = useMemo(() => {
+    return estimateSequenceDuration(state.script, state.cast, state.chat);
+  }, [state.script, state.cast, state.chat.messageDelay, state.chat.typingSpeed, state.chat.isGroup, estimateSequenceDuration]);
 
   const formatDuration = (ms: number) => {
     const totalSeconds = Math.round(ms / 1000);
