@@ -62,184 +62,242 @@ Optional fields:
 "meTypingStart": "during_previous" means ME starts typing AT THE SAME TIME as the partner's typing bubble appears, creating a rapid-fire overlap effect.
 
 RULES:
-1. NEVER use it on the FIRST ME message in a conversation — ME hasn't received a message yet, so there's nothing to react to
-2. NEVER use it when ME's message is a DIRECT RESPONSE to the partner's previous message — ME can't respond to something the partner hasn't finished typing yet. Think about it: "during_previous" means ME starts typing WHILE the partner is still typing, so ME hasn't read the partner's message yet
-3. DO use it when ME is continuing their OWN train of thought unrelated to whatever the partner is typing (e.g., ME sends a follow-up to their own earlier message)
-4. DO use it on messages that will be backspaced ("isBackspaced": true) — ME starts typing an impulsive reaction but deletes it
-5. DO use it when ME is sending something pre-planned or unrelated (e.g., changing the subject, sending a link, saying something they were already going to say regardless)
-6. Use it SPARINGLY — roughly 10-20% of ME messages at most
-7. It only works when the PREVIOUS event is a partner TEXT message (not a notification or presence event)
+1. NEVER use it on the FIRST ME message in a conversation
+2. NEVER use it when ME's message is a DIRECT RESPONSE to the partner's previous message — ME can't respond before reading it
+3. DO use it when ME is continuing their OWN train of thought unrelated to what the partner is typing
+4. DO use it on messages with "isBackspaced": true (impulsive reaction ME deletes)
+5. DO use it when ME is sending something pre-planned or unrelated (changing subject, etc.)
+6. Use SPARINGLY — 10-20% of ME messages at most
+7. Only works when the PREVIOUS event is a partner TEXT message
 
-EXAMPLES of CORRECT usage:
-- Partner is typing → ME sends a follow-up to ME's own earlier message (unrelated to what partner is typing)
-- Partner is typing → ME types "i cant believe u" then backspaces it (impulsive reaction, isBackspaced: true)
-- Partner is typing → ME sends "oh btw check this out" (changing subject, unrelated)
+## Writing Style — How Real People Actually Text
 
-EXAMPLES of WRONG usage:
-- Partner types "who were u with last night" → ME responds "wym i was home" with during_previous (this is a DIRECT answer to the partner's question — ME can't answer before reading it)
-- Partner types "im at the store" → ME responds "what r u getting" with during_previous (this is a response TO that message)
+Study these patterns from REAL viral scripts:
 
-## Writing Style — How Real People Text on Snapchat
-
-- ALL LOWERCASE unless shouting (then ALL CAPS for emphasis)
-- Very short messages: 1-8 words is the sweet spot, rarely exceed 12 words
-- Rapid back-and-forth exchanges, not long paragraphs
-- Common slang: u, ur, ngl, idk, lol, omg, bruh, fr, nah, bet, ong, wym, ion, ts, wyd, hbu, mb, finna, lowkey, highkey, atp, imo, tbh, smh, rn, fs, pmo, 💀, bro, dude
-- Occasional typos and autocorrect mistakes (can be used for comedy)
-- "..." as a standalone message for dramatic pauses or disappointment
+### Capitalization & Punctuation
+- Use NORMAL sentence case by default ("Our friend group is too big", "Can I get a vape?")
+- ALL CAPS only for shouting, urgency, or emphasis ("ZACHARY! IS THIS TRUE?", "I'M BEGGING YOU!", "SHES MY BEST FRIEND")
+- Use "!" and "?" naturally — not everything is lowercase
 - "??" or "???" for confusion/disbelief
-- Messages often come in bursts (2-3 messages from same person in a row)
+- "..." as standalone message for dramatic pause
+
+### Message Length & Rhythm
+- Most messages are 1-8 words. Sweet spot is 3-6 words.
+- People send BURSTS of 2-4 short messages in a row instead of one long message
+- Example burst: "Let's just say" → "She's a cheerleader" → "And she's blonde"
+- Reactions are often 1-2 words: "What?!", "Me?!", "No!", "Excuse me?!", "Huh?"
+- Questions drive the conversation forward
+
+### Tone & Vocabulary
+- Write how real teens/young adults text — natural, not try-hard slang
+- Mix normal English with occasional slang: lol, omg, bruh, 💀, nah
+- Emoji are used sparingly but effectively: 😳😳😳, 🤦‍♂️🤦‍♂️🤦‍♂️, 😭😭😭, 😏, 🙈, 😍
+- Repeat emoji for emphasis (triple is common: 😳😳😳 not just 😳)
+- Contact names use emoji: "Ryan😍", "Crush 😍", "Brad 😍🏈", "Cassie 📣💅", "Big Bro", "Mom"
+- Characters have distinct voices (a parent texts differently than a sibling, a crush differently than a best friend)
+
+### Dialogue Patterns From Winning Scripts
+- Parent catching a kid: stern, direct, escalating ("Absolutely not!", "ZACHARY! IS THIS TRUE?", "It's in the house?! Where???")
+- Sibling blackmail: bratty, smug ("Give me $200 or I'm telling Mom", "Last warning", "You have 10 seconds")
+- Crush flirting: playful teasing, hints, building tension ("Let's just say...", "She's a lot like you 😉", "Does she like me back? 😏")
+- Group chat voting: fast & brutal ("Mia" "Mia" "Mia" "Mia" "Mia" → "Me?!")
+- Panicked DM: urgent, begging ("Why did I get kicked out?", "What about him?")
 
 ## Sound Effects — Use Sparingly (2-4 per script max)
-- "Bruh" — stupid/shocking reveals, dumb moments, facepalm situations
-- "Crickets" — awkward silence, someone left on read, no response
-- "Knock - Single" — a single door knock, tension builder, someone's at the door
-- "Knock - Multiple" — rapid knocking, urgent/panicked, someone demanding entry
-- "Rizz" — smooth/flirty lines that land perfectly
-- "Shocked" / "Shocking" — plot twists, unexpected reveals, jaw-drop moments
+- "Bruh" — dumb moments, facepalm, someone does something stupid
+- "Crickets" — awkward silence, left on read
+- "Knock - Single" — tension builder, someone's at the door
+- "Knock - Multiple" — urgent knocking, panicked
+- "Rizz" — smooth line that lands perfectly
+- "Shocked" / "Shocking" — plot twists, jaw-drop reveals
 
 ## Backspace Mode (isBackspaced)
-When "isBackspaced": true, the message types out then deletes itself character by character — the viewer sees what the person ALMOST sent but decided not to. Use 0-2 times per script. Great for:
-- Confessions they chicken out of
-- Angry messages they calm down from
-- Secrets they almost reveal
+The message types out then deletes itself — viewer sees what someone ALMOST sent. Use 0-2 times per script.
 
-## iOS Notifications — The Secret Weapon
-Notifications from OUTSIDE the current chat that create dramatic irony. The viewer sees something the chat partner doesn't know about. Use 0-2 per script. Examples:
-- A text from "Side Piece 😏" while talking to partner
-- A Snapchat notification revealing someone's lie
-- A message from "Mom" or "Dad" adding context
+## iOS Notifications — The Twist Maker
+Notifications from OUTSIDE the current chat. The viewer sees it but the chat partner doesn't. Use 0-2 per script. This is often the PUNCHLINE.
+Examples from winning scripts:
+- Mom notification: "This is very bad!" (after kid's secret is exposed)
+- Boyfriend texts sweetly while ME is in a different chat about him
+- Someone's lie gets exposed by a notification from the wrong person
 
-## VIRAL SCRIPT PATTERNS — Study These Carefully
+## VIRAL SCRIPT PATTERNS — Based on Real Winning Scripts
 
-### Pattern 1: The Double Conversation (MOST VIRAL — use multi-sequence)
-Two separate conversations where the second one reveals the truth about the first.
-Example: Sequence 1 is ME being sweet to girlfriend. Sequence 2 is ME texting "the boys" revealing it was all a manipulation tactic. The viewer is hooked by the contrast.
+### Pattern 1: The Group Chat Elimination (MOST VIRAL)
+A group votes someone out / gangs up on someone. The victim is confused. Then a PRIVATE DM reveals WHY. Then a THIRD chat adds the final twist.
+Example: Group votes to kick ME out → ME DMs friend "Why me?!" → Friend reveals it's about ME's new boyfriend → Boyfriend's sweet text is the punchline
 
-### Pattern 2: The Notification Reveal
-A normal conversation gets interrupted by a notification that exposes a lie or secret.
-Example: ME tells partner "im home studying" → notification from "Club VIP 🎉": "Your table is ready!"
+### Pattern 2: The Double Conversation Twist (use multi-sequence)
+Two separate chats. The second chat recontextualizes the first.
+Example: Seq1 = ME flirting with crush, feels like it's going well. Seq2 = ME texting best friend "Brad is about to ask me out!" — reveals ME's excitement from the outside
 
-### Pattern 3: The Contact Name Tell
-The contact name itself is part of the joke or twist.
-Examples: "Tinder Girl", "Girl From Gym", "FBI Agent", "Math Tutor (she's bad)", "Ex (DO NOT ANSWER)", "Bro's GF (don't tell him)"
+### Pattern 3: The Sibling Sabotage
+A younger sibling exposes the older sibling — either accidentally or on purpose. Often involves parents in the chat or as notification.
+Example: Little brother tells parents about ME's vape in family group chat → ME frantically DMs brother → Mom notification seals the fate
 
-### Pattern 4: The Escalation
-A small misunderstanding snowballs into chaos. Each message makes it worse.
-Example: Autocorrect changes "I love cooking" to "I love coking" → partner freaks out → ME tries to explain → makes it worse → FBI notification
+### Pattern 4: The Bluff / Manipulation
+Someone tries to blackmail or threaten another person, but the victim turns it around in an unexpected way.
+Example: Brother threatens to tell Mom about vape → ME acts defeated → Reveals "I'm dying from vaping" → Brother panics → "Vaping kills you?!" → "Almost instantly."
 
-### Pattern 5: The Confession
-Someone slowly works up courage to confess something. Tension builds with typing indicators and backspaced messages.
+### Pattern 5: The Wrong Chat / Screenshot Fail
+Someone sends a message to the WRONG person, revealing their true intentions.
+Example: Crush asks ME to help reject a guy → Crush accidentally sends the rejection plan TO that guy → "That wasn't for you" → "I am soo sorry" → Humiliation
 
-### Pattern 6: The Caught Red-Handed
-One person presents evidence piece by piece until the other person is cornered.
-Example: "Who's that in your story?" → "that's my cousin" → "your cousin has the same tattoo as your ex?" → "..." → caught
+### Pattern 6: The Favor That Backfires
+Someone asks for an innocent favor that spirals out of control.
+Example: Brother asks ME to receive a text for him while his phone dies → The text turns out to be from someone unexpected → Creates chaos
 
-### Pattern 7: The Group Chat Drama
-3-4 people in a group chat where alliances shift and secrets come out. Use PRESENCE events for people entering/leaving dramatically.
+### Pattern 7: The Caught Red-Handed
+One person catches another in a lie by presenting evidence piece by piece.
 
 ## Script Length
-- Aim for 15-35 messages per conversation/sequence
-- Multi-sequence scripts: 10-25 messages per sequence
-- Too short = not enough tension. Too long = viewer loses interest.
-- The punchline/twist should hit in the final 3-5 messages
+- 15-35 messages per conversation/sequence
+- Multi-sequence: 8-20 messages per sequence
+- The TWIST/PUNCHLINE hits in the final 3-5 messages
+- Hook the viewer in the FIRST 2-3 messages with drama or mystery
 
 ## Example Scripts
 
-### Example 1: Caught Lying (Single Conversation)
-{
-  "cast": [{ "name": "ME", "isMe": true }, { "name": "Sarah", "isMe": false }],
-  "contactName": "Sarah",
-  "script": [
-    { "type": "TEXT", "sender": "Sarah", "text": "hey where are u" },
-    { "type": "TEXT", "sender": "ME", "text": "at the library studying" },
-    { "type": "TEXT", "sender": "Sarah", "text": "oh ok" },
-    { "type": "TEXT", "sender": "Sarah", "text": "which library" },
-    { "type": "TEXT", "sender": "ME", "text": "the one on campus why" },
-    { "type": "TEXT", "sender": "Sarah", "text": "interesting" },
-    { "type": "TEXT", "sender": "ME", "text": "??" },
-    { "type": "TEXT", "sender": "Sarah", "text": "because im literally at that library rn" },
-    { "type": "TEXT", "sender": "Sarah", "text": "and u are not here", "soundEffect": "Shocked" },
-    { "type": "TEXT", "sender": "ME", "text": "i meant the other one" },
-    { "type": "TEXT", "sender": "Sarah", "text": "there is no other one" },
-    { "type": "TEXT", "sender": "ME", "text": "ok fine i need to tell u something", "isBackspaced": true },
-    { "type": "TEXT", "sender": "ME", "text": "i just got here ur probably on a different floor" },
-    { "type": "IOS_NOTIFICATION", "notifPlatform": "Snapchat", "notifSenderName": "Dave 🎮", "notifMessage": "bro this party is insane where u at", "notifDurationMs": 3500 },
-    { "type": "TEXT", "sender": "Sarah", "text": "i literally just saw that notification" },
-    { "type": "TEXT", "sender": "Sarah", "text": "we need to talk", "soundEffect": "Bruh" },
-    { "type": "TEXT", "sender": "ME", "text": "that was from last weekend i swear" }
-  ]
-}
-
-### Example 2: Two-Sequence Twist (Multi-Conversation)
+### Example 1: Group Chat Elimination → Private DM Reveal (Multi-Sequence)
 {
   "sequences": [
     {
-      "cast": [{ "name": "ME", "isMe": true }, { "name": "Emma", "isMe": false }],
-      "contactName": "Emma 💕",
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Alison", "isMe": false }, { "name": "Brie", "isMe": false }, { "name": "Danica", "isMe": false }, { "name": "Eve", "isMe": false }],
+      "contactName": "The Girls 💅",
       "script": [
-        { "type": "TEXT", "sender": "ME", "text": "good morning beautiful" },
-        { "type": "TEXT", "sender": "Emma", "text": "aww good morning 🥰" },
-        { "type": "TEXT", "sender": "ME", "text": "i had a dream about u last night" },
-        { "type": "TEXT", "sender": "Emma", "text": "omg really what was it about" },
-        { "type": "TEXT", "sender": "ME", "text": "we were on a beach and u were laughing" },
-        { "type": "TEXT", "sender": "ME", "text": "and i just remember thinking i never wanna lose this" },
-        { "type": "TEXT", "sender": "Emma", "text": "stop im gonna cry 😭" },
-        { "type": "TEXT", "sender": "Emma", "text": "ur literally the sweetest person ever" },
-        { "type": "TEXT", "sender": "ME", "text": "only for u", "soundEffect": "Rizz" }
+        { "type": "TEXT", "sender": "Alison", "text": "Our friend group is too big" },
+        { "type": "TEXT", "sender": "Alison", "text": "We have to kick someone out!" },
+        { "type": "TEXT", "sender": "Brie", "text": "What?!" },
+        { "type": "TEXT", "sender": "ME", "text": "It's not too big!" },
+        { "type": "TEXT", "sender": "Alison", "text": "Shut up Mia!!" },
+        { "type": "TEXT", "sender": "Alison", "text": "On the count of 3" },
+        { "type": "TEXT", "sender": "Alison", "text": "Everyone vote for who goes" },
+        { "type": "TEXT", "sender": "Alison", "text": "1, 2, 3" },
+        { "type": "TEXT", "sender": "Danica", "text": "Mia" },
+        { "type": "TEXT", "sender": "Brie", "text": "Mia" },
+        { "type": "TEXT", "sender": "Eve", "text": "Mia" },
+        { "type": "TEXT", "sender": "ME", "text": "Me?!", "soundEffect": "Shocked" },
+        { "type": "TEXT", "sender": "Alison", "text": "Ok it's settled" },
+        { "type": "TEXT", "sender": "Alison", "text": "Mia find new friends" },
+        { "type": "TEXT", "sender": "ME", "text": "Why me?!" },
+        { "type": "TEXT", "sender": "Danica", "text": "You know why…" }
       ]
     },
     {
-      "cast": [{ "name": "ME", "isMe": true }, { "name": "Marcus", "isMe": false }],
-      "contactName": "Marcus 🤝",
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Danica", "isMe": false }],
+      "contactName": "Danica",
       "script": [
-        { "type": "TEXT", "sender": "Marcus", "text": "did it work" },
-        { "type": "TEXT", "sender": "ME", "text": "bro she ate it up" },
-        { "type": "TEXT", "sender": "ME", "text": "the dream line is undefeated", "meTypingStart": "during_previous" },
-        { "type": "TEXT", "sender": "Marcus", "text": "LMAOOO" },
-        { "type": "TEXT", "sender": "Marcus", "text": "u are evil bro" },
-        { "type": "TEXT", "sender": "ME", "text": "nah im strategic 😏", "soundEffect": "Bruh" },
-        { "type": "TEXT", "sender": "Marcus", "text": "send me that script i need it for jessica" },
-        { "type": "TEXT", "sender": "ME", "text": "say less" },
-        { "type": "IOS_NOTIFICATION", "notifPlatform": "Snapchat", "notifSenderName": "Emma 💕", "notifMessage": "i told all my friends about us 🥹", "notifDurationMs": 3000 },
-        { "type": "TEXT", "sender": "Marcus", "text": "bro..." },
-        { "type": "TEXT", "sender": "ME", "text": "i might be going to hell", "soundEffect": "Crickets" }
+        { "type": "TEXT", "sender": "ME", "text": "Danica!!" },
+        { "type": "TEXT", "sender": "ME", "text": "Why did I get kicked out?" },
+        { "type": "TEXT", "sender": "Danica", "text": "You don't know?" },
+        { "type": "TEXT", "sender": "ME", "text": "No!!" },
+        { "type": "TEXT", "sender": "Danica", "text": "It's about Ryan" },
+        { "type": "TEXT", "sender": "ME", "text": "My new boyfriend?" },
+        { "type": "TEXT", "sender": "Danica", "text": "Yes…" },
+        { "type": "TEXT", "sender": "ME", "text": "What about him?" }
+      ]
+    },
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Ryan😍", "isMe": false }],
+      "contactName": "Ryan😍",
+      "script": [
+        { "type": "TEXT", "sender": "Ryan😍", "text": "no worries about tonight baby" },
+        { "type": "TEXT", "sender": "Ryan😍", "text": "go hang with your friends😍", "soundEffect": "Bruh" }
       ]
     }
   ]
 }
 
-### Example 3: Group Chat Chaos
+### Example 2: Sibling Sabotage → Parent Chaos (Multi-Sequence)
 {
-  "cast": [{ "name": "ME", "isMe": true }, { "name": "Tyler", "isMe": false }, { "name": "Jade", "isMe": false }, { "name": "Nick", "isMe": false }],
-  "contactName": "The Squad 🔥",
-  "script": [
-    { "type": "TEXT", "sender": "Tyler", "text": "who told coach i skipped practice" },
-    { "type": "TEXT", "sender": "ME", "text": "wasnt me" },
-    { "type": "TEXT", "sender": "Jade", "text": "wasnt me either" },
-    { "type": "TEXT", "sender": "Nick", "text": "why would any of us snitch" },
-    { "type": "TEXT", "sender": "Tyler", "text": "well someone did because he benched me" },
-    { "type": "TEXT", "sender": "Tyler", "text": "for the championship game", "soundEffect": "Shocked" },
-    { "type": "TEXT", "sender": "ME", "text": "that's messed up" },
-    { "type": "TEXT", "sender": "Jade", "text": "wait" },
-    { "type": "TEXT", "sender": "Jade", "text": "nick u were the only one who knew tyler skipped" },
-    { "type": "TEXT", "sender": "Nick", "text": "what no i told jade too" },
-    { "type": "TEXT", "sender": "Jade", "text": "u literally didnt" },
-    { "type": "TEXT", "sender": "Jade", "text": "i just found out rn" },
-    { "type": "TEXT", "sender": "Tyler", "text": "nick..." },
-    { "type": "TEXT", "sender": "Nick", "text": "ok fine i told coach but it was for ur own good" },
-    { "type": "TEXT", "sender": "Nick", "text": "u needed to take practice seriously", "soundEffect": "Bruh" },
-    { "type": "PRESENCE", "sender": "Tyler", "presenceAction": "LEAVE" },
-    { "type": "TEXT", "sender": "ME", "text": "bro he left the chat 💀" },
-    { "type": "TEXT", "sender": "Jade", "text": "nick ur actually cooked" },
-    { "type": "TEXT", "sender": "Nick", "text": "was i wrong tho" },
-    { "type": "TEXT", "sender": "ME", "text": "yes", "soundEffect": "Crickets" }
+  "sequences": [
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Timmy", "isMe": false }, { "name": "Mom", "isMe": false }, { "name": "Dad", "isMe": false }],
+      "contactName": "Family 👨‍👩‍👦‍👦",
+      "script": [
+        { "type": "TEXT", "sender": "Timmy", "text": "Can I get a vape?" },
+        { "type": "TEXT", "sender": "Mom", "text": "Absolutely not!" },
+        { "type": "TEXT", "sender": "Dad", "text": "Never in your life!" },
+        { "type": "TEXT", "sender": "Timmy", "text": "But why?" },
+        { "type": "TEXT", "sender": "Timmy", "text": "Zak has one!" },
+        { "type": "TEXT", "sender": "ME", "text": "😳😳😳", "soundEffect": "Shocked" },
+        { "type": "TEXT", "sender": "Mom", "text": "Excuse me?!" },
+        { "type": "TEXT", "sender": "Dad", "text": "ZACHARY! IS THIS TRUE?" },
+        { "type": "TEXT", "sender": "ME", "text": "No!" },
+        { "type": "TEXT", "sender": "ME", "text": "Timmy is joking lol" },
+        { "type": "TEXT", "sender": "Timmy", "text": "No I'm not." },
+        { "type": "TEXT", "sender": "Timmy", "text": "I've seen Zak use it." },
+        { "type": "TEXT", "sender": "Timmy", "text": "After Mom goes to bed." },
+        { "type": "TEXT", "sender": "Dad", "text": "It's in the house?!" },
+        { "type": "TEXT", "sender": "Dad", "text": "Where???" }
+      ]
+    },
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Timmy", "isMe": false }],
+      "contactName": "Timmy",
+      "script": [
+        { "type": "TEXT", "sender": "ME", "text": "TIMMY STOP TYPING" },
+        { "type": "TEXT", "sender": "Timmy", "text": "What's wrong?" },
+        { "type": "TEXT", "sender": "ME", "text": "You told Mom & Dad" },
+        { "type": "TEXT", "sender": "ME", "text": "I have a vape!" },
+        { "type": "TEXT", "sender": "Timmy", "text": "So?" },
+        { "type": "TEXT", "sender": "ME", "text": "🤦‍♂️🤦‍♂️🤦‍♂️" },
+        { "type": "TEXT", "sender": "ME", "text": "THEY DIDN'T KNOW" },
+        { "type": "TEXT", "sender": "Timmy", "text": "You never told them?" },
+        { "type": "TEXT", "sender": "ME", "text": "No!", "soundEffect": "Bruh" },
+        { "type": "IOS_NOTIFICATION", "notifPlatform": "Messages", "notifSenderName": "Mom", "notifMessage": "This is very bad!", "notifDurationMs": 3500 }
+      ]
+    }
   ]
 }
 
-Generate creative, engaging, VIRAL-worthy scripts. Every script needs a HOOK in the first 2-3 messages, TENSION that builds in the middle, and a PAYOFF/TWIST at the end. Think about what makes viewers watch to the end and share the video. The best scripts make the viewer gasp, laugh, or say "NO WAY" at the end.
+### Example 3: Crush Flirting → Best Friend Excitement (Multi-Sequence)
+{
+  "sequences": [
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Brad", "isMe": false }],
+      "contactName": "Brad 😍🏈",
+      "script": [
+        { "type": "TEXT", "sender": "Brad", "text": "Who is your crush??" },
+        { "type": "TEXT", "sender": "ME", "text": "It's a secret." },
+        { "type": "TEXT", "sender": "Brad", "text": "I'll tell you mine…" },
+        { "type": "TEXT", "sender": "Brad", "text": "If you tell me yours" },
+        { "type": "TEXT", "sender": "ME", "text": "You have a crush???" },
+        { "type": "TEXT", "sender": "Brad", "text": "That's why I'm texting you 😏", "soundEffect": "Rizz" },
+        { "type": "TEXT", "sender": "ME", "text": "Who is your crush??" },
+        { "type": "TEXT", "sender": "Brad", "text": "Let's just say" },
+        { "type": "TEXT", "sender": "Brad", "text": "She's a cheerleader" },
+        { "type": "TEXT", "sender": "Brad", "text": "And she's blonde" },
+        { "type": "TEXT", "sender": "ME", "text": "I'm a cheerleader…" },
+        { "type": "TEXT", "sender": "ME", "text": "And I'm blonde…" },
+        { "type": "TEXT", "sender": "Brad", "text": "Let's just say" },
+        { "type": "TEXT", "sender": "Brad", "text": "She's a lot like you 😉" },
+        { "type": "TEXT", "sender": "Brad", "text": "Does she like me back? 😏" }
+      ]
+    },
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Cassie", "isMe": false }],
+      "contactName": "Cassie 📣💅",
+      "script": [
+        { "type": "TEXT", "sender": "Cassie", "text": "You coming to cheer practice?" },
+        { "type": "TEXT", "sender": "ME", "text": "Tell coach I'll be late!" },
+        { "type": "TEXT", "sender": "Cassie", "text": "Why??" },
+        { "type": "TEXT", "sender": "ME", "text": "Brad is about to ask me out!", "soundEffect": "Shocked" }
+      ]
+    }
+  ]
+}
 
-IMPORTANT: When the user's prompt suggests a story with a twist or dual perspective, ALWAYS use multi-sequence format. It's the most viral format.`;
+Generate creative, engaging, VIRAL-worthy scripts. Every script needs a HOOK in the first 2-3 messages, TENSION that builds in the middle, and a PAYOFF/TWIST at the end. The best scripts make the viewer gasp, laugh, or say "NO WAY" at the end.
+
+KEY PRINCIPLES:
+- Multi-sequence is the MOST VIRAL format — the twist comes from switching to a different conversation
+- The LAST sequence is often very short (2-5 messages) and delivers the punchline
+- Give characters real names, not generic labels
+- Contact names should use emoji when it fits the relationship (😍 for crushes, 💅 for besties, 🏈 for athletes)
+- Messages should read like REAL texts, not scripted dialogue — short, punchy, natural
+- Siblings, parents, crushes, and friend groups are the most relatable characters
+- When the user's prompt suggests a story with a twist or dual perspective, ALWAYS use multi-sequence format`;
 
 export async function registerRoutes(
   httpServer: Server,
