@@ -1998,10 +1998,11 @@ const App: React.FC = () => {
         outroVideo.onloadeddata = () => {
           outroVideoElRef.current = outroVideo;
           const outroDurationMs = (outroVideo.duration || 4) * 1000;
-          const outroStartMs = Math.max(0, estimatedDurationMs - outroDurationMs);
+          const adjustedEndMs = estimatedDurationMs * 0.85;
+          const outroStartMs = Math.max(0, adjustedEndMs - outroDurationMs);
           const elapsedSinceStart = performance.now() - startTime;
           const remainingDelay = Math.max(0, outroStartMs - elapsedSinceStart);
-          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
+          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Outro=${(outroDurationMs/1000).toFixed(1)}s, est=${(estimatedDurationMs/1000).toFixed(1)}s, adj=${(adjustedEndMs/1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
           const wt = workerTimerRef.current;
           const scheduleOutro = wt ? wt.setTimeout.bind(wt) : (fn: () => void, ms: number) => window.setTimeout(fn, ms);
           scheduleOutro(() => {
