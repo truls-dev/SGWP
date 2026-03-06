@@ -408,9 +408,18 @@ export async function registerRoutes(
   app.patch("/api/exports/:id/script", async (req, res) => {
     try {
       const record = await storage.getExport(req.params.id);
-      if (!record) return res.status(404).json({ error: "Not found" });
+      if (!record) {
+        console.error(`[PATCH script] Export ${req.params.id} not found`);
+        return res.status(404).json({ error: "Not found" });
+      }
       const scriptData = JSON.stringify(req.body);
+      if (!scriptData || scriptData === '{}' || scriptData === 'null' || scriptData === 'undefined') {
+        console.error(`[PATCH script] Empty/invalid body for ${req.params.id}:`, scriptData);
+        return res.status(400).json({ error: "Empty script data" });
+      }
       await storage.updateExportScript(req.params.id, scriptData);
+      const verify = await storage.getExport(req.params.id);
+      console.log(`[PATCH script] Updated ${req.params.id}, stored ${verify?.scriptData?.length ?? 0} chars`);
       res.json({ success: true });
     } catch (e: any) {
       console.error("Update script error:", e);

@@ -2129,12 +2129,19 @@ const App: React.FC = () => {
                     };
                   });
                   const seqData = currentSeqs;
-                  await fetch(`/api/exports/${exportRecord.id}/script`, {
+                  const payload = JSON.stringify({ sequences: seqData });
+                  console.log(`[Export] Saving script data (${payload.length} bytes) for export ${exportRecord.id}`);
+                  const scriptRes = await fetch(`/api/exports/${exportRecord.id}/script`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sequences: seqData })
+                    body: payload
                   });
-                  console.log('[Export] Script data saved');
+                  if (scriptRes.ok) {
+                    console.log('[Export] Script data saved');
+                  } else {
+                    const errText = await scriptRes.text();
+                    console.error(`[Export] Script save failed (${scriptRes.status}):`, errText);
+                  }
                 } catch (scriptErr) {
                   console.warn('[Export] Failed to save script data:', scriptErr);
                 }
