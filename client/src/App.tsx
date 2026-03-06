@@ -3526,6 +3526,7 @@ const App: React.FC = () => {
                 <video 
                   ref={previewVideoRef}
                   src={state.chat.exportBackgroundVideoUrl} 
+                  crossOrigin="anonymous"
                   className="w-full h-full object-cover" 
                   loop 
                   muted 
