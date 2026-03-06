@@ -339,11 +339,8 @@ export async function registerRoutes(
     try {
       const record = await storage.getExport(req.params.id);
       if (!record) return res.status(404).json({ error: "Not found" });
-      let body = '';
-      for await (const chunk of req) {
-        body += chunk.toString();
-      }
-      await storage.updateExportScript(req.params.id, body);
+      const scriptData = JSON.stringify(req.body);
+      await storage.updateExportScript(req.params.id, scriptData);
       res.json({ success: true });
     } catch (e: any) {
       console.error("Update script error:", e);
