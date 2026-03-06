@@ -14,7 +14,8 @@ import { CanvasRenderer, FrameState } from './services/canvasRenderer';
 import { 
   getRandomAvatarId,
   getSelfieUrlForAvatar,
-  getPeekingUrlForAvatar
+  getPeekingUrlForAvatar,
+  AVATAR_POOL
 } from './services/bitmojiService';
 import { findCustomojiSuggestion, getCustomojiUrl, preloadImage, initCatalog } from './services/customojiService';
 import { ExportHistoryPanel } from './components/ExportHistoryPanel';
@@ -261,6 +262,7 @@ const App: React.FC = () => {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [bitmojiPickerFor, setBitmojiPickerFor] = useState<string | null>(null);
   const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script' | 'exports'>('script');
   
@@ -3105,11 +3107,42 @@ const App: React.FC = () => {
                       </div>
                     </div>
                     <button 
-                      onClick={() => cycleAvatar(member.id)}
-                      className="w-full bg-white/5 border border-white/10 py-3 rounded-xl text-[10px] font-black uppercase text-gray-200 hover:bg-[#33B5FF] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
+                      onClick={() => setBitmojiPickerFor(bitmojiPickerFor === member.id ? null : member.id)}
+                      className={`w-full border py-3 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 active:scale-95 ${bitmojiPickerFor === member.id ? 'bg-[#33B5FF] text-white border-[#33B5FF]' : 'bg-white/5 border-white/10 text-gray-200 hover:bg-[#33B5FF] hover:text-white'}`}
                     >
-                      <i className="fa-solid fa-wand-sparkles"></i> Randomize Bitmoji
+                      <i className={`fa-solid ${bitmojiPickerFor === member.id ? 'fa-xmark' : 'fa-face-smile'}`}></i> {bitmojiPickerFor === member.id ? 'Close Picker' : 'Choose Bitmoji'}
                     </button>
+                    {bitmojiPickerFor === member.id && (
+                      <div className="grid grid-cols-5 gap-1.5 max-h-[240px] overflow-y-auto mt-2 p-2 bg-black/40 rounded-xl border border-white/10">
+                        {AVATAR_POOL.map(avatarId => (
+                          <button
+                            key={avatarId}
+                            onClick={() => {
+                              setState(prev => ({
+                                ...prev,
+                                cast: prev.cast.map(c => c.id === member.id ? { ...c, bitmojiAvatarId: avatarId } : c)
+                              }));
+                              setBitmojiPickerFor(null);
+                            }}
+                            className={`relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 ${member.bitmojiAvatarId === avatarId ? 'border-[#33B5FF] ring-1 ring-[#33B5FF]' : 'border-transparent hover:border-white/30'}`}
+                          >
+                            <div className="w-full aspect-square bg-[#FFFC00] flex items-center justify-center">
+                              <img 
+                                src={getSelfieUrlForAvatar(avatarId)} 
+                                className="w-full h-full object-contain scale-[1.3]" 
+                                alt="" 
+                                loading="lazy"
+                              />
+                            </div>
+                            {member.bitmojiAvatarId === avatarId && (
+                              <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-[#33B5FF] rounded-full flex items-center justify-center">
+                                <i className="fa-solid fa-check text-[6px] text-white"></i>
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <input
                         type="text"
