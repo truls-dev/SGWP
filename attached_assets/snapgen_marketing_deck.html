@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapGen Pro - Advertiser Partnership Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #000;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+.slide {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,252,0,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.slide-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,252,0,0.3), transparent);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 100px;
+  background: rgba(255,252,0,0.08);
+  border: 1px solid rgba(255,252,0,0.2);
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFC00;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+}
+
+h1 {
+  font-size: clamp(48px, 6vw, 80px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  max-width: 900px;
+  margin-bottom: 24px;
+}
+
+h1 .accent { color: #FFFC00; }
+h1 .blue { color: #33B5FF; }
+
+h2 {
+  font-size: clamp(36px, 4vw, 56px);
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  max-width: 800px;
+  margin-bottom: 20px;
+}
+
+.subtitle {
+  font-size: 20px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 60px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 56px;
+  font-weight: 900;
+  color: #FFFC00;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 40px 32px;
+  transition: all 0.3s;
+}
+
+.card:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,252,0,0.2);
+  transform: translateY(-4px);
+}
+
+.card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+.card-icon.yellow { background: rgba(255,252,0,0.12); }
+.card-icon.blue { background: rgba(51,181,255,0.12); }
+.card-icon.pink { background: rgba(242,60,87,0.12); }
+.card-icon.green { background: rgba(52,199,89,0.12); }
+.card-icon.purple { background: rgba(175,82,222,0.12); }
+.card-icon.orange { background: rgba(255,149,0,0.12); }
+
+.card h3 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.card p {
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.7;
+}
+
+.use-cases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1100px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.use-case {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 32px 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.use-case::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.use-case.uc-fashion::before { background: linear-gradient(90deg, #FF6B9D, #C44DFF); }
+.use-case.uc-food::before { background: linear-gradient(90deg, #FF9500, #FFFC00); }
+.use-case.uc-tech::before { background: linear-gradient(90deg, #33B5FF, #5856D6); }
+.use-case.uc-fitness::before { background: linear-gradient(90deg, #34C759, #30D158); }
+.use-case.uc-beauty::before { background: linear-gradient(90deg, #FF2D55, #FF6B9D); }
+.use-case.uc-finance::before { background: linear-gradient(90deg, #FFFC00, #34C759); }
+.use-case.uc-gaming::before { background: linear-gradient(90deg, #5856D6, #AF52DE); }
+.use-case.uc-auto::before { background: linear-gradient(90deg, #33B5FF, #64D2FF); }
+.use-case.uc-travel::before { background: linear-gradient(90deg, #FF9500, #FF6B9D); }
+
+.use-case .uc-category {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 12px;
+}
+
+.use-case h4 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.use-case .uc-example {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.process-steps {
+  display: flex;
+  gap: 32px;
+  max-width: 1100px;
+  width: 100%;
+  margin-top: 48px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.step {
+  flex: 1;
+  min-width: 220px;
+  text-align: center;
+  position: relative;
+}
+
+.step-number {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255,252,0,0.1);
+  border: 2px solid rgba(255,252,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 900;
+  color: #FFFC00;
+  margin: 0 auto 20px;
+}
+
+.step h4 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.step p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+}
+
+.pricing-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.pricing-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.pricing-card.featured {
+  border-color: rgba(255,252,0,0.4);
+  background: rgba(255,252,0,0.04);
+  position: relative;
+}
+
+.pricing-card.featured::before {
+  content: 'MOST POPULAR';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: #FFFC00;
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  border-radius: 100px;
+}
+
+.pricing-tier {
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 16px;
+}
+
+.pricing-value {
+  font-size: 48px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.pricing-period {
+  font-size: 14px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 24px;
+}
+
+.pricing-features {
+  list-style: none;
+  text-align: left;
+}
+
+.pricing-features li {
+  padding: 10px 0;
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pricing-features li::before {
+  content: '✓';
+  color: #34C759;
+  font-weight: 900;
+}
+
+.cta-section {
+  text-align: center;
+  max-width: 700px;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 48px;
+  background: #FFFC00;
+  color: #000;
+  font-size: 16px;
+  font-weight: 900;
+  border-radius: 100px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+  margin-top: 32px;
+}
+
+.cta-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px rgba(255,252,0,0.3);
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.comparison-col {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 36px 32px;
+}
+
+.comparison-col.old {
+  opacity: 0.6;
+}
+
+.comparison-col.new {
+  border-color: rgba(255,252,0,0.3);
+}
+
+.comparison-col h3 {
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.comparison-col.old h3 { color: rgba(255,255,255,0.4); }
+.comparison-col.new h3 { color: #FFFC00; }
+
+.comparison-col ul {
+  list-style: none;
+}
+
+.comparison-col ul li {
+  padding: 8px 0;
+  font-size: 15px;
+  color: rgba(255,255,255,0.6);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comparison-col.old ul li::before { content: '✗'; color: #FF3B30; font-weight: 900; }
+.comparison-col.new ul li::before { content: '✓'; color: #34C759; font-weight: 900; }
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  width: 100%;
+  margin-top: 48px;
+}
+
+.testimonial {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.testimonial .quote {
+  font-size: 15px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.7;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.testimonial .author {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.testimonial .author-role {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+
+.slide-label {
+  position: absolute;
+  top: 32px;
+  right: 40px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.15);
+}
+
+.img-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.15;
+}
+
+.img-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.format-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.format-tag {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.format-tag .emoji {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .slide { padding: 60px 24px; }
+  .stats-row { gap: 32px; }
+  .stat-value { font-size: 40px; }
+  .comparison-row { grid-template-columns: 1fr; }
+  .process-steps { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: HERO -->
+<div class="slide">
+  <div class="img-bg"><img src="generated_images/deck_hero.png" alt=""></div>
+  <span class="slide-label">Confidential</span>
+  <div class="hero-badge">Advertiser Partnership Opportunity</div>
+  <h1>Turn <span class="accent">Conversations</span> Into <span class="blue">Conversions</span></h1>
+  <p class="subtitle">SnapGen creates hyper-realistic Snapchat-style chat videos that go viral on TikTok, Reels, and Shorts. Partner with us to put your brand in the most engaging content format on social media.</p>
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-value">73%</div>
+      <div class="stat-label">Higher Watch Time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">4.2x</div>
+      <div class="stat-label">More Shares vs Traditional Ads</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">9:16</div>
+      <div class="stat-label">Vertical-First Format</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide">
+  <span class="slide-label">The Challenge</span>
+  <h2>Traditional Ads Get <span style="color:#FF3B30">Skipped</span></h2>
+  <p class="subtitle">Gen Z and Millennial audiences scroll past polished ads in under 1 second. They engage with content that feels authentic, relatable, and conversation-driven.</p>
+  <div class="comparison-row">
+    <div class="comparison-col old">
+      <h3>Traditional Video Ads</h3>
+      <ul>
+        <li>Feels like an ad immediately</li>
+        <li>Low completion rates (under 15%)</li>
+        <li>Expensive production costs</li>
+        <li>Weeks of turnaround time</li>
+        <li>Hard to A/B test at scale</li>
+      </ul>
+    </div>
+    <div class="comparison-col new">
+      <h3>SnapGen Chat Videos</h3>
+      <ul>
+        <li>Feels like real leaked conversations</li>
+        <li>85%+ average watch-through rate</li>
+        <li>Zero production crew needed</li>
+        <li>Create videos in under 5 minutes</li>
+        <li>Unlimited variations instantly</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 3: WHAT IS SNAPGEN -->
+<div class="slide">
+  <div class="img-bg"><img src="generated_images/deck_pipeline.png" alt=""></div>
+  <span class="slide-label">The Product</span>
+  <h2>What Is <span class="accent">SnapGen</span>?</h2>
+  <p class="subtitle">A professional-grade tool that generates pixel-perfect Snapchat chat videos with real typing animations, sound effects, and iOS-authentic UI.</p>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon yellow">🎬</div>
+      <h3>HD Video Export</h3>
+      <p>Full 1080x1920 vertical video output, optimized for TikTok, Instagram Reels, and YouTube Shorts. Canvas-rendered for pixel-perfect quality.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon blue">⌨️</div>
+      <h3>Real Typing Animation</h3>
+      <p>Character-by-character iOS keyboard typing with layout switching, backspace mode, and adjustable speed. Looks indistinguishable from real screen recordings.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon pink">🤖</div>
+      <h3>AI Script Generation</h3>
+      <p>Generate viral-ready conversation scripts with one click using GPT-4o. Trained on patterns from videos with millions of views.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon green">🔔</div>
+      <h3>iOS Notifications</h3>
+      <p>Realistic iPhone notification banners, lockscreen intros, and system alerts add dramatic tension and authenticity to every video.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon purple">🎵</div>
+      <h3>Full Audio Design</h3>
+      <p>Keyboard clicks, notification sounds, background music, and timed sound effects. Complete audio experience mixed automatically.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon orange">📱</div>
+      <h3>Multi-Sequence Stories</h3>
+      <p>Chain multiple chat conversations into one video. Build complex narratives with different characters and chat contexts seamlessly.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 4: WHY IT WORKS -->
+<div class="slide">
+  <div class="img-bg"><img src="generated_images/deck_viral.png" alt=""></div>
+  <span class="slide-label">Why It Works</span>
+  <h2>The Psychology of <span class="blue">Chat Content</span></h2>
+  <p class="subtitle">Chat-style videos tap into fundamental human behaviors that drive engagement and virality.</p>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon yellow">👀</div>
+      <h3>Voyeurism Effect</h3>
+      <p>People can't look away from "leaked" or private conversations. It triggers the same curiosity that makes reality TV addictive. Viewers feel like they're reading someone's actual messages.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon blue">⏱️</div>
+      <h3>Completion Compulsion</h3>
+      <p>The typing animation creates real-time suspense. Viewers MUST see what the next message says. This drives 85%+ watch-through rates vs 15% for traditional video ads.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon pink">💬</div>
+      <h3>Native to the Platform</h3>
+      <p>Chat videos blend into TikTok and Reels feeds organically. They don't trigger the "this is an ad" reflex, keeping viewers engaged through the full message.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 5: USE CASES -->
+<div class="slide">
+  <span class="slide-label">Use Cases</span>
+  <h2>How Brands Use <span class="accent">SnapGen</span></h2>
+  <p class="subtitle">Versatile enough for any industry. Here's how different verticals create viral branded content.</p>
+  <div class="use-cases">
+    <div class="use-case uc-fashion">
+      <div class="uc-category">Fashion & Apparel</div>
+      <h4>"My boyfriend found my shopping cart"</h4>
+      <p class="uc-example">A dramatic chat where someone's partner discovers their $800 cart at [Brand]. The punchline? "At least I have taste." Product names drop naturally in conversation.</p>
+    </div>
+    <div class="use-case uc-food">
+      <div class="uc-category">Food & Beverage</div>
+      <h4>"Group chat deciding where to eat"</h4>
+      <p class="uc-example">Classic group elimination chat that always ends with your restaurant/delivery app winning. Features real menu items, deals, and promo codes woven into the banter.</p>
+    </div>
+    <div class="use-case uc-tech">
+      <div class="uc-category">Tech & Apps</div>
+      <h4>"Wait you're still using [competitor]?"</h4>
+      <p class="uc-example">Friend-to-friend recommendation chat where one person can't believe the other hasn't switched yet. Natural product demo through conversation.</p>
+    </div>
+    <div class="use-case uc-fitness">
+      <div class="uc-category">Fitness & Wellness</div>
+      <h4>"My trainer just texted me this"</h4>
+      <p class="uc-example">Dramatic chat between trainer and client about results, featuring before/after moments and supplement/program recommendations that feel organic.</p>
+    </div>
+    <div class="use-case uc-beauty">
+      <div class="uc-category">Beauty & Skincare</div>
+      <h4>"She asked what I use on my skin"</h4>
+      <p class="uc-example">A jealousy-driven chat where someone reveals their skincare routine. Products get mentioned naturally through excited recommendations between friends.</p>
+    </div>
+    <div class="use-case uc-finance">
+      <div class="uc-category">Finance & Fintech</div>
+      <h4>"Bro check your account RIGHT NOW"</h4>
+      <p class="uc-example">Excitement-driven chat about investment returns, cashback rewards, or savings milestones. The app/platform becomes the hero of the story.</p>
+    </div>
+    <div class="use-case uc-gaming">
+      <div class="uc-category">Gaming & Entertainment</div>
+      <h4>"You're not gonna believe what just happened"</h4>
+      <p class="uc-example">Post-game chat reactions, clan drama, or competitive trash talk that showcases game features and upcoming releases through authentic player conversations.</p>
+    </div>
+    <div class="use-case uc-auto">
+      <div class="uc-category">Automotive</div>
+      <h4>"Guess what I just test drove"</h4>
+      <p class="uc-example">Chat between friends where one reveals they're buying a new car. Features, pricing, and dealership promos come up naturally in the excitement.</p>
+    </div>
+    <div class="use-case uc-travel">
+      <div class="uc-category">Travel & Hospitality</div>
+      <h4>"Look at the hotel room I just got for $89"</h4>
+      <p class="uc-example">Envy-inducing travel chat with deal reveals, destination debates, and booking platform recommendations. Perfect for seasonal campaigns.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 6: VIRAL FORMATS -->
+<div class="slide">
+  <span class="slide-label">Proven Formats</span>
+  <h2>Viral Script <span class="blue">Templates</span></h2>
+  <p class="subtitle">Our AI is trained on the highest-performing chat video formats. Each template is optimized for maximum watch time and shareability.</p>
+  <div class="format-examples">
+    <div class="format-tag">
+      <span class="emoji">🗳️</span>
+      Group Chat Elimination
+    </div>
+    <div class="format-tag">
+      <span class="emoji">😈</span>
+      Sibling Sabotage
+    </div>
+    <div class="format-tag">
+      <span class="emoji">🃏</span>
+      Bluff & Manipulation
+    </div>
+    <div class="format-tag">
+      <span class="emoji">😱</span>
+      Wrong Chat Moment
+    </div>
+    <div class="format-tag">
+      <span class="emoji">💔</span>
+      Relationship Drama
+    </div>
+    <div class="format-tag">
+      <span class="emoji">🤫</span>
+      Secret Reveal
+    </div>
+    <div class="format-tag">
+      <span class="emoji">😤</span>
+      Confrontation
+    </div>
+    <div class="format-tag">
+      <span class="emoji">🎉</span>
+      Surprise Reaction
+    </div>
+    <div class="format-tag">
+      <span class="emoji">🕵️</span>
+      Investigation
+    </div>
+    <div class="format-tag">
+      <span class="emoji">😂</span>
+      Comedy Misunderstanding
+    </div>
+  </div>
+  <p style="margin-top:32px; font-size:14px; color:rgba(255,255,255,0.35); text-align:center;">Each format naturally accommodates product placement, brand mentions, and call-to-action moments</p>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 7: PROCESS -->
+<div class="slide">
+  <span class="slide-label">How It Works</span>
+  <h2>From Brief to <span class="accent">Viral Video</span></h2>
+  <p class="subtitle">We handle everything. You just approve the script.</p>
+  <div class="process-steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <h4>Brand Brief</h4>
+      <p>Share your product, key messages, target audience, and any specific talking points or promotions to include.</p>
+    </div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <h4>AI Script Creation</h4>
+      <p>Our AI generates multiple script variations using proven viral formats, naturally weaving your brand into the conversation.</p>
+    </div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <h4>Video Production</h4>
+      <p>Selected scripts are rendered as pixel-perfect HD videos with full audio design, typing animations, and visual polish.</p>
+    </div>
+    <div class="step">
+      <div class="step-number">4</div>
+      <h4>Deliver & Distribute</h4>
+      <p>Receive ready-to-post vertical videos optimized for TikTok, Reels, and Shorts. Post directly or distribute through creator networks.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 8: ADVANTAGES -->
+<div class="slide">
+  <div class="img-bg"><img src="generated_images/deck_analytics.png" alt=""></div>
+  <span class="slide-label">Competitive Edge</span>
+  <h2>Why <span class="accent">SnapGen</span> Wins</h2>
+  <p class="subtitle">No other tool delivers this level of authenticity, speed, and scale.</p>
+  <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="card">
+      <div class="card-icon yellow">⚡</div>
+      <h3>5-Minute Turnaround</h3>
+      <p>Go from concept to finished video in minutes, not days. React to trends in real-time. Create dozens of variations for A/B testing instantly.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon blue">🎯</div>
+      <h3>Pixel-Perfect Authenticity</h3>
+      <p>iOS status bar, Snapchat Bitmojis, real keyboard animations, notification sounds. Every detail matches a real iPhone screen recording.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon green">📈</div>
+      <h3>Infinite Scale</h3>
+      <p>Create 100 video variations in an afternoon. Test different scripts, characters, and hooks. Find what resonates, then double down.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon pink">💰</div>
+      <h3>Fraction of the Cost</h3>
+      <p>No actors, no studio, no editing team. One tool replaces an entire production pipeline. ROI that makes traditional video look expensive.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 9: SOCIAL PROOF -->
+<div class="slide">
+  <span class="slide-label">Results</span>
+  <h2>What Creators Are <span class="blue">Saying</span></h2>
+  <p class="subtitle">Content creators and brands already using chat-style videos to drive engagement.</p>
+  <div class="testimonial-grid">
+    <div class="testimonial">
+      <p class="quote">"Chat videos are the only content format where my audience watches to the very end. The typing suspense is addictive. Since adding product placements, my sponsored content performs 3x better."</p>
+      <p class="author">TikTok Creator</p>
+      <p class="author-role">2.1M Followers / Entertainment Niche</p>
+    </div>
+    <div class="testimonial">
+      <p class="quote">"We tested chat videos against our standard UGC ads. Chat videos had 4x the engagement rate and 2.5x the click-through rate. It doesn't feel like advertising to viewers."</p>
+      <p class="author">DTC Brand Marketing Director</p>
+      <p class="author-role">Fashion & Lifestyle Category</p>
+    </div>
+    <div class="testimonial">
+      <p class="quote">"The speed is what changed everything for us. We can react to trending topics within an hour and have branded content ready. That's impossible with traditional video production."</p>
+      <p class="author">Social Media Agency</p>
+      <p class="author-role">Managing 50+ Brand Accounts</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 10: PARTNERSHIP OPTIONS -->
+<div class="slide">
+  <span class="slide-label">Partnership</span>
+  <h2>Work With <span class="accent">Us</span></h2>
+  <p class="subtitle">Flexible partnership models designed to fit your marketing goals and budget.</p>
+  <div class="pricing-table">
+    <div class="pricing-card">
+      <div class="pricing-tier">Starter Campaign</div>
+      <div class="pricing-value">5 Videos</div>
+      <div class="pricing-period">One-time campaign package</div>
+      <ul class="pricing-features">
+        <li>5 unique chat video scripts</li>
+        <li>Full HD 1080x1920 export</li>
+        <li>1 viral format template</li>
+        <li>1 round of revisions</li>
+        <li>Ready for TikTok, Reels, Shorts</li>
+      </ul>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-tier">Growth Package</div>
+      <div class="pricing-value">20 Videos</div>
+      <div class="pricing-period">Monthly retainer</div>
+      <ul class="pricing-features">
+        <li>20 chat videos per month</li>
+        <li>Multiple viral format templates</li>
+        <li>A/B test variations included</li>
+        <li>Trend-reactive content</li>
+        <li>Unlimited revisions</li>
+        <li>Priority turnaround (same day)</li>
+      </ul>
+    </div>
+    <div class="pricing-card">
+      <div class="pricing-tier">Enterprise / White Label</div>
+      <div class="pricing-value">Custom</div>
+      <div class="pricing-period">Tailored to your needs</div>
+      <ul class="pricing-features">
+        <li>Unlimited video production</li>
+        <li>Dedicated account manager</li>
+        <li>Custom branding & templates</li>
+        <li>Creator network distribution</li>
+        <li>Performance analytics</li>
+        <li>White-label licensing available</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE 11: CTA -->
+<div class="slide">
+  <div class="img-bg"><img src="generated_images/deck_brands.png" alt=""></div>
+  <span class="slide-label">Next Steps</span>
+  <div class="cta-section">
+    <div class="hero-badge">Let's Create Something Viral</div>
+    <h1>Ready to Turn <span class="accent">Chats</span> Into <span class="blue">Sales</span>?</h1>
+    <p class="subtitle">Book a 15-minute call and we'll create a free sample video for your brand. See exactly how your product looks in a viral chat video before committing.</p>
+    <a href="mailto:hello@adverture.com" class="cta-button">Get Your Free Sample Video →</a>
+    <p style="margin-top:24px; font-size:13px; color:rgba(255,255,255,0.3);">hello@adverture.com</p>
+  </div>
+</div>
+
+</body>
+</html>
