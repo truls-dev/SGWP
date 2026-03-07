@@ -99,7 +99,7 @@ const App: React.FC = () => {
       { id: 's3', type: MessageType.TEXT, senderId: 'me', text: 'Hows it going!!' },
     ],
     system: {
-      carrier: 'ROGERS',
+      carrier: 'Oh Snap',
       time: '1:15',
       battery: 88,
       connectionType: '5G',
