@@ -514,6 +514,54 @@ h2 {
   margin-bottom: 10px;
 }
 
+.showcase-grid {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 48px;
+}
+
+.showcase-item {
+  text-align: center;
+}
+
+.showcase-phone img {
+  width: 260px;
+  border-radius: 24px;
+  border: 2px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,252,0,0.05);
+}
+
+.showcase-label {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.editor-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  width: 100%;
+  margin-top: 32px;
+}
+
+.editor-feat {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+}
+
 @media (max-width: 768px) {
   .slide { padding: 60px 24px; }
   .stats-row { gap: 32px; }
@@ -617,6 +665,55 @@ h2 {
       <div class="card-icon orange">📱</div>
       <h3>Multi-Sequence Stories</h3>
       <p>Chain multiple chat conversations into one video. Build complex narratives with different characters and chat contexts seamlessly.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE: PRODUCT SHOWCASE -->
+<div class="slide">
+  <span class="slide-label">In Action</span>
+  <h2>See It In <span class="accent">Action</span></h2>
+  <p class="subtitle">Every detail is designed to be indistinguishable from a real iPhone screen recording.</p>
+  <div class="showcase-grid">
+    <div class="showcase-item showcase-phone">
+      <img src="generated_images/deck_mockup_dm.png" alt="1-on-1 Chat">
+      <div class="showcase-label">1-on-1 Chat</div>
+    </div>
+    <div class="showcase-item showcase-phone">
+      <img src="generated_images/deck_mockup_group.png" alt="Group Chat">
+      <div class="showcase-label">Group Chat</div>
+    </div>
+  </div>
+  <div class="showcase-wide" style="margin-top: 40px;">
+    <img src="generated_images/deck_mockup_triple.png" alt="Multiple Conversation Views" style="width:100%; max-width:900px; border-radius:16px; border:1px solid rgba(255,255,255,0.08);">
+    <p style="text-align:center; font-size:13px; color:rgba(255,255,255,0.35); margin-top:16px;">Typing animation, full conversation, and iOS notification banner — all rendered in real-time</p>
+  </div>
+</div>
+
+<div class="slide-divider"></div>
+
+<!-- SLIDE: EDITOR UI -->
+<div class="slide">
+  <span class="slide-label">The Tool</span>
+  <h2>Professional <span class="blue">Creation Suite</span></h2>
+  <p class="subtitle">An intuitive editor where scripts, cast, and settings come together. From concept to export in under 5 minutes.</p>
+  <div style="margin-top:40px; width:100%; max-width:1000px;">
+    <img src="generated_images/deck_mockup_editor.png" alt="SnapGen Editor Interface" style="width:100%; border-radius:16px; border:1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+  </div>
+  <div class="editor-features">
+    <div class="editor-feat">
+      <span style="color:#FFFC00; font-weight:900;">Script Tab</span> — Write or AI-generate conversation scripts with drag-and-drop reordering
+    </div>
+    <div class="editor-feat">
+      <span style="color:#33B5FF; font-weight:900;">Cast Panel</span> — Assign Bitmoji avatars, names, and colors to each participant
+    </div>
+    <div class="editor-feat">
+      <span style="color:#34C759; font-weight:900;">Settings</span> — Control typing speed, font size, background video, music, and more
+    </div>
+    <div class="editor-feat">
+      <span style="color:#AF52DE; font-weight:900;">Live Preview</span> — Watch your video play in real-time before exporting
     </div>
   </div>
 </div>
