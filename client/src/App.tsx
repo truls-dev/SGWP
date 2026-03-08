@@ -1139,9 +1139,13 @@ const App: React.FC = () => {
         setIsShiftActive(true);
         hasPlayedFirstNotif = false;
 
-        setState(prev => ({ ...prev, cast: seqCast, chat: seqChat }));
+        setState(prev => ({ ...prev, cast: seqCast, chat: seqChat, script: seqScript }));
         frameStateRef.current.cast = seqCast;
         frameStateRef.current.chatConfig = seqChat;
+        const newScriptPartIds = Array.from(new Set(
+          seqScript.filter(s => s.senderId && s.senderId !== 'me').map(s => s.senderId as string)
+        ));
+        frameStateRef.current.scriptParticipantIds = newScriptPartIds;
 
         const preShownIds: string[] = savedState ? [...savedState.activeIds] : [];
         for (let pi = 0; pi < seqScript.length; pi++) {
