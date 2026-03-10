@@ -34,6 +34,7 @@ export interface ScriptEvent {
   isVertical?: boolean; // Metadata for image orientation
   soundEffect?: string; // Assigned sound effect name
   isBackspaced?: boolean; // If true, the message is typed but then deleted instead of sent
+  backspaceDelay?: 'immediate' | 'end' | number; // When to backspace: immediately after typing, at end of sequence, or after N more events
   isPreShown?: boolean; // If true, the message is already visible when the video starts
   revealedAt?: number; // Timestamp (ms) when message was revealed during playback
   notifPlatform?: NotificationPlatform;

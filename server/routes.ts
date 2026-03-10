@@ -119,6 +119,7 @@ Study these patterns from REAL viral scripts:
 
 ## Backspace Mode (isBackspaced)
 The message types out then deletes itself — viewer sees what someone ALMOST sent. Use 0-2 times per script.
+Optional "backspaceDelay" controls WHEN the erase happens: "immediate" (default, erases right away), a number like 2 (erases after 2 more messages play), or "end" (text stays in composer until video ends). Use "immediate" unless the dramatic beat needs the text lingering.
 
 ## iOS Notifications — The Twist Maker
 Notifications from OUTSIDE the current chat that pop up on ME's screen. ONLY THE VIEWER sees the notification — the other person in the chat CANNOT see it and has NO IDEA it appeared. This means:

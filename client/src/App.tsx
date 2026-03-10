@@ -600,6 +600,7 @@ const App: React.FC = () => {
                 text: ev.text || '',
                 soundEffect: ev.soundEffect || undefined,
                 isBackspaced: ev.isBackspaced || undefined,
+                backspaceDelay: ev.backspaceDelay || undefined,
                 meTypingStart: ev.meTypingStart || undefined,
               });
             }
@@ -1234,6 +1235,34 @@ const App: React.FC = () => {
     }
 
     let pendingMeTyping: Promise<any> | null = null;
+    let pendingBackspace: { text: string; eventsRemaining: number } | null = null;
+
+    const performBackspaceAnimation = async () => {
+      if (!pendingBackspace) return;
+      const textToErase = pendingBackspace.text;
+      pendingBackspace = null;
+      const ts = seqChat.typingSpeed;
+      const sf = Math.min(1, Math.max(0.05, ts / 70));
+      const keyDelay = Math.round(70 * sf);
+      setKeyboardLayout('ALPHA');
+      setIsMeTyping(true);
+      await delay(Math.round(300 * sf));
+      let graphemes = Array.from(textToErase);
+      for (let i = graphemes.length; i > 0; i--) {
+        if ((runningStatusRef.current as string) === 'idle') break;
+        setActiveKey('backspace');
+        if (state.system.isSoundEnabled) soundService.playBackspace();
+        await delay(keyDelay);
+        setActiveKey(null);
+        graphemes.pop();
+        setCompositionText(graphemes.join(''));
+        await delay(ts);
+      }
+      setCompositionText('');
+      setIsMeTyping(false);
+      setIsShiftActive(true);
+      await delay(Math.round(400 * sf));
+    };
 
     for (let idx = startIdx; idx < scriptToPlay.length; idx++) {
       const event = scriptToPlay[idx];
@@ -1244,6 +1273,10 @@ const App: React.FC = () => {
       const isMeDuringPrev = event.type === MessageType.TEXT
         && seqCast.find(c => c.id === event.senderId)?.isMe
         && event.meTypingStart === 'during_previous';
+
+      if (pendingBackspace && pendingBackspace.eventsRemaining <= 0) {
+        await performBackspaceAnimation();
+      }
 
       if (event.type === MessageType.TEXT && event.senderId === 'me') {
         const firstChar = event.text?.[0];
@@ -1396,31 +1429,41 @@ const App: React.FC = () => {
             if ((runningStatusRef.current as string) === 'idle') return currentString;
             
             if (event.isBackspaced) {
-              if (currentLayout !== 'ALPHA') {
-                setKeyboardLayout('ALPHA');
-                currentLayout = 'ALPHA';
-                await delay(layoutDelay);
-              }
+              const bsDelay = event.backspaceDelay ?? 'immediate';
+              if (bsDelay === 'immediate') {
+                if (currentLayout !== 'ALPHA') {
+                  setKeyboardLayout('ALPHA');
+                  currentLayout = 'ALPHA';
+                  await delay(layoutDelay);
+                }
 
-              await delay(Math.round(300 * sf));
-              let graphemes = Array.from(currentString);
-              for (let i = graphemes.length; i > 0; i--) {
-                  if ((runningStatusRef.current as string) === 'idle') break;
-                  
-                  setActiveKey('backspace');
-                  if (state.system.isSoundEnabled) soundService.playBackspace();
-                  await delay(keyDelay);
-                  setActiveKey(null);
-                  
-                  graphemes.pop();
-                  currentString = graphemes.join('');
-                  setCompositionText(currentString);
-                  await delay(ts);
+                await delay(Math.round(300 * sf));
+                let graphemes = Array.from(currentString);
+                for (let i = graphemes.length; i > 0; i--) {
+                    if ((runningStatusRef.current as string) === 'idle') break;
+                    
+                    setActiveKey('backspace');
+                    if (state.system.isSoundEnabled) soundService.playBackspace();
+                    await delay(keyDelay);
+                    setActiveKey(null);
+                    
+                    graphemes.pop();
+                    currentString = graphemes.join('');
+                    setCompositionText(currentString);
+                    await delay(ts);
+                }
+                setCompositionText('');
+                setIsMeTyping(false);
+                setIsShiftActive(true); 
+                await delay(Math.round(400 * sf));
+              } else {
+                setIsMeTyping(false);
+                if (bsDelay === 'end') {
+                  pendingBackspace = { text: currentString, eventsRemaining: Infinity };
+                } else {
+                  pendingBackspace = { text: currentString, eventsRemaining: bsDelay as number };
+                }
               }
-              setCompositionText('');
-              setIsMeTyping(false);
-              setIsShiftActive(true); 
-              await delay(Math.round(400 * sf));
             } else {
               if (currentLayout !== 'ALPHA') {
                 setKeyboardLayout('ALPHA');
@@ -1535,29 +1578,39 @@ const App: React.FC = () => {
               if ((runningStatusRef.current as string) === 'idle') return;
               
               if (nextMeEvent.isBackspaced) {
-                if (currentLayout !== 'ALPHA') {
-                  setKeyboardLayout('ALPHA');
-                  currentLayout = 'ALPHA';
-                  await delay(layoutDelay);
-                }
+                const bsDelay = nextMeEvent.backspaceDelay ?? 'immediate';
+                if (bsDelay === 'immediate') {
+                  if (currentLayout !== 'ALPHA') {
+                    setKeyboardLayout('ALPHA');
+                    currentLayout = 'ALPHA';
+                    await delay(layoutDelay);
+                  }
 
-                await delay(Math.round(300 * sf));
-                let graphemes = Array.from(currentString);
-                for (let i = graphemes.length; i > 0; i--) {
-                    if ((runningStatusRef.current as string) === 'idle') break;
-                    setActiveKey('backspace');
-                    if (state.system.isSoundEnabled) soundService.playBackspace();
-                    await delay(keyDelay);
-                    setActiveKey(null);
-                    graphemes.pop();
-                    currentString = graphemes.join('');
-                    setCompositionText(currentString);
-                    await delay(ts);
+                  await delay(Math.round(300 * sf));
+                  let graphemes = Array.from(currentString);
+                  for (let i = graphemes.length; i > 0; i--) {
+                      if ((runningStatusRef.current as string) === 'idle') break;
+                      setActiveKey('backspace');
+                      if (state.system.isSoundEnabled) soundService.playBackspace();
+                      await delay(keyDelay);
+                      setActiveKey(null);
+                      graphemes.pop();
+                      currentString = graphemes.join('');
+                      setCompositionText(currentString);
+                      await delay(ts);
+                  }
+                  setCompositionText('');
+                  setIsMeTyping(false);
+                  setIsShiftActive(true); 
+                  await delay(Math.round(400 * sf));
+                } else {
+                  setIsMeTyping(false);
+                  if (bsDelay === 'end') {
+                    pendingBackspace = { text: currentString, eventsRemaining: Infinity };
+                  } else {
+                    pendingBackspace = { text: currentString, eventsRemaining: bsDelay as number };
+                  }
                 }
-                setCompositionText('');
-                setIsMeTyping(false);
-                setIsShiftActive(true); 
-                await delay(Math.round(400 * sf));
               } else {
                 if (currentLayout !== 'ALPHA') {
                   setKeyboardLayout('ALPHA');
@@ -1624,6 +1677,14 @@ const App: React.FC = () => {
           await delay(nextIsMeDuringPrev ? 200 : 800);
         }
       }
+
+      if (pendingBackspace && pendingBackspace.eventsRemaining !== Infinity) {
+        pendingBackspace.eventsRemaining--;
+      }
+    }
+
+    if (pendingBackspace) {
+      await performBackspaceAnimation();
     }
 
     savedSeqStates[seqIndex] = {
@@ -3505,18 +3566,43 @@ const App: React.FC = () => {
                                     </select>
                                   </div>
                                   <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-2">
-                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Backspace mode</span>
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Changed mind mode</span>
                                     <button 
                                       onClick={() => {
                                         const newScript = [...state.script];
-                                        newScript[idx] = { ...item, isBackspaced: !item.isBackspaced };
+                                        newScript[idx] = { ...item, isBackspaced: !item.isBackspaced, backspaceDelay: !item.isBackspaced ? 'immediate' : undefined };
                                         setState(prev => ({ ...prev, script: newScript }));
                                       }}
                                       className={`w-8 h-4 rounded-full relative transition-all ${item.isBackspaced ? 'bg-[#FF0054]' : 'bg-gray-600'}`}
+                                      data-testid={`toggle-backspace-${item.id}`}
                                     >
                                       <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${item.isBackspaced ? 'right-0.5' : 'left-0.5'}`} />
                                     </button>
                                   </div>
+                                  {item.isBackspaced && (
+                                  <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-2">
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Erase after</span>
+                                    <select
+                                      data-testid={`select-backspace-delay-${item.id}`}
+                                      value={item.backspaceDelay ?? 'immediate'}
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        const val = e.target.value;
+                                        newScript[idx] = { ...item, backspaceDelay: val === 'immediate' || val === 'end' ? val : parseInt(val) };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                      className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold outline-none cursor-pointer focus:border-[#FF0054]"
+                                    >
+                                      <option value="immediate">Immediately</option>
+                                      <option value="1">After 1 message</option>
+                                      <option value="2">After 2 messages</option>
+                                      <option value="3">After 3 messages</option>
+                                      <option value="4">After 4 messages</option>
+                                      <option value="5">After 5 messages</option>
+                                      <option value="end">Never (stays until end)</option>
+                                    </select>
+                                  </div>
+                                  )}
                                   </>
                                 )}
                               </div>
