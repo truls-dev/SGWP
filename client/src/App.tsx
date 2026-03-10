@@ -2069,14 +2069,14 @@ const App: React.FC = () => {
             const seq = si === activeSequenceIndexRef.current
               ? { script: stateRef.current.script, cast: stateRef.current.cast, chat: stateRef.current.chat }
               : seqs[si];
-            totalEstimatedMs += estimateSequenceDuration(seq.script, seq.cast, seq.chat);
-            if (si < seqs.length - 1) totalEstimatedMs += (seqs[si].transitionDelayMs || 1500);
+            const isFirstSeq = si === 0;
+            totalEstimatedMs += estimateSequenceDuration(seq.script, seq.cast, seq.chat, isFirstSeq && seq.chat.lockscreenEnabled, isFirstSeq ? seq.chat.lockscreenDurationMs : undefined);
+            if (si < seqs.length - 1) totalEstimatedMs += (seqs[si + 1].transitionDelayMs || 1500);
           }
-          const adjustedEndMs = totalEstimatedMs * 0.80;
-          const outroStartMs = Math.max(0, adjustedEndMs - outroDurationMs);
+          const outroStartMs = Math.max(0, totalEstimatedMs - outroDurationMs);
           const elapsedSinceStart = performance.now() - startTime;
           const remainingDelay = Math.max(0, outroStartMs - elapsedSinceStart);
-          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Outro=${(outroDurationMs/1000).toFixed(1)}s, totalEst=${(totalEstimatedMs/1000).toFixed(1)}s, adj=${(adjustedEndMs/1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
+          console.log(`[Outro] Pre-loaded in ${(elapsedSinceStart / 1000).toFixed(1)}s. Outro=${(outroDurationMs/1000).toFixed(1)}s, totalEst=${(totalEstimatedMs/1000).toFixed(1)}s. Will start overlay in ${(remainingDelay / 1000).toFixed(1)}s`);
           const wt = workerTimerRef.current;
           const scheduleOutro = wt ? wt.setTimeout.bind(wt) : (fn: () => void, ms: number) => window.setTimeout(fn, ms);
           scheduleOutro(() => {
@@ -2233,10 +2233,53 @@ const App: React.FC = () => {
     }
   };
 
-  const estimateSequenceDuration = useCallback((script: ScriptEvent[], cast: CastMember[], chat: ChatConfig) => {
+  const estimateMeTypingMs = useCallback((text: string, ts: number) => {
+    let ms = 0;
+    const sf = Math.min(1, Math.max(0.05, ts / 70));
+    const keyDelay = Math.round(70 * sf);
+    const layoutDelay = Math.round(80 * sf);
+    const chars = Array.from(text);
+    let currentLayout = 'ALPHA';
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i];
+      const isAlpha = /[a-zA-Z]/.test(char);
+      const isSpace = char === ' ';
+      const isNumericOrSymbol = !isAlpha && !isSpace;
+      if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
+        currentLayout = 'NUMERIC';
+        ms += layoutDelay;
+      } else if (isAlpha && currentLayout !== 'ALPHA') {
+        currentLayout = 'ALPHA';
+        ms += layoutDelay;
+      }
+      ms += keyDelay;
+      ms += (i === 0 ? 0 : ts);
+    }
+    return { ms, currentLayout };
+  }, []);
+
+  const estimateBackspaceMs = useCallback((textLength: number, ts: number) => {
+    const sf = Math.min(1, Math.max(0.05, ts / 70));
+    const keyDelay = Math.round(70 * sf);
+    let ms = Math.round(300 * sf);
+    for (let i = 0; i < textLength; i++) {
+      ms += keyDelay + ts;
+    }
+    ms += Math.round(400 * sf);
+    return ms;
+  }, []);
+
+  const estimateSequenceDuration = useCallback((script: ScriptEvent[], cast: CastMember[], chat: ChatConfig, lockscreenEnabled?: boolean, lockscreenDurationMs?: number) => {
     let totalMs = 0;
     const isGroup = chat.isGroup;
+    const ts = chat.typingSpeed;
+    const sf = Math.min(1, Math.max(0.05, ts / 70));
     const activeIds: string[] = [];
+
+    if (lockscreenEnabled) {
+      const lockDur = lockscreenDurationMs || 2000;
+      totalMs += lockDur + 400 + 1000;
+    }
 
     let estStartIdx = 0;
     for (let i = 0; i < script.length; i++) {
@@ -2244,24 +2287,61 @@ const App: React.FC = () => {
       estStartIdx = i + 1;
     }
 
+    let lockscreenFirstEventId: string | null = null;
+    if (lockscreenEnabled) {
+      const firstNonMe = script.find(e =>
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
+        e.senderId && e.senderId !== 'me'
+      );
+      if (firstNonMe) lockscreenFirstEventId = firstNonMe.id;
+    }
+
+    let pendingBackspaceLen = 0;
+    let pendingBackspaceRemaining = -1;
+
     for (let idx = estStartIdx; idx < script.length; idx++) {
       const event = script[idx];
-      totalMs += 300;
+
+      if (lockscreenFirstEventId && event.id === lockscreenFirstEventId) continue;
+
+      const isMeDuringPrev = event.type === MessageType.TEXT
+        && cast.find(c => c.id === event.senderId)?.isMe
+        && event.meTypingStart === 'during_previous';
+
+      if (pendingBackspaceRemaining === 0) {
+        totalMs += estimateBackspaceMs(pendingBackspaceLen, ts);
+        pendingBackspaceLen = 0;
+        pendingBackspaceRemaining = -1;
+      }
+
+      if (!isMeDuringPrev) {
+        totalMs += 300;
+      }
 
       if (event.type === MessageType.PRESENCE) {
         if (event.presenceAction === 'ENTER' && event.senderId) activeIds.push(event.senderId);
         totalMs += 500;
+        if (pendingBackspaceRemaining > 0) pendingBackspaceRemaining--;
         continue;
       }
-
-      const sender = cast.find(c => c.id === event.senderId);
-      if (!sender && event.type !== MessageType.NOTIFICATION && event.type !== MessageType.IOS_NOTIFICATION) continue;
 
       if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
         if (!activeIds.includes(event.senderId)) {
           activeIds.push(event.senderId);
           totalMs += 600;
         }
+      }
+
+      if (event.type === MessageType.IOS_NOTIFICATION) {
+        totalMs += event.notifDurationMs || 2500;
+        if (pendingBackspaceRemaining > 0) pendingBackspaceRemaining--;
+        continue;
+      }
+
+      const sender = cast.find(c => c.id === event.senderId);
+      if (!sender && event.type !== MessageType.NOTIFICATION) {
+        if (pendingBackspaceRemaining > 0) pendingBackspaceRemaining--;
+        continue;
       }
 
       if (event.type === MessageType.NOTIFICATION) {
@@ -2274,61 +2354,126 @@ const App: React.FC = () => {
           const them = cast.find(c => !c.isMe);
           if (them && !activeIds.includes(them.id)) {
             activeIds.push(them.id);
-            totalMs += 900;
+            totalMs += 500 + 400;
           }
         }
         totalMs += 800;
       } else if (event.type === MessageType.TEXT) {
         if (sender?.isMe) {
-          const chars = Array.from(event.text || "");
-          let currentLayout = 'ALPHA';
-          for (let i = 0; i < chars.length; i++) {
-            const char = chars[i];
-            const isAlpha = /[a-zA-Z]/.test(char);
-            const isSpace = char === ' ';
-            const isNumericOrSymbol = !isAlpha && !isSpace;
-            if (isNumericOrSymbol && currentLayout !== 'NUMERIC') {
-              currentLayout = 'NUMERIC';
-              totalMs += 80;
-            } else if (isAlpha && currentLayout !== 'ALPHA') {
-              currentLayout = 'ALPHA';
-              totalMs += 80;
-            }
-            totalMs += 70;
-            totalMs += (i === 0 ? 0 : chat.typingSpeed);
-          }
-          if (event.isBackspaced) {
-            if (currentLayout !== 'ALPHA') totalMs += 80;
-            totalMs += 300;
-            for (let i = chars.length; i > 0; i--) {
-              totalMs += 70 + chat.typingSpeed;
-            }
-            totalMs += 400;
+          const nextEvent = script[idx + 1];
+          const nextIsMeDuringPrev = nextEvent
+            && nextEvent.type === MessageType.TEXT
+            && cast.find(c => c.id === nextEvent.senderId)?.isMe
+            && nextEvent.meTypingStart === 'during_previous';
+
+          if (isMeDuringPrev) {
+            // This event was already accounted for (overlapped with partner delay)
           } else {
-            if (currentLayout !== 'ALPHA') totalMs += 300;
-            totalMs += 120 + 70;
-            if (!isGroup) {
-              const them = cast.find(c => !c.isMe);
-              if (them && !activeIds.includes(them.id)) {
-                activeIds.push(them.id);
-                totalMs += 900;
+            const { ms: typingMs, currentLayout } = estimateMeTypingMs(event.text || '', ts);
+            totalMs += typingMs;
+
+            if (event.isBackspaced) {
+              const bsDelay = event.backspaceDelay ?? 'immediate';
+              if (bsDelay === 'immediate') {
+                if (currentLayout !== 'ALPHA') totalMs += Math.round(80 * sf);
+                totalMs += estimateBackspaceMs(Array.from(event.text || '').length, ts);
+              } else {
+                if (bsDelay === 'end') {
+                  pendingBackspaceLen = Array.from(event.text || '').length;
+                  pendingBackspaceRemaining = Infinity;
+                } else {
+                  pendingBackspaceLen = Array.from(event.text || '').length;
+                  pendingBackspaceRemaining = bsDelay as number;
+                }
               }
+            } else {
+              if (currentLayout !== 'ALPHA') totalMs += Math.round(300 * sf);
+              totalMs += Math.round(120 * sf) + Math.round(70 * sf);
+              if (!isGroup) {
+                const them = cast.find(c => !c.isMe);
+                if (them && !activeIds.includes(them.id)) {
+                  activeIds.push(them.id);
+                  totalMs += Math.round(500 * sf) + Math.round(400 * sf);
+                }
+              }
+              totalMs += Math.round(400 * sf);
             }
-            totalMs += 400;
           }
         } else {
-          totalMs += chat.messageDelay;
-          totalMs += 800;
+          const nextEvent = script[idx + 1];
+          const nextIsMeDuringPrev = nextEvent
+            && nextEvent.type === MessageType.TEXT
+            && cast.find(c => c.id === nextEvent.senderId)?.isMe
+            && nextEvent.meTypingStart === 'during_previous';
+
+          if (nextIsMeDuringPrev) {
+            const { ms: meTypingMs, currentLayout: meLayout } = estimateMeTypingMs(nextEvent.text || '', ts);
+            let mePostMs = 0;
+            if (nextEvent.isBackspaced) {
+              const bsDelay = nextEvent.backspaceDelay ?? 'immediate';
+              if (bsDelay === 'immediate') {
+                if (meLayout !== 'ALPHA') mePostMs += Math.round(80 * sf);
+                mePostMs += estimateBackspaceMs(Array.from(nextEvent.text || '').length, ts);
+              } else {
+                if (bsDelay === 'end') {
+                  pendingBackspaceLen = Array.from(nextEvent.text || '').length;
+                  pendingBackspaceRemaining = Infinity;
+                } else {
+                  pendingBackspaceLen = Array.from(nextEvent.text || '').length;
+                  pendingBackspaceRemaining = bsDelay as number;
+                }
+              }
+            } else {
+              if (meLayout !== 'ALPHA') mePostMs += Math.round(300 * sf);
+              mePostMs += Math.round(120 * sf) + Math.round(70 * sf);
+              if (!isGroup) {
+                const them = cast.find(c => !c.isMe);
+                if (them && !activeIds.includes(them.id)) {
+                  activeIds.push(them.id);
+                  mePostMs += Math.round(500 * sf) + Math.round(400 * sf);
+                }
+              }
+              mePostMs += Math.round(400 * sf);
+            }
+            const partnerMs = chat.messageDelay;
+            totalMs += Math.max(partnerMs, meTypingMs + mePostMs);
+            totalMs += 200;
+            idx++;
+          } else {
+            totalMs += chat.messageDelay;
+            totalMs += 800;
+          }
         }
       }
+
+      if (pendingBackspaceRemaining > 0 && pendingBackspaceRemaining !== Infinity) {
+        pendingBackspaceRemaining--;
+      }
     }
-    totalMs += 3000;
+
+    if (pendingBackspaceLen > 0) {
+      totalMs += estimateBackspaceMs(pendingBackspaceLen, ts);
+    }
+
+    totalMs += 1000;
     return totalMs;
-  }, []);
+  }, [estimateMeTypingMs, estimateBackspaceMs]);
 
   const estimatedDurationMs = useMemo(() => {
-    return estimateSequenceDuration(state.script, state.cast, state.chat);
-  }, [state.script, state.cast, state.chat.messageDelay, state.chat.typingSpeed, state.chat.isGroup, estimateSequenceDuration]);
+    let total = 0;
+    const seqs = sequences.map((s, i) =>
+      i === activeSequenceIndex
+        ? { ...s, cast: state.cast, script: state.script, chat: state.chat }
+        : s
+    );
+    for (let si = 0; si < seqs.length; si++) {
+      const seq = seqs[si];
+      const isFirstSeq = si === 0;
+      total += estimateSequenceDuration(seq.script, seq.cast, seq.chat, isFirstSeq && seq.chat.lockscreenEnabled, isFirstSeq ? seq.chat.lockscreenDurationMs : undefined);
+      if (si < seqs.length - 1) total += (seqs[si + 1].transitionDelayMs || 1500);
+    }
+    return total;
+  }, [state.script, state.cast, state.chat, sequences, activeSequenceIndex, estimateSequenceDuration]);
 
   const formatDuration = (ms: number) => {
     const totalSeconds = Math.round(ms / 1000);
