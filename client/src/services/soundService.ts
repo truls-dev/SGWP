@@ -13,6 +13,7 @@ const SOUND_EFFECTS: Record<string, string> = {
   Rizz: "https://raw.githubusercontent.com/truls-dev/sounds/main/rizz.wav",
   Shocked: "https://raw.githubusercontent.com/truls-dev/sounds/main/shocked.wav",
   Shocking: "https://raw.githubusercontent.com/truls-dev/sounds/main/shocking.wav",
+  "Metal Gear Shocked": "/metalgear-shocked.mp3",
 };
 
 const MUSIC_BASE_URL = "https://raw.githubusercontent.com/truls-dev/music/main/";
