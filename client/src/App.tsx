@@ -2711,6 +2711,9 @@ const App: React.FC = () => {
                       >
                         <option value="Bruh">Bruh</option>
                         <option value="Crickets">Crickets</option>
+                        <option value="Knock - Multiple">Knock - Multiple</option>
+                        <option value="Knock - Single">Knock - Single</option>
+                        <option value="Metal Gear Shocked">Metal Gear Shocked</option>
                         <option value="Rizz">Rizz</option>
                         <option value="Shocked">Shocked</option>
                         <option value="Shocking">Shocking</option>
@@ -3508,6 +3511,7 @@ const App: React.FC = () => {
                                    <option value="Crickets">Crickets</option>
                                    <option value="Knock - Multiple">Knock - Multiple</option>
                                    <option value="Knock - Single">Knock - Single</option>
+                                   <option value="Metal Gear Shocked">Metal Gear Shocked</option>
                                    <option value="Rizz">Rizz</option>
                                    <option value="Shocked">Shocked</option>
                                    <option value="Shocking">Shocking</option>
