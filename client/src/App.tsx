@@ -1683,7 +1683,7 @@ const App: React.FC = () => {
       }
     }
 
-    if (pendingBackspace) {
+    if (pendingBackspace && pendingBackspace.eventsRemaining !== Infinity) {
       await performBackspaceAnimation();
     }
 
@@ -2451,7 +2451,7 @@ const App: React.FC = () => {
       }
     }
 
-    if (pendingBackspaceLen > 0) {
+    if (pendingBackspaceLen > 0 && pendingBackspaceRemaining !== Infinity) {
       totalMs += estimateBackspaceMs(pendingBackspaceLen, ts);
     }
 
