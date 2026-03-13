@@ -1194,7 +1194,16 @@ export class CanvasRenderer {
         } else if (msg.type === MessageType.IMAGE) {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
-          h += msg.isVertical ? 420 : 300;
+          const imgEl = this.images.get(`media_${msg.id}`);
+          if (imgEl && imgEl.naturalWidth && imgEl.naturalHeight) {
+            const maxW = msg.isVertical ? 230 : 420;
+            const maxH = msg.isVertical ? 400 : 280;
+            const ratio = imgEl.naturalWidth / imgEl.naturalHeight;
+            const boxRatio = maxW / maxH;
+            h += ratio >= boxRatio ? Math.round(maxW / ratio) : maxH;
+          } else {
+            h += msg.isVertical ? 420 : 300;
+          }
           if (lines.length > 0) h += 10;
         } else {
           lines = this.wrapText(ctx, msg.text || "", maxTextW);
@@ -1343,10 +1352,22 @@ export class CanvasRenderer {
 
       const imgEl = this.images.get(`media_${msg.id}`);
       if (imgEl) {
-        const imgH = msg.isVertical ? 400 : 280;
-        const imgW = msg.isVertical ? 230 : 420;
-        this.drawRoundedImage(ctx, imgEl, textStartX, curY, imgW, imgH, 50);
-        curY += imgH + 10;
+        const maxW = msg.isVertical ? 230 : 420;
+        const maxH = msg.isVertical ? 400 : 280;
+        const natW = imgEl.naturalWidth || imgEl.width || maxW;
+        const natH = imgEl.naturalHeight || imgEl.height || maxH;
+        const ratio = natW / natH;
+        const boxRatio = maxW / maxH;
+        let actualW: number, actualH: number;
+        if (ratio >= boxRatio) {
+          actualW = maxW;
+          actualH = Math.round(maxW / ratio);
+        } else {
+          actualH = maxH;
+          actualW = Math.round(maxH * ratio);
+        }
+        this.drawRoundedImage(ctx, imgEl, textStartX, curY, actualW, actualH, 50);
+        curY += actualH + 10;
       } else {
         curY += msg.isVertical ? 400 : 280;
       }

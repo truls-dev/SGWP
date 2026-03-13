@@ -4005,7 +4005,8 @@ const App: React.FC = () => {
                                         {item.mediaUrl ? (
                                             <img 
                                             src={item.mediaUrl} 
-                                            className="w-full h-auto rounded-[20px] object-contain shadow-sm border border-gray-100/10" 
+                                            className="rounded-[20px] object-contain shadow-sm border border-gray-100/10 block"
+                                            style={{ maxWidth: item.isVertical ? '180px' : '260px', maxHeight: item.isVertical ? '380px' : '240px', width: 'auto', height: 'auto' }}
                                             alt="Chat Image" 
                                             />
                                         ) : (
