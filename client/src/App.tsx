@@ -263,6 +263,7 @@ const App: React.FC = () => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [bitmojiPickerFor, setBitmojiPickerFor] = useState<string | null>(null);
+  const [contactCardPickerFor, setContactCardPickerFor] = useState<string | null>(null);
   const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState<'settings' | 'cast' | 'script' | 'exports'>('script');
   
@@ -3832,7 +3833,7 @@ const App: React.FC = () => {
                               <div className="space-y-3">
                                 <div className="w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
                                   {item.contactCardAvatarId ? (
-                                    <img src={`https://sdk.bitmoji.com/render/panel/10220264-${item.contactCardAvatarId}-v1.png?transparent=1&palette=1`} className="w-10 h-10 rounded-full object-cover bg-yellow-400/20" alt="Avatar" />
+                                    <img src={getSelfieUrlForAvatar(item.contactCardAvatarId)} className="w-10 h-10 rounded-full object-contain bg-yellow-400/20" alt="Avatar" />
                                   ) : (
                                     <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center">
                                       <span className="text-xl">👤</span>
@@ -3840,7 +3841,7 @@ const App: React.FC = () => {
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <div className="text-xs font-bold text-white truncate">{item.contactCardName || 'Name'}</div>
-                                    <div className="text-[10px] text-gray-400 truncate">@{item.contactCardUsername || 'username'}</div>
+                                    <div className="text-[10px] text-gray-400 truncate">~{item.contactCardUsername || 'username'}</div>
                                   </div>
                                 </div>
                                 <div className="space-y-2">
@@ -3870,18 +3871,39 @@ const App: React.FC = () => {
                                       }}
                                     />
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest w-20">Avatar ID</span>
-                                    <input
-                                      className="bg-transparent flex-1 text-xs font-medium focus:outline-none border-b border-white/10 pb-0.5"
-                                      value={item.contactCardAvatarId || ''}
-                                      placeholder="Bitmoji avatar ID..."
-                                      onChange={e => {
-                                        const newScript = [...state.script];
-                                        newScript[idx] = { ...item, contactCardAvatarId: e.target.value };
-                                        setState(prev => ({ ...prev, script: newScript }));
-                                      }}
-                                    />
+                                  <div className="border-t border-white/5 pt-2">
+                                    <button
+                                      onClick={() => setContactCardPickerFor(contactCardPickerFor === item.id ? null : item.id)}
+                                      className={`w-full border py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 active:scale-95 ${contactCardPickerFor === item.id ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-white/5 border-white/10 text-gray-300 hover:bg-yellow-400/20 hover:border-yellow-400/30'}`}
+                                    >
+                                      <i className={`fa-solid ${contactCardPickerFor === item.id ? 'fa-xmark' : 'fa-face-smile'}`}></i>
+                                      {contactCardPickerFor === item.id ? 'Close Bitmoji Picker' : 'Choose Bitmoji Avatar'}
+                                    </button>
+                                    {contactCardPickerFor === item.id && (
+                                      <div className="grid grid-cols-5 gap-1.5 max-h-[200px] overflow-y-auto mt-2 p-2 bg-black/40 rounded-xl border border-white/10">
+                                        {AVATAR_POOL.map(avatarId => (
+                                          <button
+                                            key={avatarId}
+                                            onClick={() => {
+                                              const newScript = [...state.script];
+                                              newScript[idx] = { ...item, contactCardAvatarId: avatarId };
+                                              setState(prev => ({ ...prev, script: newScript }));
+                                              setContactCardPickerFor(null);
+                                            }}
+                                            className={`relative rounded-lg overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 ${item.contactCardAvatarId === avatarId ? 'border-yellow-400 ring-1 ring-yellow-400' : 'border-transparent hover:border-white/30'}`}
+                                          >
+                                            <div className="w-full aspect-square bg-[#FFFC00] flex items-center justify-center">
+                                              <img src={getSelfieUrlForAvatar(avatarId)} className="w-full h-full object-contain scale-[1.3]" alt="" loading="lazy" />
+                                            </div>
+                                            {item.contactCardAvatarId === avatarId && (
+                                              <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
+                                                <i className="fa-solid fa-check text-[6px] text-black"></i>
+                                              </div>
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -4270,28 +4292,28 @@ const App: React.FC = () => {
                                 <div className="flex items-start gap-3 w-full">
                                 <div className={`w-[2px] h-auto min-h-[28px] self-stretch transition-all ${!isGroupedWithPrev ? 'rounded-t-full' : ''}`} style={{ backgroundColor: color }} />
                                 <div className="flex-1">
-                                    <div className="bg-white rounded-[16px] shadow-sm flex items-center gap-3 px-3 py-2.5 max-w-[260px]">
-                                    <div className="w-10 h-10 rounded-full bg-yellow-400/30 flex-shrink-0 overflow-hidden">
+                                    <div className="bg-white rounded-[18px] shadow-[0_2px_14px_rgba(0,0,0,0.13)] border border-black/5 flex items-center gap-3 px-3 py-2.5 max-w-[270px]">
+                                    <div className="w-[46px] h-[46px] rounded-full bg-[#FFFC00] flex-shrink-0 overflow-hidden">
                                         {item.contactCardAvatarId ? (
                                         <img
-                                            src={`https://sdk.bitmoji.com/render/panel/10220264-${item.contactCardAvatarId}-v1.png?transparent=1&palette=1`}
-                                            className="w-full h-full object-cover"
+                                            src={getSelfieUrlForAvatar(item.contactCardAvatarId)}
+                                            className="w-full h-full object-contain scale-[1.25]"
                                             alt=""
                                         />
                                         ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-lg">👤</div>
+                                        <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-[13px] font-bold text-black leading-tight truncate">{item.contactCardName || 'Name'}</div>
-                                        <div className="text-[11px] text-gray-500 truncate">@{item.contactCardUsername || 'username'}</div>
+                                        <div className="text-[11px] text-gray-400 truncate">~{item.contactCardUsername || 'username'}</div>
                                     </div>
-                                    <div className="flex gap-1.5 flex-shrink-0">
-                                        <div className="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    <div className="flex gap-[7px] flex-shrink-0">
+                                        <div className="w-[34px] h-[34px] bg-[#FFFC00] rounded-[10px] flex items-center justify-center">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="black"><path d="M20 2H4C2.9 2 2 2.9 2 4v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
                                         </div>
-                                        <div className="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                        <div className="w-[34px] h-[34px] bg-[#FFFC00] rounded-[10px] flex items-center justify-center">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="black"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
                                         </div>
                                     </div>
                                     </div>

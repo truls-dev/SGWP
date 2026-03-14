@@ -1494,27 +1494,35 @@ export class CanvasRenderer {
     }
     ctx.restore();
 
-    const textX = avatarX + avatarSize + 18;
-    const nameSize = Math.round(fontSize * 0.82);
-    const usernameSize = Math.round(fontSize * 0.62);
+    const textX = avatarX + avatarSize + 20;
+    const nameSize = Math.round(fontSize * 0.80);
+    const usernameSize = Math.round(fontSize * 0.60);
 
+    ctx.save();
     ctx.font = `700 ${nameSize}px ${FONT_REGULAR}`;
     ctx.fillStyle = '#111827';
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    this.fillTextWithEmoji(ctx, msg.contactCardName || 'Contact', textX, y + cardH / 2 - nameSize * 0.65, FONT_REGULAR, nameSize);
+    ctx.textBaseline = 'alphabetic';
+    const nameY = y + cardH / 2 - 6;
+    this.fillTextWithEmoji(ctx, msg.contactCardName || 'Contact', textX, nameY, FONT_REGULAR, nameSize);
+    ctx.restore();
 
+    ctx.save();
     ctx.font = `400 ${usernameSize}px ${FONT_REGULAR}`;
-    ctx.fillStyle = '#6B7280';
-    ctx.fillText(msg.contactCardUsername || '', textX, y + cardH / 2 + usernameSize * 0.85);
+    ctx.fillStyle = '#9CA3AF';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    const username = msg.contactCardUsername ? `~${msg.contactCardUsername}` : '';
+    ctx.fillText(username, textX, y + cardH / 2 + usernameSize + 2);
+    ctx.restore();
 
-    const btnSize = 56;
-    const btnGap = 14;
+    const btnSize = 58;
+    const btnGap = 12;
     const btnAreaRight = x + cardW - pad;
     const btn2X = btnAreaRight - btnSize;
     const btn1X = btn2X - btnSize - btnGap;
     const btnY = y + cardH / 2 - btnSize / 2;
-    const btnR = 16;
+    const btnR = 14;
 
     for (const bx of [btn1X, btn2X]) {
       ctx.save();
@@ -1524,46 +1532,45 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
-    const iconSize = 26;
-    const iconColor = '#000000';
+    // Chat icon: filled speech bubble (rounded rect + tail triangle)
+    const chatCX = btn1X + btnSize / 2;
+    const chatCY = btnY + btnSize / 2;
+    const bW = 22, bH = 18, bR = 5;
     ctx.save();
-    ctx.fillStyle = iconColor;
-    const chatIconCX = btn1X + btnSize / 2;
-    const chatIconCY = btnY + btnSize / 2;
-    const bubbleR = iconSize / 2;
+    ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.arc(chatIconCX, chatIconCY - 2, bubbleR, 0, Math.PI * 2);
+    ctx.roundRect(chatCX - bW / 2, chatCY - bH / 2 - 2, bW, bH, bR);
     ctx.fill();
-    ctx.fillStyle = '#FFFC00';
     ctx.beginPath();
-    ctx.arc(chatIconCX, chatIconCY - 2, bubbleR - 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = iconColor;
-    ctx.beginPath();
-    ctx.moveTo(chatIconCX - 6, chatIconCY + bubbleR - 5);
-    ctx.lineTo(chatIconCX - 10, chatIconCY + bubbleR + 3);
-    ctx.lineTo(chatIconCX + 2, chatIconCY + bubbleR - 5);
+    ctx.moveTo(chatCX - 7, chatCY + bH / 2 - 4);
+    ctx.lineTo(chatCX - 11, chatCY + bH / 2 + 5);
+    ctx.lineTo(chatCX - 1, chatCY + bH / 2 - 4);
     ctx.fill();
     ctx.restore();
 
+    // Camera icon: body rect + lens circle + small bump on top
     const camCX = btn2X + btnSize / 2;
     const camCY = btnY + btnSize / 2;
+    const camW = 22, camH = 15, camBodyR = 4;
     ctx.save();
-    ctx.fillStyle = iconColor;
+    ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.roundRect(camCX - iconSize / 2, camCY - iconSize / 2 + 4, iconSize, iconSize - 7, 5);
+    ctx.roundRect(camCX - camW / 2, camCY - camH / 2 + 2, camW, camH, camBodyR);
     ctx.fill();
+    // Lens: yellow circle
     ctx.fillStyle = '#FFFC00';
     ctx.beginPath();
-    ctx.arc(camCX, camCY + 0.5, (iconSize - 14) / 2, 0, Math.PI * 2);
+    ctx.arc(camCX, camCY + 4, 4.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = iconColor;
+    // Inner lens: black circle
+    ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.arc(camCX, camCY + 0.5, (iconSize - 22) / 2, 0, Math.PI * 2);
+    ctx.arc(camCX, camCY + 4, 2.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = iconColor;
+    // Viewfinder bump on top
+    ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.arc(camCX + (iconSize / 2) - 5, camCY - (iconSize / 2) + 6, 3, 0, Math.PI * 2);
+    ctx.roundRect(camCX - 4, camCY - camH / 2, 8, 5, 2);
     ctx.fill();
     ctx.restore();
   }
