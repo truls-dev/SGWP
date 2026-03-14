@@ -1194,7 +1194,12 @@ export class CanvasRenderer {
         } else if (msg.type === MessageType.IMAGE) {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
-          h += msg.isVertical ? 420 : 300;
+          const layoutImgEl = this.images.get(`media_${msg.id}`);
+          if (layoutImgEl && layoutImgEl.width > 0) {
+            h += Math.round(420 / (layoutImgEl.width / layoutImgEl.height));
+          } else {
+            h += msg.isVertical ? 420 : 300;
+          }
           if (lines.length > 0) h += 10;
         } else {
           lines = this.wrapText(ctx, msg.text || "", maxTextW);
@@ -1343,9 +1348,11 @@ export class CanvasRenderer {
 
       const imgEl = this.images.get(`media_${msg.id}`);
       if (imgEl) {
-        const imgH = msg.isVertical ? 400 : 280;
-        const imgW = msg.isVertical ? 230 : 420;
-        this.drawRoundedImage(ctx, imgEl, textStartX, curY, imgW, imgH, 50);
+        const maxW = 420;
+        const imgRatio = imgEl.width / imgEl.height;
+        const imgW = maxW;
+        const imgH = maxW / imgRatio;
+        this.drawRoundedImage(ctx, imgEl, textStartX, curY, imgW, imgH, 50, false);
         curY += imgH + 10;
       } else {
         curY += msg.isVertical ? 400 : 280;
@@ -2700,6 +2707,7 @@ export class CanvasRenderer {
     w: number,
     h: number,
     r: number,
+    cover = true,
   ): void {
     ctx.save();
     ctx.beginPath();
@@ -2708,16 +2716,30 @@ export class CanvasRenderer {
     const imgRatio = img.width / img.height;
     const boxRatio = w / h;
     let dw: number, dh: number, dx: number, dy: number;
-    if (imgRatio > boxRatio) {
-      dh = h;
-      dw = h * imgRatio;
-      dx = x + (w - dw) / 2;
-      dy = y;
+    if (cover) {
+      if (imgRatio > boxRatio) {
+        dh = h;
+        dw = h * imgRatio;
+        dx = x + (w - dw) / 2;
+        dy = y;
+      } else {
+        dw = w;
+        dh = w / imgRatio;
+        dx = x;
+        dy = y + (h - dh) / 2;
+      }
     } else {
-      dw = w;
-      dh = w / imgRatio;
-      dx = x;
-      dy = y + (h - dh) / 2;
+      if (imgRatio > boxRatio) {
+        dw = w;
+        dh = w / imgRatio;
+        dx = x;
+        dy = y + (h - dh) / 2;
+      } else {
+        dh = h;
+        dw = h * imgRatio;
+        dx = x + (w - dw) / 2;
+        dy = y;
+      }
     }
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
