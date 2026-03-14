@@ -289,6 +289,13 @@ const App: React.FC = () => {
   const outroActiveRef = useRef(false);
 
   const [suggestedUrl, setSuggestedUrl] = useState<string | null>(null);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifPickerEventId, setGifPickerEventId] = useState<string | null>(null);
+  const [gifSearchQuery, setGifSearchQuery] = useState('');
+  const [gifResults, setGifResults] = useState<{ id: string; title: string; url: string; preview: string }[]>([]);
+  const [gifSearchLoading, setGifSearchLoading] = useState(false);
+  const [gifPickerTab, setGifPickerTab] = useState<'search' | 'upload'>('search');
+  const timelineGifInputRef = useRef<HTMLInputElement>(null);
   const lastStickerChangeTimeRef = useRef<number>(0);
   const stickerTimeoutRef = useRef<number | null>(null);
 
@@ -440,6 +447,27 @@ const App: React.FC = () => {
         container.appendChild(canvasEl);
       }
     };
+    const hasGifs = state.script.some(s => s.type === MessageType.GIF);
+    if (hasGifs) {
+      let rafId: number;
+      let initialized = false;
+      const animLoop = () => {
+        const canvasEl = renderer.renderFrame(frameStateRef.current);
+        staticPreviewCanvasRef.current = canvasEl;
+        const container = staticPreviewContainerRef.current;
+        if (container && !initialized) {
+          container.innerHTML = '';
+          canvasEl.style.maxWidth = '100%';
+          canvasEl.style.maxHeight = '100%';
+          canvasEl.style.display = 'block';
+          container.appendChild(canvasEl);
+          initialized = true;
+        }
+        rafId = requestAnimationFrame(animLoop);
+      };
+      rafId = requestAnimationFrame(animLoop);
+      return () => cancelAnimationFrame(rafId);
+    }
     renderPreview();
     const t1 = setTimeout(renderPreview, 500);
     const t2 = setTimeout(renderPreview, 1500);
@@ -473,7 +501,7 @@ const App: React.FC = () => {
       } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
         if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
       }
-      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.NOTIFICATION) && !preEvent.isBackspaced) {
+      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.GIF || preEvent.type === MessageType.NOTIFICATION) && !preEvent.isBackspaced) {
         preShownItems.push({ ...preEvent, instanceId: uuidv4() });
       }
     }
@@ -793,6 +821,72 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTimelineGifUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && gifPickerEventId) {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const result = loadEvent.target?.result;
+        if (typeof result === 'string') {
+          const evId = gifPickerEventId;
+          setState(prev => ({
+            ...prev,
+            script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: result, isVertical: false } : s)
+          }));
+          setShowGifPicker(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    if (!gifPickerEventId) return;
+    const evId = gifPickerEventId;
+    setState(prev => ({
+      ...prev,
+      script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: gifUrl, isVertical: false } : s)
+    }));
+    setShowGifPicker(false);
+  };
+
+  const searchGiphy = async (query: string) => {
+    if (!query.trim()) return;
+    setGifSearchLoading(true);
+    try {
+      const res = await fetch(`/api/giphy/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setGifResults(data.results || []);
+    } catch {
+      setGifResults([]);
+    } finally {
+      setGifSearchLoading(false);
+    }
+  };
+
+  const fetchTrendingGifs = async () => {
+    setGifSearchLoading(true);
+    try {
+      const res = await fetch('/api/giphy/trending');
+      const data = await res.json();
+      setGifResults(data.results || []);
+    } catch {
+      setGifResults([]);
+    } finally {
+      setGifSearchLoading(false);
+    }
+  };
+
+  const openGifPicker = (eventId: string) => {
+    setGifPickerEventId(eventId);
+    setGifPickerTab('search');
+    setGifSearchQuery('');
+    setGifResults([]);
+    setShowGifPicker(true);
+    fetchTrendingGifs();
+  };
+
   const handleBulkImport = () => {
     if (!bulkImportValue.trim()) return;
 
@@ -922,7 +1016,7 @@ const App: React.FC = () => {
       id: uuidv4(),
       type,
       senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : (type === MessageType.IOS_NOTIFICATION ? undefined : state.cast[0].id)),
-      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.IOS_NOTIFICATION ? '' : 'New message')),
+      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.GIF || type === MessageType.IOS_NOTIFICATION ? '' : 'New message')),
       presenceAction: type === MessageType.PRESENCE ? 'ENTER' : undefined,
       isVertical: false,
       isBackspaced: false,
@@ -1157,7 +1251,7 @@ const App: React.FC = () => {
           } else if (pe.type !== MessageType.NOTIFICATION && pe.senderId && pe.senderId !== 'me') {
             if (!preShownIds.includes(pe.senderId)) preShownIds.push(pe.senderId);
           }
-          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.NOTIFICATION) && !pe.isBackspaced) {
+          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.GIF || pe.type === MessageType.NOTIFICATION) && !pe.isBackspaced) {
             setPlaybackItems(prev => [...prev, { ...pe, instanceId: uuidv4(), revealedAt: Date.now() }]);
           }
         }
@@ -1174,7 +1268,7 @@ const App: React.FC = () => {
 
     if (seqIndex === 0 && seqChat.lockscreenEnabled) {
       const firstNonMeEvent = seqScript.find(e =>
-        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF) &&
         e.senderId && e.senderId !== 'me'
       );
       const lockDurationMs = seqChat.lockscreenDurationMs || 2000;
@@ -1300,7 +1394,7 @@ const App: React.FC = () => {
       }
 
       // If it's the other person sending, ensure they "arrive" before typing/sending
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER)) {
         if (!localActiveParticipantIds.includes(event.senderId)) {
            updateActiveIds(Array.from(new Set([event.senderId as string, ...localActiveParticipantIds])));
            await delay(600);
@@ -1338,7 +1432,7 @@ const App: React.FC = () => {
           soundService.playEffect(event.soundEffect);
         }
         await delay(1000);
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF) {
         const sender = seqCast.find(c => c.id === event.senderId);
         if (!sender) continue;
         
@@ -2290,7 +2384,7 @@ const App: React.FC = () => {
     let lockscreenFirstEventId: string | null = null;
     if (lockscreenEnabled) {
       const firstNonMe = script.find(e =>
-        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE) &&
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF) &&
         e.senderId && e.senderId !== 'me'
       );
       if (firstNonMe) lockscreenFirstEventId = firstNonMe.id;
@@ -2325,7 +2419,7 @@ const App: React.FC = () => {
         continue;
       }
 
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.STICKER)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER)) {
         if (!activeIds.includes(event.senderId)) {
           activeIds.push(event.senderId);
           totalMs += 600;
@@ -2346,7 +2440,7 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.NOTIFICATION) {
         totalMs += 1000;
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF) {
         if (sender && !sender.isMe) {
           totalMs += chat.messageDelay;
         }
@@ -3525,6 +3619,14 @@ const App: React.FC = () => {
                                     <i className="fa-solid fa-camera"></i> {item.mediaUrl ? 'Swap Image' : 'Upload'}
                                   </button>
                                )}
+                               {item.type === MessageType.GIF && (
+                                  <button 
+                                    onClick={() => openGifPicker(item.id)}
+                                    className="text-[10px] font-black uppercase text-[#FF6B9D] hover:text-white transition-colors flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md"
+                                  >
+                                    <i className="fa-solid fa-film"></i> {item.mediaUrl ? 'Swap GIF' : 'Add GIF'}
+                                  </button>
+                               )}
                                <button
                                  title={item.isPreShown ? "Will show at start" : "Show at start"}
                                  onClick={() => {
@@ -3693,6 +3795,32 @@ const App: React.FC = () => {
                                   </button>
                                 </div>
                               </div>
+                            ) : item.type === MessageType.GIF ? (
+                              <div className="space-y-3">
+                                {item.mediaUrl ? (
+                                   <div className="w-full h-32 overflow-hidden rounded-xl border border-white/10 bg-black/20 flex items-center justify-center">
+                                      <img src={item.mediaUrl} className="w-full h-full object-contain" alt="GIF Preview" />
+                                   </div>
+                                ) : (
+                                   <div className="w-full h-32 rounded-xl border border-dashed border-[#FF6B9D]/30 bg-[#FF6B9D]/5 flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => openGifPicker(item.id)}>
+                                      <span className="text-2xl">🎬</span>
+                                      <span className="text-[9px] font-black uppercase tracking-widest text-[#FF6B9D]">Click to add GIF</span>
+                                   </div>
+                                )}
+                                <div className="flex items-center justify-end gap-2 border-t border-white/5 pt-2">
+                                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Changed mind mode</span>
+                                  <button 
+                                    onClick={() => {
+                                      const newScript = [...state.script];
+                                      newScript[idx] = { ...item, isBackspaced: !item.isBackspaced };
+                                      setState(prev => ({ ...prev, script: newScript }));
+                                    }}
+                                    className={`w-8 h-4 rounded-full relative transition-all ${item.isBackspaced ? 'bg-[#FF0054]' : 'bg-gray-600'}`}
+                                  >
+                                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${item.isBackspaced ? 'right-0.5' : 'left-0.5'}`} />
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
                               <div className="space-y-2">
                                 <textarea rows={2} className="bg-transparent w-full text-xs font-medium focus:outline-none resize-none placeholder-gray-600" value={item.text} placeholder="Enter chat message content..." onChange={e => { const newScript = [...state.script]; newScript[idx].text = e.target.value; setState(prev => ({ ...prev, script: newScript })); }} />
@@ -3772,6 +3900,7 @@ const App: React.FC = () => {
                     <div className="flex gap-2 pt-4">
                       <button onClick={() => addScriptItem(MessageType.TEXT)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
                       <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
+                      <button onClick={() => addScriptItem(MessageType.GIF)} className="flex-1 bg-[#FF6B9D]/10 border border-[#FF6B9D]/20 text-[#FF6B9D] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#FF6B9D]/20 active:scale-95">+ GIF</button>
                       <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
                       <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="flex-1 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95"><i className="fa-solid fa-bell mr-1"></i> + iOS NOTIF</button>
                     </div>
@@ -3825,7 +3954,7 @@ const App: React.FC = () => {
                                 {item.type === MessageType.NOTIFICATION ? 'SYSTEM' : item.type === MessageType.PRESENCE ? 'PRESENCE' : item.type === MessageType.IOS_NOTIFICATION ? 'iOS NOTIF' : (sender?.name || 'Unknown')}
                               </span>
                               <span className="text-[10px] text-gray-500 truncate flex-1">
-                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.STICKER ? '🎨 Sticker' : (item.text || '')}
+                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.GIF ? '🎬 GIF' : item.type === MessageType.STICKER ? '🎨 Sticker' : (item.text || '')}
                               </span>
                             </div>
                           </div>
@@ -3952,7 +4081,7 @@ const App: React.FC = () => {
                         const key = item.instanceId || item.id;
                         const filteredMessages = messagesToRender.filter(i => i.type !== MessageType.PRESENCE && i.type !== MessageType.IOS_NOTIFICATION);
                         const prevItem = idx > 0 ? filteredMessages[idx - 1] : null;
-                        const isGroupedWithPrev = prevItem && (prevItem.type === MessageType.TEXT || prevItem.type === MessageType.STICKER || prevItem.type === MessageType.IMAGE) && item.senderId === prevItem.senderId;
+                        const isGroupedWithPrev = prevItem && (prevItem.type === MessageType.TEXT || prevItem.type === MessageType.STICKER || prevItem.type === MessageType.IMAGE || prevItem.type === MessageType.GIF) && item.senderId === prevItem.senderId;
                         
                         if (item.type === MessageType.NOTIFICATION) {
                         return (
@@ -4011,6 +4140,38 @@ const App: React.FC = () => {
                                         ) : (
                                             <div className="w-full h-40 bg-gray-100 rounded-[20px] flex items-center justify-center border-2 border-dashed border-gray-300">
                                             <span className="text-gray-400 text-xs text-center px-2">No image selected</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+                        );
+                        }
+
+                        if (item.type === MessageType.GIF) {
+                        return (
+                            <div key={key} className={`${cropOffsetClass} animate-in slide-in-from-bottom-2 fade-in duration-300 ${isGroupedWithPrev ? 'pt-0' : 'pt-[12px]'} pb-1`}>
+                            <div className="flex flex-col items-start">
+                                {!isGroupedWithPrev && (
+                                    <span className="text-[13px] font-bold mb-1 tracking-tight snap-font-bold" style={{ color }}>
+                                    {sender?.name.toUpperCase()}
+                                    </span>
+                                )}
+                                <div className="flex items-start gap-3 w-full">
+                                <div className={`w-[2px] h-auto min-h-[28px] self-stretch transition-all ${!isGroupedWithPrev ? 'rounded-t-full' : ''}`} style={{ backgroundColor: color }} />
+                                <div className="flex-1 flex flex-col gap-2">
+                                    <div className="max-w-[240px] w-full">
+                                        {item.mediaUrl ? (
+                                            <img 
+                                            src={item.mediaUrl} 
+                                            className="w-full h-auto rounded-[20px] shadow-sm" 
+                                            alt="GIF" 
+                                            />
+                                        ) : (
+                                            <div className="w-full h-32 bg-gray-100 rounded-[20px] flex items-center justify-center border-2 border-dashed border-gray-300">
+                                            <span className="text-gray-400 text-xs text-center px-2">No GIF selected</span>
                                             </div>
                                         )}
                                     </div>
@@ -4099,6 +4260,77 @@ const App: React.FC = () => {
         </div>
       </div>
       
+      {showGifPicker && (
+        <div className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowGifPicker(false)}>
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-md p-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">Add GIF</h2>
+              <button onClick={() => setShowGifPicker(false)} className="text-gray-400 hover:text-white transition-colors w-7 h-7 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
+                <i className="fa-solid fa-xmark text-[11px]"></i>
+              </button>
+            </div>
+            <div className="flex gap-2 mb-3">
+              <button onClick={() => setGifPickerTab('search')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${gifPickerTab === 'search' ? 'bg-[#FFFC00] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
+                🔍 Giphy Search
+              </button>
+              <button onClick={() => setGifPickerTab('upload')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${gifPickerTab === 'upload' ? 'bg-[#FFFC00] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
+                📁 Upload GIF
+              </button>
+            </div>
+            {gifPickerTab === 'search' ? (
+              <div>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    placeholder="Search GIFs..."
+                    value={gifSearchQuery}
+                    onChange={e => setGifSearchQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') searchGiphy(gifSearchQuery); }}
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-medium outline-none focus:border-[#FFFC00]/50 text-white placeholder-gray-600"
+                    autoFocus
+                  />
+                  <button onClick={() => searchGiphy(gifSearchQuery)} className="bg-[#FFFC00] text-black px-3 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-yellow-300 transition active:scale-95">Go</button>
+                </div>
+                {gifSearchLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="w-6 h-6 border-2 border-[#FFFC00] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : gifResults.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-1.5 max-h-64 overflow-y-auto no-scrollbar rounded-xl">
+                    {gifResults.map((gif) => (
+                      <button key={gif.id} onClick={() => handleGifSelect(gif.url)} className="aspect-square rounded-lg overflow-hidden bg-black/40 hover:ring-2 hover:ring-[#FFFC00] transition-all">
+                        <img src={gif.preview} className="w-full h-full object-cover" alt={gif.title} loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-40 gap-2 text-gray-500">
+                    <span className="text-3xl">🎬</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Search for GIFs above</span>
+                    <button onClick={fetchTrendingGifs} className="text-[10px] font-black uppercase text-[#33B5FF] hover:text-white transition-colors">or load trending</button>
+                  </div>
+                )}
+                <div className="mt-2 text-center">
+                  <span className="text-[9px] text-gray-600 uppercase tracking-widest">Powered by GIPHY</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-44 gap-4">
+                <span className="text-4xl">📁</span>
+                <span className="text-xs text-gray-400">Upload a .gif file from your device</span>
+                <button
+                  onClick={() => timelineGifInputRef.current?.click()}
+                  className="bg-[#FFFC00] text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-yellow-300 transition active:scale-95"
+                >
+                  Choose File
+                </button>
+                <input ref={timelineGifInputRef} type="file" accept="image/gif" className="hidden" onChange={handleTimelineGifUpload} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {showAiModal && (
         <div className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-8">
           <div className="bg-[#1a1a1a] border border-white/10 rounded-[48px] p-10 max-w-lg w-full space-y-6 animate-in zoom-in-95 duration-500 shadow-2xl relative">

@@ -1191,7 +1191,7 @@ export class CanvasRenderer {
 
         if (msg.type === MessageType.STICKER) {
           h += 200;
-        } else if (msg.type === MessageType.IMAGE) {
+        } else if (msg.type === MessageType.IMAGE || msg.type === MessageType.GIF) {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
           const layoutImgEl = this.images.get(`media_${msg.id}`);
@@ -1333,7 +1333,7 @@ export class CanvasRenderer {
       } else {
         curY += 180;
       }
-    } else if (msg.type === MessageType.IMAGE) {
+    } else if (msg.type === MessageType.IMAGE || msg.type === MessageType.GIF) {
       if (lines.length > 0) {
         ctx.font = `400 ${fontSize}px ${FONT_REGULAR}`;
         ctx.fillStyle = textColor;

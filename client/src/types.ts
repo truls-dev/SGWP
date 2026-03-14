@@ -2,6 +2,7 @@ export enum MessageType {
   TEXT = 'TEXT',
   STICKER = 'STICKER',
   IMAGE = 'IMAGE',
+  GIF = 'GIF',
   AUDIO = 'AUDIO',
   NOTIFICATION = 'NOTIFICATION',
   PRESENCE = 'PRESENCE',

@@ -317,6 +317,46 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  app.get("/api/giphy/search", async (req, res) => {
+    const apiKey = process.env.GIPHY_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: "GIPHY_API_KEY not configured", results: [] });
+    const q = (req.query.q as string) || '';
+    if (!q.trim()) return res.json({ results: [] });
+    try {
+      const url = `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=24&rating=g`;
+      const r = await fetch(url);
+      const data = await r.json() as any;
+      const results = (data.data || []).map((g: any) => ({
+        id: g.id,
+        title: g.title,
+        url: g.images?.original?.url,
+        preview: g.images?.fixed_height_small?.url || g.images?.fixed_height?.url,
+      }));
+      res.json({ results });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, results: [] });
+    }
+  });
+
+  app.get("/api/giphy/trending", async (req, res) => {
+    const apiKey = process.env.GIPHY_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: "GIPHY_API_KEY not configured", results: [] });
+    try {
+      const url = `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
+      const r = await fetch(url);
+      const data = await r.json() as any;
+      const results = (data.data || []).map((g: any) => ({
+        id: g.id,
+        title: g.title,
+        url: g.images?.original?.url,
+        preview: g.images?.fixed_height_small?.url || g.images?.fixed_height?.url,
+      }));
+      res.json({ results });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, results: [] });
+    }
+  });
+
   app.post("/api/ai/generate-script", async (req, res) => {
     try {
       if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
