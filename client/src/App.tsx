@@ -3841,7 +3841,7 @@ const App: React.FC = () => {
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <div className="text-xs font-bold text-white truncate">{item.contactCardName || 'Name'}</div>
-                                    <div className="text-[10px] text-gray-400 truncate">~{item.contactCardUsername || 'username'}</div>
+                                    <div className="text-[10px] text-gray-400 truncate">{item.contactCardUsername || 'username'}</div>
                                   </div>
                                 </div>
                                 <div className="space-y-2">
@@ -4306,16 +4306,18 @@ const App: React.FC = () => {
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-[13px] font-bold text-black leading-tight truncate">{item.contactCardName || 'Name'}</div>
-                                        <div className="text-[11px] text-gray-400 truncate">~{item.contactCardUsername || 'username'}</div>
-                                    </div>
-                                    <div className="flex gap-[6px] flex-shrink-0">
-                                        <div className="w-[48px] h-[30px] bg-[#FFFC00] rounded-full flex items-center justify-center">
-                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#000" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.353C3 3.053 4.053 2 5.353 2h5.294C11.947 2 13 3.053 13 4.353v9.854a.5.5 0 0 1-.809.393L9.202 12.25A1.176 1.176 0 0 0 8.475 12H5.353A2.353 2.353 0 0 1 3 9.647V4.353Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+                                        <div className="flex items-center gap-[5px] min-w-0">
+                                        <div className="text-[13px] font-bold text-black leading-tight truncate flex-1 min-w-0">{item.contactCardName || 'Name'}</div>
+                                        <div className="flex gap-[5px] flex-shrink-0">
+                                            <div className="w-[44px] h-[28px] bg-[#FFFC00] rounded-full flex items-center justify-center">
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="#000" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.353C3 3.053 4.053 2 5.353 2h5.294C11.947 2 13 3.053 13 4.353v9.854a.5.5 0 0 1-.809.393L9.202 12.25A1.176 1.176 0 0 0 8.475 12H5.353A2.353 2.353 0 0 1 3 9.647V4.353Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+                                            </div>
+                                            <div className="w-[44px] h-[28px] bg-[#FFFC00] rounded-full flex items-center justify-center">
+                                            <svg width="55%" height="55%" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M35 45.118c-4.56 0-8.27-3.708-8.27-8.268 0-4.559 3.71-8.267 8.27-8.267 4.562 0 8.271 3.708 8.271 8.267 0 4.56-3.71 8.268-8.27 8.268ZM21.317 36.85c0-7.543 6.138-13.678 13.684-13.678 7.547 0 13.684 6.135 13.684 13.678 0 7.542-6.137 13.68-13.684 13.68-7.546 0-13.684-6.138-13.684-13.68ZM56.29 18.934c-2.052-.867-4.398-1.601-6.994-2.214a18.079 18.079 0 0 0-.675-2.078 4.97 4.97 0 0 0-2.719-2.755c-2.04-.861-5.59-1.888-10.9-1.888-5.312 0-8.862 1.027-10.904 1.888a4.975 4.975 0 0 0-2.716 2.754c-.259.65-.487 1.35-.7 2.109-2.572.583-4.92 1.317-6.972 2.184-2.188.923-3.865 2.623-4.725 4.784-1.165 2.935-2.556 7.73-2.556 13.914 0 6.376 1.47 11.278 2.7 14.266a8.738 8.738 0 0 0 4.378 4.618C16.914 58.105 23.409 60 35.002 60c11.59 0 18.084-1.894 21.493-3.483a8.74 8.74 0 0 0 4.376-4.618c1.231-2.988 2.7-7.89 2.7-14.266 0-6.184-1.39-10.98-2.556-13.912-.858-2.165-2.537-3.863-4.725-4.786Z" fill="#000"/></svg>
+                                            </div>
                                         </div>
-                                        <div className="w-[48px] h-[30px] bg-[#FFFC00] rounded-full flex items-center justify-center">
-                                        <svg width="60%" height="60%" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M35 45.118c-4.56 0-8.27-3.708-8.27-8.268 0-4.559 3.71-8.267 8.27-8.267 4.562 0 8.271 3.708 8.271 8.267 0 4.56-3.71 8.268-8.27 8.268ZM21.317 36.85c0-7.543 6.138-13.678 13.684-13.678 7.547 0 13.684 6.135 13.684 13.678 0 7.542-6.137 13.68-13.684 13.68-7.546 0-13.684-6.138-13.684-13.68ZM56.29 18.934c-2.052-.867-4.398-1.601-6.994-2.214a18.079 18.079 0 0 0-.675-2.078 4.97 4.97 0 0 0-2.719-2.755c-2.04-.861-5.59-1.888-10.9-1.888-5.312 0-8.862 1.027-10.904 1.888a4.975 4.975 0 0 0-2.716 2.754c-.259.65-.487 1.35-.7 2.109-2.572.583-4.92 1.317-6.972 2.184-2.188.923-3.865 2.623-4.725 4.784-1.165 2.935-2.556 7.73-2.556 13.914 0 6.376 1.47 11.278 2.7 14.266a8.738 8.738 0 0 0 4.378 4.618C16.914 58.105 23.409 60 35.002 60c11.59 0 18.084-1.894 21.493-3.483a8.74 8.74 0 0 0 4.376-4.618c1.231-2.988 2.7-7.89 2.7-14.266 0-6.184-1.39-10.98-2.556-13.912-.858-2.165-2.537-3.863-4.725-4.786Z" fill="#000"/></svg>
                                         </div>
+                                        <div className="text-[11px] text-gray-400 truncate">{item.contactCardUsername || 'username'}</div>
                                     </div>
                                     </div>
                                 </div>
