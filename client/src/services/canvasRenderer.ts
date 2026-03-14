@@ -383,6 +383,9 @@ export class CanvasRenderer {
           promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
         }
       }
+      if (e.type === MessageType.CONTACT_CARD && e.contactCardAvatarId) {
+        promises.push(this.loadImg(`contact_${e.id}`, getSelfieUrlForAvatar(e.contactCardAvatarId)));
+      }
     }
 
     if (chatConfig?.exportBackgroundUrl) {
@@ -1251,7 +1254,9 @@ export class CanvasRenderer {
 
         ctx.font = `400 ${msgFontSize}px ${FONT_REGULAR}`;
 
-        if (msg.type === MessageType.STICKER) {
+        if (msg.type === MessageType.CONTACT_CARD) {
+          h += 165;
+        } else if (msg.type === MessageType.STICKER) {
           h += 200;
         } else if (msg.type === MessageType.IMAGE || msg.type === MessageType.GIF) {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
@@ -1388,7 +1393,10 @@ export class CanvasRenderer {
     const textStartX = padX + BAR_WIDTH + BAR_GAP;
     const barStartY = curY;
 
-    if (msg.type === MessageType.STICKER) {
+    if (msg.type === MessageType.CONTACT_CARD) {
+      this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
+      curY += 155;
+    } else if (msg.type === MessageType.STICKER) {
       const stickerImg = this.images.get(`media_${msg.id}`);
       if (stickerImg) {
         const sh = 180;
@@ -1447,6 +1455,117 @@ export class CanvasRenderer {
         ctx.fillRect(padX, barStartY, BAR_WIDTH, barH);
       }
     }
+  }
+
+  private drawContactCard(
+    ctx: CanvasRenderingContext2D,
+    msg: ScriptEvent,
+    x: number,
+    y: number,
+    fontSize: number,
+  ): void {
+    const cardW = 510;
+    const cardH = 148;
+    const cardR = 28;
+    const pad = 22;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.10)';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = '#FFFFFF';
+    this.pillPath(ctx, x, y, cardW, cardH, cardR);
+    ctx.fill();
+    ctx.restore();
+
+    const avatarSize = 90;
+    const avatarX = x + pad;
+    const avatarCY = y + cardH / 2;
+    const avatarImg = this.images.get(`contact_${msg.id}`);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize / 2, avatarCY, avatarSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    if (avatarImg) {
+      ctx.drawImage(avatarImg, avatarX, avatarCY - avatarSize / 2, avatarSize, avatarSize);
+    } else {
+      ctx.fillStyle = '#E5E7EB';
+      ctx.fill();
+    }
+    ctx.restore();
+
+    const textX = avatarX + avatarSize + 18;
+    const nameSize = Math.round(fontSize * 0.82);
+    const usernameSize = Math.round(fontSize * 0.62);
+
+    ctx.font = `700 ${nameSize}px ${FONT_REGULAR}`;
+    ctx.fillStyle = '#111827';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    this.fillTextWithEmoji(ctx, msg.contactCardName || 'Contact', textX, y + cardH / 2 - nameSize * 0.65, FONT_REGULAR, nameSize);
+
+    ctx.font = `400 ${usernameSize}px ${FONT_REGULAR}`;
+    ctx.fillStyle = '#6B7280';
+    ctx.fillText(msg.contactCardUsername || '', textX, y + cardH / 2 + usernameSize * 0.85);
+
+    const btnSize = 56;
+    const btnGap = 14;
+    const btnAreaRight = x + cardW - pad;
+    const btn2X = btnAreaRight - btnSize;
+    const btn1X = btn2X - btnSize - btnGap;
+    const btnY = y + cardH / 2 - btnSize / 2;
+    const btnR = 16;
+
+    for (const bx of [btn1X, btn2X]) {
+      ctx.save();
+      ctx.fillStyle = '#FFFC00';
+      this.pillPath(ctx, bx, btnY, btnSize, btnSize, btnR);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const iconSize = 26;
+    const iconColor = '#000000';
+    ctx.save();
+    ctx.fillStyle = iconColor;
+    const chatIconCX = btn1X + btnSize / 2;
+    const chatIconCY = btnY + btnSize / 2;
+    const bubbleR = iconSize / 2;
+    ctx.beginPath();
+    ctx.arc(chatIconCX, chatIconCY - 2, bubbleR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFC00';
+    ctx.beginPath();
+    ctx.arc(chatIconCX, chatIconCY - 2, bubbleR - 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = iconColor;
+    ctx.beginPath();
+    ctx.moveTo(chatIconCX - 6, chatIconCY + bubbleR - 5);
+    ctx.lineTo(chatIconCX - 10, chatIconCY + bubbleR + 3);
+    ctx.lineTo(chatIconCX + 2, chatIconCY + bubbleR - 5);
+    ctx.fill();
+    ctx.restore();
+
+    const camCX = btn2X + btnSize / 2;
+    const camCY = btnY + btnSize / 2;
+    ctx.save();
+    ctx.fillStyle = iconColor;
+    ctx.beginPath();
+    ctx.roundRect(camCX - iconSize / 2, camCY - iconSize / 2 + 4, iconSize, iconSize - 7, 5);
+    ctx.fill();
+    ctx.fillStyle = '#FFFC00';
+    ctx.beginPath();
+    ctx.arc(camCX, camCY + 0.5, (iconSize - 14) / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = iconColor;
+    ctx.beginPath();
+    ctx.arc(camCX, camCY + 0.5, (iconSize - 22) / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = iconColor;
+    ctx.beginPath();
+    ctx.arc(camCX + (iconSize / 2) - 5, camCY - (iconSize / 2) + 6, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   private drawTypingIndicator(

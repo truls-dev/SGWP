@@ -6,7 +6,8 @@ export enum MessageType {
   AUDIO = 'AUDIO',
   NOTIFICATION = 'NOTIFICATION',
   PRESENCE = 'PRESENCE',
-  IOS_NOTIFICATION = 'IOS_NOTIFICATION'
+  IOS_NOTIFICATION = 'IOS_NOTIFICATION',
+  CONTACT_CARD = 'CONTACT_CARD'
 }
 
 export enum SenderType {
@@ -45,6 +46,9 @@ export interface ScriptEvent {
   notifDurationMs?: number;
   notifIconUrl?: string;
   meTypingStart?: 'default' | 'during_previous';
+  contactCardName?: string;
+  contactCardUsername?: string;
+  contactCardAvatarId?: string;
 }
 
 export interface SystemConfig {

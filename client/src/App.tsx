@@ -501,7 +501,7 @@ const App: React.FC = () => {
       } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
         if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
       }
-      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.GIF || preEvent.type === MessageType.NOTIFICATION) && !preEvent.isBackspaced) {
+      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.GIF || preEvent.type === MessageType.NOTIFICATION || preEvent.type === MessageType.CONTACT_CARD) && !preEvent.isBackspaced) {
         preShownItems.push({ ...preEvent, instanceId: uuidv4() });
       }
     }
@@ -1016,10 +1016,15 @@ const App: React.FC = () => {
       id: uuidv4(),
       type,
       senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : (type === MessageType.IOS_NOTIFICATION ? undefined : state.cast[0].id)),
-      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.GIF || type === MessageType.IOS_NOTIFICATION ? '' : 'New message')),
+      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.GIF || type === MessageType.IOS_NOTIFICATION || type === MessageType.CONTACT_CARD ? '' : 'New message')),
       presenceAction: type === MessageType.PRESENCE ? 'ENTER' : undefined,
       isVertical: false,
       isBackspaced: false,
+      ...(type === MessageType.CONTACT_CARD ? {
+        contactCardName: 'Molly',
+        contactCardUsername: 'prettycoolnicegirl',
+        contactCardAvatarId: state.cast.find(c => !c.isMe)?.bitmojiAvatarId || state.cast[0]?.bitmojiAvatarId,
+      } : {}),
       ...(type === MessageType.IOS_NOTIFICATION ? {
         notifPlatform: 'Messages' as NotificationPlatform,
         notifSenderName: 'Jane',
@@ -1251,7 +1256,7 @@ const App: React.FC = () => {
           } else if (pe.type !== MessageType.NOTIFICATION && pe.senderId && pe.senderId !== 'me') {
             if (!preShownIds.includes(pe.senderId)) preShownIds.push(pe.senderId);
           }
-          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.GIF || pe.type === MessageType.NOTIFICATION) && !pe.isBackspaced) {
+          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.GIF || pe.type === MessageType.NOTIFICATION || pe.type === MessageType.CONTACT_CARD) && !pe.isBackspaced) {
             setPlaybackItems(prev => [...prev, { ...pe, instanceId: uuidv4(), revealedAt: Date.now() }]);
           }
         }
@@ -1268,7 +1273,7 @@ const App: React.FC = () => {
 
     if (seqIndex === 0 && seqChat.lockscreenEnabled) {
       const firstNonMeEvent = seqScript.find(e =>
-        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF) &&
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF || e.type === MessageType.CONTACT_CARD) &&
         e.senderId && e.senderId !== 'me'
       );
       const lockDurationMs = seqChat.lockscreenDurationMs || 2000;
@@ -1394,7 +1399,7 @@ const App: React.FC = () => {
       }
 
       // If it's the other person sending, ensure they "arrive" before typing/sending
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD)) {
         if (!localActiveParticipantIds.includes(event.senderId)) {
            updateActiveIds(Array.from(new Set([event.senderId as string, ...localActiveParticipantIds])));
            await delay(600);
@@ -1432,7 +1437,7 @@ const App: React.FC = () => {
           soundService.playEffect(event.soundEffect);
         }
         await delay(1000);
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD) {
         const sender = seqCast.find(c => c.id === event.senderId);
         if (!sender) continue;
         
@@ -2386,7 +2391,7 @@ const App: React.FC = () => {
     let lockscreenFirstEventId: string | null = null;
     if (lockscreenEnabled) {
       const firstNonMe = script.find(e =>
-        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF) &&
+        (e.type === MessageType.TEXT || e.type === MessageType.STICKER || e.type === MessageType.IMAGE || e.type === MessageType.GIF || e.type === MessageType.CONTACT_CARD) &&
         e.senderId && e.senderId !== 'me'
       );
       if (firstNonMe) lockscreenFirstEventId = firstNonMe.id;
@@ -2421,7 +2426,7 @@ const App: React.FC = () => {
         continue;
       }
 
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD)) {
         if (!activeIds.includes(event.senderId)) {
           activeIds.push(event.senderId);
           totalMs += 600;
@@ -2442,7 +2447,7 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.NOTIFICATION) {
         totalMs += 1000;
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD) {
         if (sender && !sender.isMe) {
           totalMs += chat.messageDelay;
         }
@@ -3823,6 +3828,63 @@ const App: React.FC = () => {
                                   </button>
                                 </div>
                               </div>
+                            ) : item.type === MessageType.CONTACT_CARD ? (
+                              <div className="space-y-3">
+                                <div className="w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+                                  {item.contactCardAvatarId ? (
+                                    <img src={`https://sdk.bitmoji.com/render/panel/10220264-${item.contactCardAvatarId}-v1.png?transparent=1&palette=1`} className="w-10 h-10 rounded-full object-cover bg-yellow-400/20" alt="Avatar" />
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-full bg-yellow-400/20 flex items-center justify-center">
+                                      <span className="text-xl">👤</span>
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-bold text-white truncate">{item.contactCardName || 'Name'}</div>
+                                    <div className="text-[10px] text-gray-400 truncate">@{item.contactCardUsername || 'username'}</div>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest w-20">Display Name</span>
+                                    <input
+                                      className="bg-transparent flex-1 text-xs font-medium focus:outline-none border-b border-white/10 pb-0.5"
+                                      value={item.contactCardName || ''}
+                                      placeholder="Display name..."
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, contactCardName: e.target.value };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest w-20">Username</span>
+                                    <input
+                                      className="bg-transparent flex-1 text-xs font-medium focus:outline-none border-b border-white/10 pb-0.5"
+                                      value={item.contactCardUsername || ''}
+                                      placeholder="username..."
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, contactCardUsername: e.target.value };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest w-20">Avatar ID</span>
+                                    <input
+                                      className="bg-transparent flex-1 text-xs font-medium focus:outline-none border-b border-white/10 pb-0.5"
+                                      value={item.contactCardAvatarId || ''}
+                                      placeholder="Bitmoji avatar ID..."
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, contactCardAvatarId: e.target.value };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
                             ) : (
                               <div className="space-y-2">
                                 <textarea rows={2} className="bg-transparent w-full text-xs font-medium focus:outline-none resize-none placeholder-gray-600" value={item.text} placeholder="Enter chat message content..." onChange={e => { const newScript = [...state.script]; newScript[idx].text = e.target.value; setState(prev => ({ ...prev, script: newScript })); }} />
@@ -3903,6 +3965,7 @@ const App: React.FC = () => {
                       <button onClick={() => addScriptItem(MessageType.TEXT)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
                       <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
                       <button onClick={() => addScriptItem(MessageType.GIF)} className="flex-1 bg-[#FF6B9D]/10 border border-[#FF6B9D]/20 text-[#FF6B9D] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#FF6B9D]/20 active:scale-95">+ GIF</button>
+                      <button onClick={() => addScriptItem(MessageType.CONTACT_CARD)} className="flex-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-yellow-400/20 active:scale-95">+ CONTACT</button>
                       <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
                       <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="flex-1 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95"><i className="fa-solid fa-bell mr-1"></i> + iOS NOTIF</button>
                     </div>
@@ -3956,7 +4019,7 @@ const App: React.FC = () => {
                                 {item.type === MessageType.NOTIFICATION ? 'SYSTEM' : item.type === MessageType.PRESENCE ? 'PRESENCE' : item.type === MessageType.IOS_NOTIFICATION ? 'iOS NOTIF' : (sender?.name || 'Unknown')}
                               </span>
                               <span className="text-[10px] text-gray-500 truncate flex-1">
-                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.GIF ? '🎬 GIF' : item.type === MessageType.STICKER ? '🎨 Sticker' : (item.text || '')}
+                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.GIF ? '🎬 GIF' : item.type === MessageType.STICKER ? '🎨 Sticker' : item.type === MessageType.CONTACT_CARD ? `👤 ${item.contactCardName || 'Contact'}` : (item.text || '')}
                               </span>
                             </div>
                           </div>
@@ -4083,7 +4146,7 @@ const App: React.FC = () => {
                         const key = item.instanceId || item.id;
                         const filteredMessages = messagesToRender.filter(i => i.type !== MessageType.PRESENCE && i.type !== MessageType.IOS_NOTIFICATION);
                         const prevItem = idx > 0 ? filteredMessages[idx - 1] : null;
-                        const isGroupedWithPrev = prevItem && (prevItem.type === MessageType.TEXT || prevItem.type === MessageType.STICKER || prevItem.type === MessageType.IMAGE || prevItem.type === MessageType.GIF) && item.senderId === prevItem.senderId;
+                        const isGroupedWithPrev = prevItem && (prevItem.type === MessageType.TEXT || prevItem.type === MessageType.STICKER || prevItem.type === MessageType.IMAGE || prevItem.type === MessageType.GIF || prevItem.type === MessageType.CONTACT_CARD) && item.senderId === prevItem.senderId;
                         
                         if (item.type === MessageType.NOTIFICATION) {
                         return (
@@ -4187,6 +4250,50 @@ const App: React.FC = () => {
                                             <span className="text-gray-400 text-xs text-center px-2">No GIF selected</span>
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+                        );
+                        }
+
+                        if (item.type === MessageType.CONTACT_CARD) {
+                        return (
+                            <div key={key} className={`${cropOffsetClass} animate-in slide-in-from-bottom-2 fade-in duration-300 ${isGroupedWithPrev ? 'pt-0' : 'pt-[12px]'} pb-1`}>
+                            <div className="flex flex-col items-start">
+                                {!isGroupedWithPrev && (
+                                    <span className="text-[13px] font-bold mb-1 tracking-tight snap-font-bold" style={{ color }}>
+                                    {sender?.name.toUpperCase()}
+                                    </span>
+                                )}
+                                <div className="flex items-start gap-3 w-full">
+                                <div className={`w-[2px] h-auto min-h-[28px] self-stretch transition-all ${!isGroupedWithPrev ? 'rounded-t-full' : ''}`} style={{ backgroundColor: color }} />
+                                <div className="flex-1">
+                                    <div className="bg-white rounded-[16px] shadow-sm flex items-center gap-3 px-3 py-2.5 max-w-[260px]">
+                                    <div className="w-10 h-10 rounded-full bg-yellow-400/30 flex-shrink-0 overflow-hidden">
+                                        {item.contactCardAvatarId ? (
+                                        <img
+                                            src={`https://sdk.bitmoji.com/render/panel/10220264-${item.contactCardAvatarId}-v1.png?transparent=1&palette=1`}
+                                            className="w-full h-full object-cover"
+                                            alt=""
+                                        />
+                                        ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-lg">👤</div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-[13px] font-bold text-black leading-tight truncate">{item.contactCardName || 'Name'}</div>
+                                        <div className="text-[11px] text-gray-500 truncate">@{item.contactCardUsername || 'username'}</div>
+                                    </div>
+                                    <div className="flex gap-1.5 flex-shrink-0">
+                                        <div className="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        </div>
+                                        <div className="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
                                 </div>
