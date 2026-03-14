@@ -1500,35 +1500,37 @@ export class CanvasRenderer {
     const nameSize = Math.round(fontSize * 0.80);
     const usernameSize = Math.round(fontSize * 0.60);
 
-    const btnW = 84;
-    const btnH = 52;
-    const btnGap = 12;
+    const btnW = 70;
+    const btnH = 36;
+    const btnGap = 10;
     const btnAreaRight = x + cardW - pad;
     const btn2X = btnAreaRight - btnW;
     const btn1X = btn2X - btnW - btnGap;
-    const nameRowCenterY = y + Math.round(cardH * 0.38);
-    const btnY = nameRowCenterY - btnH / 2;
+    const btnY = y + cardH / 2 - btnH / 2;
     const btnR = btnH / 2;
 
-    const nameY = nameRowCenterY + Math.round(nameSize * 0.35);
-    const nameMaxW = btn1X - textX - 8;
+    const textMaxW = btn1X - textX - 10;
+    const nameY = y + cardH / 2 - 6;
     ctx.save();
     ctx.font = `700 ${nameSize}px ${FONT_REGULAR}`;
     ctx.fillStyle = '#111827';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
     ctx.beginPath();
-    ctx.rect(textX, y, nameMaxW, cardH);
+    ctx.rect(textX, y, textMaxW, cardH);
     ctx.clip();
     this.fillTextWithEmoji(ctx, msg.contactCardName || 'Contact', textX, nameY, FONT_REGULAR, nameSize);
     ctx.restore();
 
-    const usernameY = y + Math.round(cardH * 0.70);
+    const usernameY = y + cardH / 2 + usernameSize + 2;
     ctx.save();
     ctx.font = `400 ${usernameSize}px ${FONT_REGULAR}`;
     ctx.fillStyle = '#9CA3AF';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
+    ctx.beginPath();
+    ctx.rect(textX, y, textMaxW, cardH);
+    ctx.clip();
     ctx.fillText(msg.contactCardUsername || '', textX, usernameY);
     ctx.restore();
 
