@@ -831,7 +831,7 @@ const App: React.FC = () => {
           const evId = gifPickerEventId;
           setState(prev => ({
             ...prev,
-            script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: result, isVertical: false } : s)
+            script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: result, mediaThumbnailUrl: result, isVertical: false } : s)
           }));
           setShowGifPicker(false);
         }
@@ -841,12 +841,12 @@ const App: React.FC = () => {
     e.target.value = '';
   };
 
-  const handleGifSelect = (gifUrl: string) => {
+  const handleGifSelect = (gifUrl: string, thumbUrl?: string) => {
     if (!gifPickerEventId) return;
     const evId = gifPickerEventId;
     setState(prev => ({
       ...prev,
-      script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: gifUrl, isVertical: false } : s)
+      script: prev.script.map(s => s.id === evId ? { ...s, mediaUrl: gifUrl, mediaThumbnailUrl: thumbUrl || gifUrl, isVertical: false } : s)
     }));
     setShowGifPicker(false);
   };
@@ -3799,7 +3799,7 @@ const App: React.FC = () => {
                               <div className="space-y-3">
                                 {item.mediaUrl ? (
                                    <div className="w-full h-32 overflow-hidden rounded-xl border border-white/10 bg-black/20 flex items-center justify-center">
-                                      <img src={item.mediaUrl} className="w-full h-full object-contain" alt="GIF Preview" />
+                                      <img src={item.mediaThumbnailUrl || item.mediaUrl} className="w-full h-full object-contain" alt="GIF Preview" />
                                    </div>
                                 ) : (
                                    <div className="w-full h-32 rounded-xl border border-dashed border-[#FF6B9D]/30 bg-[#FF6B9D]/5 flex flex-col items-center justify-center gap-2 cursor-pointer" onClick={() => openGifPicker(item.id)}>
@@ -4309,7 +4309,7 @@ const App: React.FC = () => {
                 ) : gifResults.length > 0 ? (
                   <div className="grid grid-cols-3 gap-1.5 max-h-64 overflow-y-auto no-scrollbar rounded-xl">
                     {gifResults.map((gif) => (
-                      <button key={gif.id} onClick={() => handleGifSelect(gif.url)} className="aspect-square rounded-lg overflow-hidden bg-black/40 hover:ring-2 hover:ring-[#FFFC00] transition-all">
+                      <button key={gif.id} onClick={() => handleGifSelect(gif.url, gif.preview)} className="aspect-square rounded-lg overflow-hidden bg-black/40 hover:ring-2 hover:ring-[#FFFC00] transition-all">
                         <img src={gif.preview} className="w-full h-full object-cover" alt={gif.title} loading="lazy" />
                       </button>
                     ))}

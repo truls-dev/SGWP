@@ -432,14 +432,32 @@ export class CanvasRenderer {
       video.loop = true;
       video.muted = true;
       video.playsInline = true;
-      video.crossOrigin = 'anonymous';
+      let resolved = false;
+      const done = () => { if (!resolved) { resolved = true; resolve(); } };
       video.oncanplay = () => {
         this.gifVideos.set(key, video);
         video.play().catch(() => {});
-        resolve();
+        done();
       };
-      video.onerror = () => resolve();
+      video.onerror = () => {
+        const fallbackUrl = url.replace('/giphy.mp4', '/giphy.gif');
+        if (fallbackUrl !== url) {
+          this.loadImg(key, fallbackUrl).then(done);
+        } else {
+          done();
+        }
+      };
+      setTimeout(() => {
+        if (!resolved) {
+          if (video.readyState >= 3) {
+            this.gifVideos.set(key, video);
+            video.play().catch(() => {});
+          }
+          done();
+        }
+      }, 5000);
       video.src = url;
+      video.load();
     });
   }
 

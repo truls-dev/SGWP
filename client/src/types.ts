@@ -28,6 +28,7 @@ export interface ScriptEvent {
   senderId?: string; 
   text?: string;
   mediaUrl?: string;
+  mediaThumbnailUrl?: string;
   duration?: string;
   timestamp?: string;
   instanceId?: string;
