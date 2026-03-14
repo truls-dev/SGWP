@@ -4164,11 +4164,22 @@ const App: React.FC = () => {
                                 <div className="flex-1 flex flex-col gap-2">
                                     <div className="max-w-[240px] w-full">
                                         {item.mediaUrl ? (
-                                            <img 
-                                            src={item.mediaUrl} 
-                                            className="w-full h-auto rounded-[20px] shadow-sm" 
-                                            alt="GIF" 
-                                            />
+                                            item.mediaUrl.includes('.mp4') || item.mediaUrl.includes('video/') ? (
+                                                <video
+                                                    src={item.mediaUrl}
+                                                    className="w-full h-auto rounded-[20px] shadow-sm"
+                                                    autoPlay
+                                                    loop
+                                                    muted
+                                                    playsInline
+                                                />
+                                            ) : (
+                                                <img 
+                                                    src={item.mediaUrl} 
+                                                    className="w-full h-auto rounded-[20px] shadow-sm" 
+                                                    alt="GIF" 
+                                                />
+                                            )
                                         ) : (
                                             <div className="w-full h-32 bg-gray-100 rounded-[20px] flex items-center justify-center border-2 border-dashed border-gray-300">
                                             <span className="text-gray-400 text-xs text-center px-2">No GIF selected</span>

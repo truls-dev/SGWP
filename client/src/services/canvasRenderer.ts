@@ -245,6 +245,7 @@ export class CanvasRenderer {
   private W = 1080;
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
+  private gifVideos = new Map<string, HTMLVideoElement>();
   private emojiImages = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
@@ -363,7 +364,12 @@ export class CanvasRenderer {
 
     for (const e of events) {
       if (e.mediaUrl) {
-        promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
+        const isGifVideo = e.type === MessageType.GIF && (e.mediaUrl.includes('.mp4') || e.mediaUrl.includes('video/'));
+        if (isGifVideo) {
+          promises.push(this.loadVideo(`media_${e.id}`, e.mediaUrl));
+        } else {
+          promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
+        }
       }
     }
 
@@ -414,6 +420,26 @@ export class CanvasRenderer {
         img2.src = url;
       };
       img.src = url;
+    });
+  }
+
+  private loadVideo(key: string, url: string): Promise<void> {
+    if (!url) return Promise.resolve();
+    if (this.gifVideos.has(key)) return Promise.resolve();
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.crossOrigin = 'anonymous';
+      video.oncanplay = () => {
+        this.gifVideos.set(key, video);
+        video.play().catch(() => {});
+        resolve();
+      };
+      video.onerror = () => resolve();
+      video.src = url;
     });
   }
 
@@ -1195,8 +1221,11 @@ export class CanvasRenderer {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
           const layoutImgEl = this.images.get(`media_${msg.id}`);
-          if (layoutImgEl && layoutImgEl.width > 0) {
-            h += Math.round(420 / (layoutImgEl.width / layoutImgEl.height));
+          const layoutVidEl = this.gifVideos.get(`media_${msg.id}`);
+          const layoutW = layoutVidEl ? layoutVidEl.videoWidth : (layoutImgEl?.width ?? 0);
+          const layoutH = layoutVidEl ? layoutVidEl.videoHeight : (layoutImgEl?.height ?? 0);
+          if (layoutW > 0 && layoutH > 0) {
+            h += Math.round(420 / (layoutW / layoutH));
           } else {
             h += msg.isVertical ? 420 : 300;
           }
@@ -1346,14 +1375,18 @@ export class CanvasRenderer {
         curY += 10;
       }
 
+      const vidEl = this.gifVideos.get(`media_${msg.id}`);
       const imgEl = this.images.get(`media_${msg.id}`);
-      if (imgEl) {
+      const mediaEl = vidEl || imgEl;
+      const mediaW = vidEl ? vidEl.videoWidth : (imgEl?.width ?? 0);
+      const mediaH = vidEl ? vidEl.videoHeight : (imgEl?.height ?? 0);
+      if (mediaEl && mediaW > 0 && mediaH > 0) {
         const maxW = 420;
-        const imgRatio = imgEl.width / imgEl.height;
-        const imgW = maxW;
-        const imgH = maxW / imgRatio;
-        this.drawRoundedImage(ctx, imgEl, textStartX, curY, imgW, imgH, 50, false);
-        curY += imgH + 10;
+        const ratio = mediaW / mediaH;
+        const drawW = maxW;
+        const drawH = maxW / ratio;
+        this.drawRoundedImage(ctx, mediaEl as HTMLImageElement, textStartX, curY, drawW, drawH, 50, false);
+        curY += drawH + 10;
       } else {
         curY += msg.isVertical ? 400 : 280;
       }

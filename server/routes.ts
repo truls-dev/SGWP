@@ -329,7 +329,7 @@ export async function registerRoutes(
       const results = (data.data || []).map((g: any) => ({
         id: g.id,
         title: g.title,
-        url: g.images?.original?.url,
+        url: g.images?.original?.mp4 || g.images?.original?.url,
         preview: g.images?.fixed_height_small?.url || g.images?.fixed_height?.url,
       }));
       res.json({ results });
@@ -348,7 +348,7 @@ export async function registerRoutes(
       const results = (data.data || []).map((g: any) => ({
         id: g.id,
         title: g.title,
-        url: g.images?.original?.url,
+        url: g.images?.original?.mp4 || g.images?.original?.url,
         preview: g.images?.fixed_height_small?.url || g.images?.fixed_height?.url,
       }));
       res.json({ results });
