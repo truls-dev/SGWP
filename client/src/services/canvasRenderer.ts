@@ -364,12 +364,11 @@ export class CanvasRenderer {
 
     for (const e of events) {
       if (e.mediaUrl) {
-        const isGifVideo = e.type === MessageType.GIF && (e.mediaUrl.includes('.mp4') || e.mediaUrl.includes('video/'));
-        if (isGifVideo) {
-          promises.push(this.loadVideo(`media_${e.id}`, e.mediaUrl));
-        } else {
-          promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
+        let canvasUrl = e.mediaUrl;
+        if (e.type === MessageType.GIF && canvasUrl.includes('.mp4')) {
+          canvasUrl = canvasUrl.replace(/\.mp4(\?.*)?$/, '.gif');
         }
+        promises.push(this.loadImg(`media_${e.id}`, canvasUrl));
       }
     }
 
@@ -1239,9 +1238,8 @@ export class CanvasRenderer {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
           const layoutImgEl = this.images.get(`media_${msg.id}`);
-          const layoutVidEl = this.gifVideos.get(`media_${msg.id}`);
-          const layoutW = layoutVidEl ? layoutVidEl.videoWidth : (layoutImgEl?.width ?? 0);
-          const layoutH = layoutVidEl ? layoutVidEl.videoHeight : (layoutImgEl?.height ?? 0);
+          const layoutW = layoutImgEl?.width ?? 0;
+          const layoutH = layoutImgEl?.height ?? 0;
           if (layoutW > 0 && layoutH > 0) {
             h += Math.round(420 / (layoutW / layoutH));
           } else {
@@ -1393,11 +1391,9 @@ export class CanvasRenderer {
         curY += 10;
       }
 
-      const vidEl = this.gifVideos.get(`media_${msg.id}`);
-      const imgEl = this.images.get(`media_${msg.id}`);
-      const mediaEl = vidEl || imgEl;
-      const mediaW = vidEl ? vidEl.videoWidth : (imgEl?.width ?? 0);
-      const mediaH = vidEl ? vidEl.videoHeight : (imgEl?.height ?? 0);
+      const mediaEl = this.images.get(`media_${msg.id}`);
+      const mediaW = mediaEl?.width ?? 0;
+      const mediaH = mediaEl?.height ?? 0;
       if (mediaEl && mediaW > 0 && mediaH > 0) {
         const maxW = 420;
         const ratio = mediaW / mediaH;
