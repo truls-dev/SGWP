@@ -498,15 +498,15 @@ export class CanvasRenderer {
         const canR = this.W / this.H;
         let dw: number, dh: number, dx: number, dy: number;
         if (imgR > canR) {
-          dh = this.H;
-          dw = this.H * imgR;
-          dx = (this.W - dw) / 2;
-          dy = 0;
-        } else {
           dw = this.W;
           dh = this.W / imgR;
           dx = 0;
           dy = (this.H - dh) / 2;
+        } else {
+          dh = this.H;
+          dw = this.H * imgR;
+          dx = (this.W - dw) / 2;
+          dy = 0;
         }
         ctx.drawImage(exportBg, dx, dy, dw, dh);
       } else {

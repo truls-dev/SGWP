@@ -3904,7 +3904,7 @@ const App: React.FC = () => {
         
         {state.chat.exportBackgroundUrl && !isVideoMode && (
             <div className="absolute inset-0 z-0">
-                <img src={state.chat.exportBackgroundUrl} className="w-full h-full object-cover" alt="Background" />
+                <img src={state.chat.exportBackgroundUrl} className="w-full h-full object-contain" alt="Background" />
             </div>
         )}
 
