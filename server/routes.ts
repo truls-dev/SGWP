@@ -357,6 +357,28 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/media-proxy", async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).json({ error: "Missing url" });
+    try {
+      const parsed = new URL(url);
+      if (!parsed.hostname.endsWith('.giphy.com') && !parsed.hostname.endsWith('.giphy.net')) {
+        return res.status(403).json({ error: "Forbidden domain" });
+      }
+      const response = await fetch(url);
+      if (!response.ok) return res.status(response.status).end();
+      const contentType = response.headers.get('content-type') || 'video/mp4';
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('Content-Length', buffer.byteLength);
+      res.send(buffer);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.post("/api/ai/generate-script", async (req, res) => {
     try {
       if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {

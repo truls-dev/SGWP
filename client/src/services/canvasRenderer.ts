@@ -246,6 +246,7 @@ export class CanvasRenderer {
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
   private gifVideos = new Map<string, HTMLVideoElement>();
+  private hiddenVideoContainer: HTMLDivElement;
   private emojiImages = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
   private presenceAnims = new Map<string, PresenceAnimState>();
@@ -280,6 +281,17 @@ export class CanvasRenderer {
     this.canvas.width = this.W;
     this.canvas.height = this.H;
     this.ctx = this.canvas.getContext("2d", { alpha: false })!;
+    this.hiddenVideoContainer = document.createElement("div");
+    this.hiddenVideoContainer.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;opacity:0;";
+    document.body.appendChild(this.hiddenVideoContainer);
+  }
+
+  destroy(): void {
+    this.gifVideos.forEach(v => { v.pause(); v.src = ''; });
+    this.gifVideos.clear();
+    if (this.hiddenVideoContainer.parentNode) {
+      this.hiddenVideoContainer.parentNode.removeChild(this.hiddenVideoContainer);
+    }
   }
 
   getCanvas(): HTMLCanvasElement {
@@ -364,11 +376,12 @@ export class CanvasRenderer {
 
     for (const e of events) {
       if (e.mediaUrl) {
-        let canvasUrl = e.mediaUrl;
-        if (e.type === MessageType.GIF && canvasUrl.includes('.mp4')) {
-          canvasUrl = canvasUrl.replace(/\.mp4(\?.*)?$/, '.gif');
+        const isGiphyMp4 = e.type === MessageType.GIF && e.mediaUrl.includes('.mp4') && !e.mediaUrl.startsWith('data:');
+        if (isGiphyMp4) {
+          promises.push(this.loadVideo(`media_${e.id}`, e.mediaUrl));
+        } else {
+          promises.push(this.loadImg(`media_${e.id}`, e.mediaUrl));
         }
-        promises.push(this.loadImg(`media_${e.id}`, canvasUrl));
       }
     }
 
@@ -422,40 +435,46 @@ export class CanvasRenderer {
     });
   }
 
-  private loadVideo(key: string, url: string): Promise<void> {
-    if (!url) return Promise.resolve();
+  private loadVideo(key: string, originalUrl: string): Promise<void> {
+    if (!originalUrl) return Promise.resolve();
     if (this.gifVideos.has(key)) return Promise.resolve();
+    const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
     return new Promise((resolve) => {
       const video = document.createElement('video');
+      video.crossOrigin = 'anonymous';
       video.autoplay = true;
       video.loop = true;
       video.muted = true;
       video.playsInline = true;
+      video.preload = 'auto';
       let resolved = false;
       const done = () => { if (!resolved) { resolved = true; resolve(); } };
       video.oncanplay = () => {
-        this.gifVideos.set(key, video);
-        video.play().catch(() => {});
-        done();
+        if (!resolved) {
+          this.gifVideos.set(key, video);
+          video.play().catch(() => {});
+          done();
+        }
       };
       video.onerror = () => {
-        const fallbackUrl = url.replace('/giphy.mp4', '/giphy.gif');
-        if (fallbackUrl !== url) {
-          this.loadImg(key, fallbackUrl).then(done);
+        const fallbackUrl = originalUrl.replace(/\.mp4(\?.*)?$/, '.gif');
+        if (fallbackUrl !== originalUrl) {
+          this.loadImg(key, `/api/media-proxy?url=${encodeURIComponent(fallbackUrl)}`).then(done);
         } else {
           done();
         }
       };
       setTimeout(() => {
         if (!resolved) {
-          if (video.readyState >= 3) {
+          if (video.readyState >= 2) {
             this.gifVideos.set(key, video);
             video.play().catch(() => {});
           }
           done();
         }
-      }, 5000);
-      video.src = url;
+      }, 8000);
+      this.hiddenVideoContainer.appendChild(video);
+      video.src = proxyUrl;
       video.load();
     });
   }
@@ -1238,8 +1257,9 @@ export class CanvasRenderer {
           lines = msg.text ? this.wrapText(ctx, msg.text, maxTextW) : [];
           h += lines.length * msgLineH;
           const layoutImgEl = this.images.get(`media_${msg.id}`);
-          const layoutW = layoutImgEl?.width ?? 0;
-          const layoutH = layoutImgEl?.height ?? 0;
+          const layoutVidEl = this.gifVideos.get(`media_${msg.id}`);
+          const layoutW = layoutVidEl ? layoutVidEl.videoWidth : (layoutImgEl?.width ?? 0);
+          const layoutH = layoutVidEl ? layoutVidEl.videoHeight : (layoutImgEl?.height ?? 0);
           if (layoutW > 0 && layoutH > 0) {
             h += Math.round(420 / (layoutW / layoutH));
           } else {
@@ -1391,15 +1411,17 @@ export class CanvasRenderer {
         curY += 10;
       }
 
-      const mediaEl = this.images.get(`media_${msg.id}`);
-      const mediaW = mediaEl?.width ?? 0;
-      const mediaH = mediaEl?.height ?? 0;
+      const vidEl = this.gifVideos.get(`media_${msg.id}`);
+      const imgEl = this.images.get(`media_${msg.id}`);
+      const mediaEl = vidEl || imgEl;
+      const mediaW = vidEl ? vidEl.videoWidth : (imgEl?.width ?? 0);
+      const mediaH = vidEl ? vidEl.videoHeight : (imgEl?.height ?? 0);
       if (mediaEl && mediaW > 0 && mediaH > 0) {
         const maxW = 420;
         const ratio = mediaW / mediaH;
         const drawW = maxW;
         const drawH = maxW / ratio;
-        this.drawRoundedImage(ctx, mediaEl as HTMLImageElement, textStartX, curY, drawW, drawH, 50, false);
+        this.drawRoundedImage(ctx, mediaEl as HTMLImageElement | HTMLVideoElement, textStartX, curY, drawW, drawH, 50, false);
         curY += drawH + 10;
       } else {
         curY += msg.isVertical ? 400 : 280;
@@ -2748,7 +2770,7 @@ export class CanvasRenderer {
 
   private drawRoundedImage(
     ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
+    img: HTMLImageElement | HTMLVideoElement,
     x: number,
     y: number,
     w: number,
@@ -2760,7 +2782,9 @@ export class CanvasRenderer {
     ctx.beginPath();
     this.pillPath(ctx, x, y, w, h, r);
     ctx.clip();
-    const imgRatio = img.width / img.height;
+    const natW = img instanceof HTMLVideoElement ? img.videoWidth : img.width;
+    const natH = img instanceof HTMLVideoElement ? img.videoHeight : img.height;
+    const imgRatio = natW / natH;
     const boxRatio = w / h;
     let dw: number, dh: number, dx: number, dy: number;
     if (cover) {

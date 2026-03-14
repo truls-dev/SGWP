@@ -1815,6 +1815,7 @@ const App: React.FC = () => {
       if (previewCanvasContainerRef.current) {
         previewCanvasContainerRef.current.innerHTML = '';
       }
+      canvasRendererRef.current?.destroy();
       canvasRendererRef.current = null;
       restoreActiveSequence();
       setPlaybackMode(false);
@@ -1942,6 +1943,7 @@ const App: React.FC = () => {
     if (videoEncoderRef.current) { try { videoEncoderRef.current.close(); } catch(e){} videoEncoderRef.current = null; }
     if (audioEncoderRef.current) { try { audioEncoderRef.current.close(); } catch(e){} audioEncoderRef.current = null; }
     
+    canvasRendererRef.current?.destroy();
     canvasRendererRef.current = null;
     
     if (streamRef.current) {
