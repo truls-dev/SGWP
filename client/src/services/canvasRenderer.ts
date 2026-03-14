@@ -1518,43 +1518,42 @@ export class CanvasRenderer {
     ctx.fillText(username, textX, y + cardH / 2 + usernameSize + 2);
     ctx.restore();
 
-    const btnSize = 58;
+    const btnW = 84;
+    const btnH = 52;
     const btnGap = 12;
     const btnAreaRight = x + cardW - pad;
-    const btn2X = btnAreaRight - btnSize;
-    const btn1X = btn2X - btnSize - btnGap;
-    const btnY = y + cardH / 2 - btnSize / 2;
-    const btnR = 14;
+    const btn2X = btnAreaRight - btnW;
+    const btn1X = btn2X - btnW - btnGap;
+    const btnY = y + cardH / 2 - btnH / 2;
+    const btnR = btnH / 2;
 
     for (const bx of [btn1X, btn2X]) {
       ctx.save();
       ctx.fillStyle = '#FFFC00';
       ctx.beginPath();
-      this.pillPath(ctx, bx, btnY, btnSize, btnSize, btnR);
+      this.pillPath(ctx, bx, btnY, btnW, btnH, btnR);
       ctx.fill();
       ctx.restore();
     }
 
-    // Chat icon: filled speech bubble (rounded rect + tail triangle)
-    const chatCX = btn1X + btnSize / 2;
-    const chatCY = btnY + btnSize / 2;
-    const bW = 22, bH = 18, bR = 5;
+    // Chat icon: Snapchat-style chat bubble SVG (viewBox 0 0 16 16)
+    const chatCX = btn1X + btnW / 2;
+    const chatCY = btnY + btnH / 2;
+    const chatIconPath = new Path2D(
+      'M3 4.353C3 3.053 4.053 2 5.353 2h5.294C11.947 2 13 3.053 13 4.353v9.854a.5.5 0 0 1-.809.393L9.202 12.25A1.176 1.176 0 0 0 8.475 12H5.353A2.353 2.353 0 0 1 3 9.647V4.353Z'
+    );
+    const chatIconScale = (btnH * 0.62) / 16;
     ctx.save();
     ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.roundRect(chatCX - bW / 2, chatCY - bH / 2 - 2, bW, bH, bR);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(chatCX - 7, chatCY + bH / 2 - 4);
-    ctx.lineTo(chatCX - 11, chatCY + bH / 2 + 5);
-    ctx.lineTo(chatCX - 1, chatCY + bH / 2 - 4);
-    ctx.fill();
+    ctx.translate(chatCX - 8 * chatIconScale, chatCY - 8 * chatIconScale);
+    ctx.scale(chatIconScale, chatIconScale);
+    ctx.fill(chatIconPath);
     ctx.restore();
 
     // Camera icon: Snapchat-style camera SVG (viewBox 0 0 70 70, evenodd)
-    const camCX = btn2X + btnSize / 2;
-    const camCY = btnY + btnSize / 2;
-    const camIconScale = (btnSize * 0.68) / 70;
+    const camCX = btn2X + btnW / 2;
+    const camCY = btnY + btnH / 2;
+    const camIconScale = (btnH * 0.68) / 70;
     const camIconPath = new Path2D(
       'M35 45.118c-4.56 0-8.27-3.708-8.27-8.268 0-4.559 3.71-8.267 8.27-8.267 4.562 0 8.271 3.708 8.271 8.267 0 4.56-3.71 8.268-8.27 8.268Z' +
       'M21.317 36.85c0-7.543 6.138-13.678 13.684-13.678 7.547 0 13.684 6.135 13.684 13.678 0 7.542-6.137 13.68-13.684 13.68-7.546 0-13.684-6.138-13.684-13.68Z' +
