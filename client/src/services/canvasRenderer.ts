@@ -384,7 +384,8 @@ export class CanvasRenderer {
         }
       }
       if (e.type === MessageType.CONTACT_CARD && e.contactCardAvatarId) {
-        promises.push(this.loadImg(`contact_${e.id}`, getSelfieUrlForAvatar(e.contactCardAvatarId)));
+        const bitmojiUrl = getSelfieUrlForAvatar(e.contactCardAvatarId);
+        promises.push(this.loadImg(`contact_${e.id}`, `/api/media-proxy?url=${encodeURIComponent(bitmojiUrl)}`));
       }
     }
 

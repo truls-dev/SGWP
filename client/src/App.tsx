@@ -4296,9 +4296,10 @@ const App: React.FC = () => {
                                     <div className="w-[46px] h-[46px] rounded-full bg-[#FFFC00] flex-shrink-0 overflow-hidden">
                                         {item.contactCardAvatarId ? (
                                         <img
-                                            src={getSelfieUrlForAvatar(item.contactCardAvatarId)}
-                                            className="w-full h-full object-contain scale-[1.25]"
+                                            src={`/api/media-proxy?url=${encodeURIComponent(getSelfieUrlForAvatar(item.contactCardAvatarId))}`}
+                                            className="w-full h-full object-cover object-top scale-[1.4]"
                                             alt=""
+                                            onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
                                         />
                                         ) : (
                                         <div className="w-full h-full flex items-center justify-center text-xl">👤</div>

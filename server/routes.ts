@@ -362,7 +362,12 @@ export async function registerRoutes(
     if (!url) return res.status(400).json({ error: "Missing url" });
     try {
       const parsed = new URL(url);
-      if (!parsed.hostname.endsWith('.giphy.com') && !parsed.hostname.endsWith('.giphy.net')) {
+      const allowed =
+        parsed.hostname.endsWith('.giphy.com') ||
+        parsed.hostname.endsWith('.giphy.net') ||
+        parsed.hostname === 'sdk.bitmoji.com' ||
+        parsed.hostname.endsWith('.bitmoji.com');
+      if (!allowed) {
         return res.status(403).json({ error: "Forbidden domain" });
       }
       const response = await fetch(url);
