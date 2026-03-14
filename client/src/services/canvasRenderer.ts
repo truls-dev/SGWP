@@ -1551,30 +1551,20 @@ export class CanvasRenderer {
     ctx.fill();
     ctx.restore();
 
-    // Camera icon: body rect + lens circle + small bump on top
+    // Camera icon: Snapchat-style camera SVG (viewBox 0 0 70 70, evenodd)
     const camCX = btn2X + btnSize / 2;
     const camCY = btnY + btnSize / 2;
-    const camW = 22, camH = 15, camBodyR = 4;
+    const camIconScale = (btnSize * 0.68) / 70;
+    const camIconPath = new Path2D(
+      'M35 45.118c-4.56 0-8.27-3.708-8.27-8.268 0-4.559 3.71-8.267 8.27-8.267 4.562 0 8.271 3.708 8.271 8.267 0 4.56-3.71 8.268-8.27 8.268Z' +
+      'M21.317 36.85c0-7.543 6.138-13.678 13.684-13.678 7.547 0 13.684 6.135 13.684 13.678 0 7.542-6.137 13.68-13.684 13.68-7.546 0-13.684-6.138-13.684-13.68Z' +
+      'M56.29 18.934c-2.052-.867-4.398-1.601-6.994-2.214a18.079 18.079 0 0 0-.675-2.078 4.97 4.97 0 0 0-2.719-2.755c-2.04-.861-5.59-1.888-10.9-1.888-5.312 0-8.862 1.027-10.904 1.888a4.975 4.975 0 0 0-2.716 2.754c-.259.65-.487 1.35-.7 2.109-2.572.583-4.92 1.317-6.972 2.184-2.188.923-3.865 2.623-4.725 4.784-1.165 2.935-2.556 7.73-2.556 13.914 0 6.376 1.47 11.278 2.7 14.266a8.738 8.738 0 0 0 4.378 4.618C16.914 58.105 23.409 60 35.002 60c11.59 0 18.084-1.894 21.493-3.483a8.74 8.74 0 0 0 4.376-4.618c1.231-2.988 2.7-7.89 2.7-14.266 0-6.184-1.39-10.98-2.556-13.912-.858-2.165-2.537-3.863-4.725-4.786Z'
+    );
     ctx.save();
     ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.roundRect(camCX - camW / 2, camCY - camH / 2 + 2, camW, camH, camBodyR);
-    ctx.fill();
-    // Lens: yellow circle
-    ctx.fillStyle = '#FFFC00';
-    ctx.beginPath();
-    ctx.arc(camCX, camCY + 4, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-    // Inner lens: black circle
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.arc(camCX, camCY + 4, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    // Viewfinder bump on top
-    ctx.fillStyle = '#000000';
-    ctx.beginPath();
-    ctx.roundRect(camCX - 4, camCY - camH / 2, 8, 5, 2);
-    ctx.fill();
+    ctx.translate(camCX - 35 * camIconScale, camCY - 35 * camIconScale);
+    ctx.scale(camIconScale, camIconScale);
+    ctx.fill(camIconPath, 'evenodd');
     ctx.restore();
   }
 
