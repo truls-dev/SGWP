@@ -1474,6 +1474,7 @@ export class CanvasRenderer {
     ctx.shadowBlur = 18;
     ctx.shadowOffsetY = 4;
     ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
     this.pillPath(ctx, x, y, cardW, cardH, cardR);
     ctx.fill();
     ctx.restore();
@@ -1527,6 +1528,7 @@ export class CanvasRenderer {
     for (const bx of [btn1X, btn2X]) {
       ctx.save();
       ctx.fillStyle = '#FFFC00';
+      ctx.beginPath();
       this.pillPath(ctx, bx, btnY, btnSize, btnSize, btnR);
       ctx.fill();
       ctx.restore();
