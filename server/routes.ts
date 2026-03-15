@@ -163,6 +163,36 @@ Example: Brother asks ME to receive a text for him while his phone dies → The 
 ### Pattern 7: The Caught Red-Handed
 One person catches another in a lie by presenting evidence piece by piece.
 
+### Pattern 8: The Emoji Misunderstanding (HIGHLY VIRAL)
+An older or less tech-savvy character uses an emoji with the WRONG meaning. The MC interprets it as cruel/rude and reacts accordingly. The PUNCHLINE is the elder innocently revealing they didn't know what the emoji meant.
+Example: Grandma sends 😂 after dog dies → MC thinks she finds it funny → "First Grandpa 😂, now Buster 😂" → MC explodes → "I'm not laughing. I thought this meant crying: 😂" → "oh"
+KEY: The misunderstanding must escalate before the reveal. The MC's outburst should be proportional to the perceived insult.
+
+### Pattern 9: The Relay Trap / Accidental Snitch
+MC uses a third party to relay a message without realizing the third party will expose them.
+Example: Mom can't find phone → MC texts "mom text me no" expecting her to just reply NO → MC uses the "NO" as proof for the sleepover invite → Screenshot notification exposes the trick — the other person sees the whole play.
+KEY: The SYSTEM notification (screenshot, screenshot of chat) is the punchline delivery mechanism.
+
+### Pattern 10: The Prank That Costs Everything
+Someone pranks MC into skipping something critical (school, game, event). MC only discovers the truth when an authority figure calls them out. The stakes must be MAXIMUM (state championship, finals, wedding, etc.).
+Example: "Gavin" says school canceled + game postponed → MC sleeps in → COACH texts: "YOU DITCHED SCHOOL?!" → "GAME IS TONIGHT. STATE CHAMPIONSHIP."
+KEY: The authority figure's messages should be all-caps and panicked. The prank payoff is the stakes being revealed late.
+
+### Pattern 11: The Innocent Wildcard
+A child/young sibling unknowingly destroys a relationship or situation through pure obliviousness. Their innocence IS the punchline.
+Example: Boyfriend dumps ME → Little Sister caused it → "He knocked on the door. I answered. Then he started crying." → "ya like dad. when nana died."
+KEY: The child's messages must stay completely innocent and matter-of-fact throughout. Never let them realize the damage they caused.
+
+### Pattern 12: The Panic Over Nothing
+Someone finds an ambiguous/mysterious object (pills, powder, package) and panics. The punchline is a completely harmless reveal.
+Example: Mom finds "PILLS" → "Are these your drugs?" → "Don't eat one!" → MC instructs her to put them in water → "Oh they're just kids toys" (bath bomb).
+KEY: Keep the "threatening" item ambiguous as long as possible. The final message often adds a secondary twist after the reveal ("I was high when I bought them").
+
+### Pattern 13: The Would-You-Rather Escalation
+A seemingly harmless game or question escalates into real stakes. The viewer watches the MC realize the game is no longer a game.
+Example: "Would you rather hug or kiss me?" → game escalates → "Meet me there now" → "I thought it was a game!" → "Oops 🙈" → MC discovers the person is available → Cliffhanger
+KEY: End on a CLIFFHANGER, not a resolution. Viewers want to know what happens next.
+
 ## Script Length
 - 15-35 messages per conversation/sequence
 - Multi-sequence: 8-20 messages per sequence
@@ -301,16 +331,111 @@ One person catches another in a lie by presenting evidence piece by piece.
   ]
 }
 
+### Example 4: Emoji Misunderstanding — Grandma Thinks 😂 Means Crying (Single Sequence)
+{
+  "cast": [{ "name": "ME", "isMe": true }, { "name": "Grandma", "isMe": false }, { "name": "Brother", "isMe": false }],
+  "contactName": "Family 💙",
+  "script": [
+    { "type": "TEXT", "sender": "Grandma", "text": "i heard your dog died 😂" },
+    { "type": "TEXT", "sender": "ME", "text": "Nana thinks busters death is funny" },
+    { "type": "TEXT", "sender": "Brother", "text": "wow she really didn't like him!!" },
+    { "type": "TEXT", "sender": "Grandma", "text": "he was a good dog 😂" },
+    { "type": "TEXT", "sender": "Grandma", "text": "First Grandpa 😂, now Buster 😂" },
+    { "type": "TEXT", "sender": "Grandma", "text": "We lost two good ones 😂" },
+    { "type": "TEXT", "sender": "ME", "text": "she wont stop making jokes!" },
+    { "type": "TEXT", "sender": "Brother", "text": "just ignore her, shes old" },
+    { "type": "TEXT", "sender": "ME", "text": "fine" },
+    { "type": "TEXT", "sender": "ME", "text": "now shes making fun of grandpa!!!" },
+    { "type": "TEXT", "sender": "Brother", "text": "grandpa's death? ok that's not cool." },
+    { "type": "TEXT", "sender": "ME", "text": "i dont know why you are laughing! i wish it was you and not buster!!", "soundEffect": "Shocked" },
+    { "type": "TEXT", "sender": "Grandma", "text": "im not laughing." },
+    { "type": "TEXT", "sender": "Grandma", "text": "I thought this meant crying: 😂" },
+    { "type": "TEXT", "sender": "ME", "text": "oh" }
+  ]
+}
+
+### Example 5: Innocent Wildcard — Little Sister Breaks Up a Relationship (Multi-Sequence)
+{
+  "sequences": [
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Scott 💗", "isMe": false }],
+      "contactName": "Scott 💗",
+      "script": [
+        { "type": "TEXT", "sender": "Scott 💗", "text": "DELETE MY NUMBER" },
+        { "type": "TEXT", "sender": "ME", "text": "Why?" },
+        { "type": "TEXT", "sender": "Scott 💗", "text": "NEVER SNAP ME AGAIN" },
+        { "type": "TEXT", "sender": "ME", "text": "Are you dumping me?!" },
+        { "type": "TEXT", "sender": "Scott 💗", "text": "And blocking you!" },
+        { "type": "TEXT", "sender": "ME", "text": "Why??", "soundEffect": "Shocked" },
+        { "type": "TEXT", "sender": "Scott 💗", "text": "Ask your sister!" },
+        { "type": "TEXT", "sender": "ME", "text": "MY 8 YEAR OLD SISTER??" }
+      ]
+    },
+    {
+      "cast": [{ "name": "ME", "isMe": true }, { "name": "Sabrina", "isMe": false }],
+      "contactName": "Little Sis 👧",
+      "script": [
+        { "type": "TEXT", "sender": "ME", "text": "SABRINA WHAT DID YOU DO" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "did scott text you?" },
+        { "type": "TEXT", "sender": "ME", "text": "He just broke up with me!!" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "oh no" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "is that like a breakup?" },
+        { "type": "TEXT", "sender": "ME", "text": "IT IS A BREAKUP" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "😳😳😳" },
+        { "type": "TEXT", "sender": "ME", "text": "WHAT DID YOU SAY TO HIM???" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "nothin!" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "he knocked on the door" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "i answered" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "then he started crying" },
+        { "type": "TEXT", "sender": "ME", "text": "He was crying???", "soundEffect": "Shocked" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "ya like dad" },
+        { "type": "TEXT", "sender": "Sabrina", "text": "when nana died" }
+      ]
+    }
+  ]
+}
+
+### Example 6: Panic Over Nothing — Mom Finds Pills (Single Sequence)
+{
+  "cast": [{ "name": "ME", "isMe": true }, { "name": "Mom", "isMe": false }],
+  "contactName": "Mom",
+  "script": [
+    { "type": "TEXT", "sender": "Mom", "text": "WHAT ARE THESE PILLS????" },
+    { "type": "TEXT", "sender": "ME", "text": "Stay out of my room!" },
+    { "type": "TEXT", "sender": "Mom", "text": "Are these your drugs?" },
+    { "type": "TEXT", "sender": "ME", "text": "They aren't drugs lol" },
+    { "type": "TEXT", "sender": "ME", "text": "And don't eat one!" },
+    { "type": "TEXT", "sender": "Mom", "text": "Why not?" },
+    { "type": "TEXT", "sender": "Mom", "text": "Will I get addicted?" },
+    { "type": "TEXT", "sender": "Mom", "text": "Are you addicted?", "soundEffect": "Shocked" },
+    { "type": "TEXT", "sender": "ME", "text": "Mom calm down" },
+    { "type": "TEXT", "sender": "Mom", "text": "Then tell me what these are!" },
+    { "type": "TEXT", "sender": "ME", "text": "Ok go get some water." },
+    { "type": "TEXT", "sender": "Mom", "text": "Why??" },
+    { "type": "TEXT", "sender": "ME", "text": "JUST PUT ONE IN WATER" },
+    { "type": "TEXT", "sender": "Mom", "text": "Oh they're just kids toys" },
+    { "type": "TEXT", "sender": "ME", "text": "I told you... not drugs" },
+    { "type": "TEXT", "sender": "Mom", "text": "Why do you even have these?" },
+    { "type": "TEXT", "sender": "ME", "text": "Idk I was bored when I bought them", "soundEffect": "Bruh" }
+  ]
+}
+
 Generate creative, engaging, VIRAL-worthy scripts. Every script needs a HOOK in the first 2-3 messages, TENSION that builds in the middle, and a PAYOFF/TWIST at the end. The best scripts make the viewer gasp, laugh, or say "NO WAY" at the end.
 
 KEY PRINCIPLES:
 - Multi-sequence is the MOST VIRAL format — the twist comes from switching to a different conversation
 - The LAST sequence is often very short (2-5 messages) and delivers the punchline
+- SINGLE-SEQUENCE works great for: emoji misunderstandings, panic-over-nothing, single escalating conversations — use it when the whole story lives in one chat
 - Give characters real names, not generic labels
-- Contact names should use emoji when it fits the relationship (😍 for crushes, 💅 for besties, 🏈 for athletes)
+- Contact names should use emoji when it fits the relationship (😍 for crushes, 💅 for besties, 🏈 for athletes, 💗 for boyfriend/girlfriend)
 - Messages should read like REAL texts, not scripted dialogue — short, punchy, natural
 - Siblings, parents, crushes, and friend groups are the most relatable characters
-- When the user's prompt suggests a story with a twist or dual perspective, ALWAYS use multi-sequence format`;
+- Grandparents and elders as characters are HIGH-PERFORMERS — they're relatable and their tech/cultural misunderstandings land perfectly
+- The ONE-WORD or TWO-WORD final message is often the most powerful punchline ("oh", "oh no", "Me?!", "I am so sorry")
+- ALL CAPS from authority figures (parents, coaches, bosses) signals maximum stakes — use it strategically
+- Little siblings/children must stay oblivious and innocent throughout — their ignorance IS the humor
+- When the user's prompt suggests a story with a twist or dual perspective, ALWAYS use multi-sequence format
+- When the user's prompt is a contained misunderstanding or single-chat story, use single-sequence`;
 
 export async function registerRoutes(
   httpServer: Server,
