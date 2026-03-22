@@ -220,9 +220,17 @@ const App: React.FC = () => {
 
   const removeSequence = (index: number) => {
     if (sequences.length <= 1) return;
-    const newSequences = sequences.filter((_, i) => i !== index);
+    const updated = sequences.map((seq, i) =>
+      i === activeSequenceIndex
+        ? { ...seq, cast: state.cast, script: state.script, chat: state.chat }
+        : seq
+    );
+    const newSequences = updated.filter((_, i) => i !== index);
     setSequences(newSequences);
-    const newIndex = index >= newSequences.length ? newSequences.length - 1 : index;
+    const adjustedActive = index < activeSequenceIndex
+      ? activeSequenceIndex - 1
+      : activeSequenceIndex;
+    const newIndex = Math.min(adjustedActive, newSequences.length - 1);
     const target = newSequences[newIndex];
     setState(prev => ({
       ...prev,
@@ -445,6 +453,7 @@ const App: React.FC = () => {
         canvasEl.style.maxWidth = '100%';
         canvasEl.style.maxHeight = '100%';
         canvasEl.style.display = 'block';
+        canvasEl.style.outline = 'none';
         container.appendChild(canvasEl);
       }
     };
@@ -461,6 +470,7 @@ const App: React.FC = () => {
           canvasEl.style.maxWidth = '100%';
           canvasEl.style.maxHeight = '100%';
           canvasEl.style.display = 'block';
+          canvasEl.style.outline = 'none';
           container.appendChild(canvasEl);
           initialized = true;
         }
@@ -1849,6 +1859,7 @@ const App: React.FC = () => {
             : seq
         );
         sequencesRef.current = latestSeqs;
+        setSequences(latestSeqs);
         const seq1 = latestSeqs[0];
 
         resetSimulationState(seq1.script);
@@ -1881,6 +1892,7 @@ const App: React.FC = () => {
         canvasEl.style.maxWidth = '100%';
         canvasEl.style.maxHeight = '100%';
         canvasEl.style.display = 'block';
+        canvasEl.style.outline = 'none';
 
         if (previewCanvasContainerRef.current) {
           previewCanvasContainerRef.current.innerHTML = '';
@@ -1977,6 +1989,7 @@ const App: React.FC = () => {
           : seq
       );
       sequencesRef.current = latestSeqs;
+      setSequences(latestSeqs);
       const seq1 = latestSeqs[0];
 
       resetSimulationState(seq1.script);
@@ -2016,6 +2029,7 @@ const App: React.FC = () => {
       canvas.style.maxWidth = '100%';
       canvas.style.maxHeight = '100%';
       canvas.style.display = 'block';
+      canvas.style.outline = 'none';
       if (previewCanvasContainerRef.current) {
         previewCanvasContainerRef.current.innerHTML = '';
         previewCanvasContainerRef.current.appendChild(canvas);

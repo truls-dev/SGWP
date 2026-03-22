@@ -117,3 +117,8 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Suppress browser focus rings on canvas elements */
+canvas {
+    outline: none;
+}
