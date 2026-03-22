@@ -365,6 +365,18 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const suppress = (e: DragEvent) => { e.preventDefault(); e.stopPropagation(); };
+    document.addEventListener('dragover', suppress);
+    document.addEventListener('dragenter', suppress);
+    document.addEventListener('drop', suppress);
+    return () => {
+      document.removeEventListener('dragover', suppress);
+      document.removeEventListener('dragenter', suppress);
+      document.removeEventListener('drop', suppress);
+    };
+  }, []);
+
+  useEffect(() => {
     frameStateRef.current = {
       ...frameStateRef.current,
       messages: (playbackMode ? playbackItems : state.script).filter(m => m.type !== MessageType.IOS_NOTIFICATION),
