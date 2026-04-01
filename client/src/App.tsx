@@ -2839,6 +2839,7 @@ const App: React.FC = () => {
                       >
                         <option value="Bruh">Bruh</option>
                         <option value="Crickets">Crickets</option>
+                        <option value="iPhone Sound Noti">iPhone Sound Noti</option>
                         <option value="Knock - Multiple">Knock - Multiple</option>
                         <option value="Knock - Single">Knock - Single</option>
                         <option value="Metal Gear Shocked">Metal Gear Shocked</option>
@@ -3637,6 +3638,7 @@ const App: React.FC = () => {
                                    <option value="">No Sound</option>
                                    <option value="Bruh">Bruh</option>
                                    <option value="Crickets">Crickets</option>
+                                   <option value="iPhone Sound Noti">iPhone Sound Noti</option>
                                    <option value="Knock - Multiple">Knock - Multiple</option>
                                    <option value="Knock - Single">Knock - Single</option>
                                    <option value="Metal Gear Shocked">Metal Gear Shocked</option>
