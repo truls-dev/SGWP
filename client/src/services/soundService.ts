@@ -57,6 +57,7 @@ export const MUSIC_TRACKS: { name: string; filename: string; baseUrl?: string }[
   { name: "The Long Walk", filename: "TheLongWalk.mp3" },
   { name: "Warm Memories", filename: "Warm Memories.mp3" },
   { name: "Where Is My Mind", filename: "Where is my mind.mp3" },
+  { name: "Wii Shop Music", filename: "wii-shop-music.mp3", baseUrl: "/" },
 ];
 
 export interface SoundEvent {
