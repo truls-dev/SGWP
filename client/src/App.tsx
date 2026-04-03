@@ -2846,6 +2846,7 @@ const App: React.FC = () => {
                         <option value="Rizz">Rizz</option>
                         <option value="Shocked">Shocked</option>
                         <option value="Shocking">Shocking</option>
+                        <option value="Vine Boom">Vine Boom</option>
                       </select>
                       <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
                         <span className="text-[9px] text-gray-500">@</span>
@@ -3645,6 +3646,7 @@ const App: React.FC = () => {
                                    <option value="Rizz">Rizz</option>
                                    <option value="Shocked">Shocked</option>
                                    <option value="Shocking">Shocking</option>
+                                   <option value="Vine Boom">Vine Boom</option>
                                  </select>
                                </div>
                                {item.type === MessageType.IMAGE && (
