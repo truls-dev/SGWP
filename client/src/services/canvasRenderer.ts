@@ -525,7 +525,7 @@ export class CanvasRenderer {
 
     const ctx = this.ctx;
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
-    const kbH = state.chatConfig.isKeyboardHidden ? 0 : (state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H);
+    const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
 
     if (isVideoMode) {
       if (state.backgroundVideo && state.backgroundVideo.videoWidth) {
