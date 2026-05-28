@@ -4187,7 +4187,11 @@ const App: React.FC = () => {
           } ${state.chat.isShortCrop || isVideoMode ? '' : 'outline outline-[14px] outline-[#1a1a1a]'}`} 
           style={{ 
             width: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : basePhoneWidth,
-            height: state.chat.isShortCrop ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px` : (isRecording ? '100vh' : '98vh'),
+            height: state.chat.isShortCrop
+              ? `${state.chat.shortCropHeight * previewInterfaceScaleFactor}px`
+              : state.chat.isKeyboardHidden
+                ? (isRecording ? `calc(100vh * ${1280 / 1920})` : `calc(98vh * ${1280 / 1920})`)
+                : (isRecording ? '100vh' : '98vh'),
             borderBottomLeftRadius: isRecording || isVideoMode ? '0' : '10px',
             borderBottomRightRadius: isRecording || isVideoMode ? '0' : '10px',
             flexBasis: isVideoMode ? `calc(100vh * 9 / 19.5 * ${previewInterfaceScaleFactor})` : 'auto',

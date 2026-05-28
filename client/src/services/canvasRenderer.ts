@@ -540,14 +540,19 @@ export class CanvasRenderer {
       const ox = (this.W - phoneW) / 2;
       const oy = (this.H - phoneH) / 2;
 
+      const actualKbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
+      const clipPhoneH = state.chatConfig.isKeyboardHidden
+        ? phoneH - actualKbH * scale
+        : phoneH;
+
       ctx.save();
       const cr = state.chatConfig.topCornerRadius * (phoneW / 390);
       ctx.beginPath();
       ctx.moveTo(ox + cr, oy);
       ctx.lineTo(ox + phoneW - cr, oy);
       ctx.quadraticCurveTo(ox + phoneW, oy, ox + phoneW, oy + cr);
-      ctx.lineTo(ox + phoneW, oy + phoneH);
-      ctx.lineTo(ox, oy + phoneH);
+      ctx.lineTo(ox + phoneW, oy + clipPhoneH);
+      ctx.lineTo(ox, oy + clipPhoneH);
       ctx.lineTo(ox, oy + cr);
       ctx.quadraticCurveTo(ox, oy, ox + cr, oy);
       ctx.closePath();
