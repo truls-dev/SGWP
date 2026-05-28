@@ -69,6 +69,7 @@ export interface ChatConfig {
   messageDelay: number;
   groupIconUrl?: string;
   isKeyboardCropped?: boolean;
+  isKeyboardHidden?: boolean;
   isShortCrop?: boolean;
   shortCropHeight: number;
   topCornerRadius: number;

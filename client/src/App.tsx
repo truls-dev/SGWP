@@ -115,6 +115,7 @@ const App: React.FC = () => {
       messageDelay: 500,
       groupIconUrl: undefined,
       isKeyboardCropped: false,
+      isKeyboardHidden: false,
       isShortCrop: true,
       shortCropHeight: 850,
       topCornerRadius: 10,
@@ -767,6 +768,7 @@ const App: React.FC = () => {
           groupName: 'The Squad',
           groupIconUrl: undefined,
           isKeyboardCropped: false,
+          isKeyboardHidden: false,
           isShortCrop: true,
           shortCropHeight: 850,
           topCornerRadius: 10,
@@ -3060,8 +3062,21 @@ const App: React.FC = () => {
 
                 <div className="flex items-center justify-between pt-2 border-t border-white/10">
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold">Keyboard crop</span>
-                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">TikTok Side Frame</span>
+                    <span className="text-sm font-bold">Keyboard Crop</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Hide keyboard entirely</span>
+                  </div>
+                  <button 
+                    onClick={() => updateChat('isKeyboardHidden', !state.chat.isKeyboardHidden)}
+                    className={`w-14 h-7 rounded-full transition-all relative ${state.chat.isKeyboardHidden ? 'bg-[#33B5FF]' : 'bg-gray-600'}`}
+                  >
+                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${state.chat.isKeyboardHidden ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold">TikTok Side Frame</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Shift chat for side overlay</span>
                   </div>
                   <button 
                     onClick={() => updateChat('isKeyboardCropped', !state.chat.isKeyboardCropped)}
@@ -4425,7 +4440,7 @@ const App: React.FC = () => {
                 isPlaybackMode={playbackMode}
                 isKeyboardCropped={state.chat.isKeyboardCropped}
                 />
-                <IOSKeyboard activeKey={activeKey} isShiftActive={isShiftActive} layout={keyboardLayout} isShortCrop={state.chat.isShortCrop} />
+                {!state.chat.isKeyboardHidden && <IOSKeyboard activeKey={activeKey} isShiftActive={isShiftActive} layout={keyboardLayout} isShortCrop={state.chat.isShortCrop} />}
             </div>
           </div>
 
