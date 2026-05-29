@@ -627,6 +627,12 @@ export class CanvasRenderer {
       }
     }
 
+    // Draw snap fullscreen overlay in root canvas space (no transforms active)
+    // so the black bg covers the full canvas and zoom coords are correct.
+    if (state.snapFullscreenActive && state.snapFullscreenEventId) {
+      this.drawSnapFullscreen(this.ctx, state);
+    }
+
     return this.canvas;
   }
 
@@ -682,9 +688,6 @@ export class CanvasRenderer {
     }
 
     this.drawActiveNotifications(ctx, state);
-    if (state.snapFullscreenActive && state.snapFullscreenEventId) {
-      this.drawSnapFullscreen(ctx, state);
-    }
   }
 
   private drawLockscreen(
@@ -1524,8 +1527,15 @@ export class CanvasRenderer {
     const sqX = textStartX + 22;
     const sqY = y + (cardH - sqSize) / 2;
 
-    // Always record position so zoom animation knows where to start/end
-    this.snapOriginRect = { x: sqX, y: sqY, w: sqSize, h: sqSize };
+    // Record canvas-space coordinates using current transform matrix so the
+    // zoom animation works correctly regardless of uiScale / safeScale transforms.
+    const m = ctx.getTransform();
+    this.snapOriginRect = {
+      x: m.a * sqX + m.c * sqY + m.e,
+      y: m.b * sqX + m.d * sqY + m.f,
+      w: m.a * sqSize,
+      h: m.d * sqSize,
+    };
 
     if (!snapOpened) {
       ctx.fillStyle = '#E8453C';
