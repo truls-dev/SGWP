@@ -36,6 +36,7 @@ export interface FrameState {
   snapFullscreenActive?: boolean;
   snapFullscreenEventId?: string;
   snapOpenedIds?: Set<string>;
+  snapTappingId?: string;
 }
 
 interface StickerAnimState {
@@ -1416,7 +1417,8 @@ export class CanvasRenderer {
 
     if (msg.type === MessageType.SNAP) {
       const snapOpened = this.currentSnapOpenedIds.has(msg.id);
-      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened);
+      const snapTapping = state.snapTappingId === msg.id;
+      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping);
     } else if (msg.type === MessageType.CONTACT_CARD) {
       this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
       curY += 155;
@@ -1487,22 +1489,26 @@ export class CanvasRenderer {
     y: number,
     maxTextW: number,
     snapOpened: boolean,
+    snapTapping = false,
   ): number {
     const cardH = 100;
     const cardW = Math.min(750, maxTextW);
     const cardRadius = 18;
 
+    // Tapping: flash gray background
+    const cardFill = snapTapping ? '#D1D5DB' : '#FFFFFF';
+
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.06)';
     ctx.shadowBlur = 8;
     ctx.shadowOffsetY = 2;
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = cardFill;
     ctx.beginPath();
     (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
     ctx.fill();
     ctx.restore();
 
-    ctx.strokeStyle = '#E5E7EB';
+    ctx.strokeStyle = snapTapping ? '#9CA3AF' : '#E5E7EB';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);

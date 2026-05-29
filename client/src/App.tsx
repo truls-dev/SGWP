@@ -1492,6 +1492,12 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.OPEN_SNAP) {
         const snapDuration = event.snapDurationMs || 3000;
+        // Brief "tap" flash on the bubble before fullscreen opens
+        if (event.snapTargetId) {
+          frameStateRef.current.snapTappingId = event.snapTargetId;
+          await delay(280);
+          frameStateRef.current.snapTappingId = undefined;
+        }
         frameStateRef.current.snapFullscreenActive = true;
         frameStateRef.current.snapFullscreenEventId = event.id;
         await delay(snapDuration);
