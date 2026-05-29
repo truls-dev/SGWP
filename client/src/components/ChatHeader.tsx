@@ -52,7 +52,7 @@ const AVATAR_SETTINGS = {
 
 const ChatHeader: React.FC<Props> = ({ config, cast, isKeyboardCropped = false }) => {
   const others = cast.filter(c => !c.isMe);
-  const displayName = config.isGroup ? (config.groupName || others.map(o => o.name).join(', ')) : config.contactName;
+  const displayName = config.isGroup ? (config.groupName || others.map(o => o.name).join(', ')) : (config.headerName || config.contactName);
 
   return (
     <div className="flex items-center justify-between px-1 bg-white border-b border-gray-100 shadow-sm z-10 h-[42px] snap-font-regular">

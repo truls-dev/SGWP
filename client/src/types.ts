@@ -69,6 +69,7 @@ export interface SystemConfig {
 
 export interface ChatConfig {
   contactName: string;
+  headerName?: string;
   isGroup: boolean;
   groupName?: string;
   typingSpeed: number;

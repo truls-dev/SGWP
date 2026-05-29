@@ -3478,6 +3478,23 @@ const App: React.FC = () => {
           {activeTab === 'cast' && (
           <>
           <div className="space-y-10">
+            <section className="space-y-6">
+              <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Chat Header</h3>
+              <div className="space-y-3 bg-white/5 p-6 rounded-[32px] border border-white/5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">Display Name in Top Bar</label>
+                  <input
+                    type="text"
+                    placeholder={state.chat.contactName || 'Uses sender name by default'}
+                    value={state.chat.headerName || ''}
+                    onChange={e => updateChat('headerName', e.target.value || undefined)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#33B5FF] placeholder-gray-600"
+                  />
+                  <p className="text-[9px] text-gray-500">Leave blank to use the sender's name. Set to e.g. "Boyfriend" to show that instead.</p>
+                </div>
+              </div>
+            </section>
+
             {state.chat.isGroup && (
             <section className="space-y-6">
               <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Group Settings</h3>

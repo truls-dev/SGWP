@@ -1196,7 +1196,7 @@ export class CanvasRenderer {
 
     const displayName = state.chatConfig.isGroup
       ? state.chatConfig.groupName || others.map((o) => o.name).join(", ")
-      : state.chatConfig.contactName;
+      : (state.chatConfig.headerName || state.chatConfig.contactName);
 
     const callImg = !isCropped ? this.images.get("callIcons") : null;
     const callIconsW = callImg ? callImg.width * (90 / callImg.height) + 50 : 0;
