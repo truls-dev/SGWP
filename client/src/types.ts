@@ -91,6 +91,10 @@ export interface ChatConfig {
   lockscreenDate?: string;
   lockscreenDurationMs?: number;
   export16x9?: boolean;
+  endScreenEnabled?: boolean;
+  endScreenText?: string;
+  endScreenDelayMs?: number;
+  endScreenDurationMs?: number;
 }
 
 export interface TimedSoundEffect {

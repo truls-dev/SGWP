@@ -1885,6 +1885,21 @@ const App: React.FC = () => {
     };
     } // end sequences loop
 
+    // End screen overlay (frost + text)
+    const lastSeqChat = allSequences[allSequences.length - 1].chat;
+    if (lastSeqChat.endScreenEnabled && lastSeqChat.endScreenText) {
+      const screenDelay = lastSeqChat.endScreenDelayMs ?? 2000;
+      const screenDuration = lastSeqChat.endScreenDurationMs ?? 3000;
+      const FADE_IN = 600;
+      await delay(screenDelay);
+      if ((runningStatusRef.current as string) === 'idle') return;
+      frameStateRef.current.endScreenActive = true;
+      frameStateRef.current.endScreenStartTime = performance.now() - playbackStartTimeRef.current;
+      await delay(FADE_IN + screenDuration);
+      if ((runningStatusRef.current as string) === 'idle') return;
+      frameStateRef.current.endScreenActive = false;
+    }
+
     const restoreActiveSequence = () => {
       if (allSequences.length > 1) {
         const activeSeq = latestSequences[activeSequenceIndexRef.current];
@@ -3465,6 +3480,64 @@ const App: React.FC = () => {
               </div>
             </section>
           </div>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between bg-white/5 p-5 rounded-3xl border border-white/10">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">End Screen</span>
+                <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Frost overlay with text at the end</span>
+              </div>
+              <button
+                onClick={() => updateChat('endScreenEnabled', !state.chat.endScreenEnabled)}
+                className={`w-14 h-7 rounded-full transition-all relative ${state.chat.endScreenEnabled ? 'bg-[#33B5FF]' : 'bg-gray-600'}`}
+              >
+                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all shadow-md ${state.chat.endScreenEnabled ? 'right-1' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {state.chat.endScreenEnabled && (
+              <div className="space-y-5 bg-white/5 p-5 rounded-[28px] border border-white/5 animate-in slide-in-from-top-2 duration-300">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">End Screen Text</label>
+                  <textarea
+                    rows={2}
+                    placeholder='e.g. "To be continued… Subscribe for part 2!"'
+                    value={state.chat.endScreenText || ''}
+                    onChange={e => updateChat('endScreenText', e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#33B5FF] resize-none placeholder-gray-600"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Delay</label>
+                      <span className="text-[10px] font-black text-[#33B5FF]">{((state.chat.endScreenDelayMs ?? 2000) / 1000).toFixed(1)}s</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="5000" step="250"
+                      value={state.chat.endScreenDelayMs ?? 2000}
+                      onChange={e => updateChat('endScreenDelayMs', parseInt(e.target.value))}
+                      className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <p className="text-[9px] text-gray-500">Time after last message before frost appears</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase">Duration</label>
+                      <span className="text-[10px] font-black text-[#33B5FF]">{((state.chat.endScreenDurationMs ?? 3000) / 1000).toFixed(1)}s</span>
+                    </div>
+                    <input
+                      type="range" min="1000" max="8000" step="500"
+                      value={state.chat.endScreenDurationMs ?? 3000}
+                      onChange={e => updateChat('endScreenDurationMs', parseInt(e.target.value))}
+                      className="w-full accent-[#33B5FF] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <p className="text-[9px] text-gray-500">How long the end screen stays visible</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
 
           <button 
             onClick={handleNewChat}

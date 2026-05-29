@@ -39,6 +39,8 @@ export interface FrameState {
   snapTappingId?: string;
   snapOpeningStartTime?: number;
   snapClosingStartTime?: number;
+  endScreenActive?: boolean;
+  endScreenStartTime?: number;
 }
 
 interface StickerAnimState {
@@ -262,6 +264,8 @@ export class CanvasRenderer {
   private actionIconsTransitionTime = -Infinity;
   private snapOriginRect: { x: number; y: number; w: number; h: number } | null = null;
   private phoneCanvasRect: { x: number; y: number; w: number; h: number } = { x: 0, y: 0, w: 1080, h: 1920 };
+  private endScreenSnapshot: HTMLCanvasElement | null = null;
+  private lastEndScreenActive = false;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
@@ -635,6 +639,22 @@ export class CanvasRenderer {
     // so the black bg covers the full canvas and zoom coords are correct.
     if (state.snapFullscreenActive && state.snapFullscreenEventId) {
       this.drawSnapFullscreen(this.ctx, state);
+    }
+
+    // End screen frost overlay — capture snapshot on first active frame, then render
+    if (state.endScreenActive && !this.lastEndScreenActive) {
+      const snap = document.createElement('canvas');
+      snap.width = this.W;
+      snap.height = this.H;
+      snap.getContext('2d')!.drawImage(this.canvas, 0, 0);
+      this.endScreenSnapshot = snap;
+      this.lastEndScreenActive = true;
+    } else if (!state.endScreenActive) {
+      this.lastEndScreenActive = false;
+      this.endScreenSnapshot = null;
+    }
+    if (state.endScreenActive) {
+      this.drawEndScreen(this.ctx, state);
     }
 
     return this.canvas;
@@ -1663,6 +1683,52 @@ export class CanvasRenderer {
         ctx.arc(dotsX, dotsStartY + i * dotSpacing, dotR, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.restore();
+    }
+  }
+
+  private drawEndScreen(ctx: CanvasRenderingContext2D, state: FrameState): void {
+    const FADE_DUR = 600;
+    const t = Math.min(1, Math.max(0, (state.time - (state.endScreenStartTime ?? 0)) / FADE_DUR));
+    const pr = this.phoneCanvasRect;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pr.x, pr.y, pr.w, pr.h);
+    ctx.clip();
+
+    if (this.endScreenSnapshot) {
+      ctx.filter = `blur(${Math.round(30 * t)}px)`;
+      ctx.globalAlpha = Math.min(1, t * 1.3);
+      ctx.drawImage(this.endScreenSnapshot, pr.x, pr.y, pr.w, pr.h, pr.x, pr.y, pr.w, pr.h);
+      ctx.filter = 'none';
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.fillStyle = `rgba(255,255,255,${t * 0.38})`;
+    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
+
+    ctx.restore();
+
+    if (t > 0.3 && state.chatConfig.endScreenText) {
+      const textAlpha = Math.min(1, (t - 0.3) / 0.45);
+      ctx.save();
+      ctx.globalAlpha = textAlpha;
+      const fontSize = Math.round(this.W * 0.052);
+      ctx.font = `900 ${fontSize}px ${FONT_HEADER}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const maxW = pr.w * 0.78;
+      const lines = this.wrapText(ctx, state.chatConfig.endScreenText, maxW);
+      const lineH = Math.round(fontSize * 1.35);
+      const totalH = lines.length * lineH;
+      const startY = pr.y + pr.h / 2 - totalH / 2 + lineH / 2;
+      ctx.shadowColor = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur = 28;
+      ctx.fillStyle = '#FFFFFF';
+      lines.forEach((line, i) => {
+        ctx.fillText(line, pr.x + pr.w / 2, startY + i * lineH);
+      });
       ctx.restore();
     }
   }
