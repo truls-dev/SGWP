@@ -1638,16 +1638,15 @@ export class CanvasRenderer {
 
     const pr = this.phoneCanvasRect;
 
-    // Scale factors matching the actual phone UI rendering:
-    // non-video: ctx.scale(safeScale, 1) — X scaled, Y is 1:1
-    // video mode: ctx.scale(scale, scale) — both axes
-    const isVideoMode = state.chatConfig.isVideoBackgroundMode;
+    // Status bar is always drawn at Y scale = 1 (no vertical compression),
+    // matching the default non-video chat mode sizing regardless of videoModeScale.
+    // X scale maps the 1080-local-unit width onto the phone canvas width.
     const xScale = pr.w / this.W;
-    const yScale = isVideoMode ? pr.w / this.W : 1;
+    const yScale = 1;
 
     // Canvas-space heights for the status bar and the snap bottom bar
     // snapChatBar image is 497×121 — maintain aspect ratio across the phone width
-    const statusBarCanvasH = STATUS_BAR_H * yScale;
+    const statusBarCanvasH = STATUS_BAR_H; // always 42 canvas-px, same as chat mode
     const snapBarCanvasH = Math.round(pr.w * (121 / 497));
 
     // Origin: snap bubble square (canvas-space)
