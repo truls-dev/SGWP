@@ -553,6 +553,8 @@ const App: React.FC = () => {
     frameStateRef.current.snapFullscreenActive = false;
     frameStateRef.current.snapFullscreenEventId = undefined;
     frameStateRef.current.snapOpenedIds = new Set();
+    frameStateRef.current.endScreenActive = false;
+    frameStateRef.current.endScreenStartTime = undefined;
     frameStateRef.current.compositionText = '';
     frameStateRef.current.isMeTyping = false;
     if (canvasRendererRef.current) {
