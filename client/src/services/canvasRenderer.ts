@@ -37,6 +37,8 @@ export interface FrameState {
   snapFullscreenEventId?: string;
   snapOpenedIds?: Set<string>;
   snapTappingId?: string;
+  snapOpeningStartTime?: number;
+  snapClosingStartTime?: number;
 }
 
 interface StickerAnimState {
@@ -258,6 +260,7 @@ export class CanvasRenderer {
   private presenceEnabled = false;
   private actionIconsVisible = true;
   private actionIconsTransitionTime = -Infinity;
+  private snapOriginRect: { x: number; y: number; w: number; h: number } | null = null;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
@@ -1521,6 +1524,9 @@ export class CanvasRenderer {
     const sqX = textStartX + 22;
     const sqY = y + (cardH - sqSize) / 2;
 
+    // Always record position so zoom animation knows where to start/end
+    this.snapOriginRect = { x: sqX, y: sqY, w: sqSize, h: sqSize };
+
     if (!snapOpened) {
       ctx.fillStyle = '#E8453C';
       ctx.beginPath();
@@ -1557,43 +1563,86 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     state: FrameState,
   ): void {
-    // Black background
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, this.W, this.H);
-
+    const OPEN_DUR = 280;
+    const CLOSE_DUR = 250;
     const imgCornerR = 44;
+    const sqRadius = 8;
 
-    // Draw snap image with rounded corners (full canvas)
-    const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
-    if (img && img.width > 0 && img.height > 0) {
-      ctx.save();
-      ctx.beginPath();
-      (ctx as any).roundRect(0, 0, this.W, this.H, imgCornerR);
-      ctx.clip();
-      const imgR = img.width / img.height;
-      const canR = this.W / this.H;
-      let dx: number, dy: number, dw: number, dh: number;
-      if (imgR > canR) {
-        dh = this.H; dw = this.H * imgR;
-        dx = (this.W - dw) / 2; dy = 0;
-      } else {
-        dw = this.W; dh = this.W / imgR;
-        dx = 0; dy = (this.H - dh) / 2;
-      }
-      ctx.drawImage(img, dx, dy, dw, dh);
-      ctx.restore();
+    // t = 0: image at snap bubble square, t = 1: image fills canvas
+    let t = 1;
+
+    if (state.snapOpeningStartTime !== undefined) {
+      const elapsed = state.time - state.snapOpeningStartTime;
+      const raw = Math.min(Math.max(elapsed / OPEN_DUR, 0), 1);
+      // easeOutCubic — fast start, settles into fullscreen
+      t = 1 - Math.pow(1 - raw, 3);
+    } else if (state.snapClosingStartTime !== undefined) {
+      const elapsed = state.time - state.snapClosingStartTime;
+      const raw = Math.min(Math.max(elapsed / CLOSE_DUR, 0), 1);
+      // easeInCubic — slow start, accelerates back to bubble
+      t = 1 - Math.pow(raw, 2);
     }
 
-    // 3 vertical dots (top-right corner)
-    const dotR = 7;
-    const dotSpacing = 19;
-    const dotsX = this.W - 38;
-    const dotsStartY = STATUS_BAR_H + 36;
-    ctx.fillStyle = '#FFFFFF';
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.arc(dotsX, dotsStartY + i * dotSpacing, dotR, 0, Math.PI * 2);
-      ctx.fill();
+    // Origin: the snap bubble's red/outlined square position
+    const origin = this.snapOriginRect ?? {
+      x: this.W / 2 - 19,
+      y: this.H / 2 - 19,
+      w: 38,
+      h: 38,
+    };
+
+    // Interpolated destination rect
+    const ix = origin.x + (0 - origin.x) * t;
+    const iy = origin.y + (0 - origin.y) * t;
+    const iw = origin.w + (this.W - origin.w) * t;
+    const ih = origin.h + (this.H - origin.h) * t;
+    const ir = sqRadius + (imgCornerR - sqRadius) * t;
+
+    // Black bg fades in alongside the image
+    ctx.fillStyle = `rgba(0,0,0,${t})`;
+    ctx.fillRect(0, 0, this.W, this.H);
+
+    const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
+    ctx.save();
+    ctx.beginPath();
+    (ctx as any).roundRect(ix, iy, iw, ih, Math.max(ir, 0));
+    ctx.clip();
+
+    if (img && img.width > 0 && img.height > 0) {
+      const imgR = img.width / img.height;
+      const canR = iw / ih;
+      let dx: number, dy: number, dw: number, dh: number;
+      if (imgR > canR) {
+        dh = ih; dw = ih * imgR;
+        dx = ix + (iw - dw) / 2; dy = iy;
+      } else {
+        dw = iw; dh = iw / imgR;
+        dx = ix; dy = iy + (ih - dh) / 2;
+      }
+      ctx.drawImage(img, dx, dy, dw, dh);
+    } else {
+      // No image yet: draw a dark placeholder so animation is still visible
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(ix, iy, iw, ih);
+    }
+    ctx.restore();
+
+    // 3 vertical dots — fade in as image approaches fullscreen
+    const dotAlpha = t > 0.7 ? (t - 0.7) / 0.3 : 0;
+    if (dotAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = dotAlpha;
+      const dotR = 7;
+      const dotSpacing = 19;
+      const dotsX = this.W - 38;
+      const dotsStartY = STATUS_BAR_H + 36;
+      ctx.fillStyle = '#FFFFFF';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(dotsX, dotsStartY + i * dotSpacing, dotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
   }
 

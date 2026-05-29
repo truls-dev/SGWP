@@ -1492,21 +1492,31 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.OPEN_SNAP) {
         const snapDuration = event.snapDurationMs || 3000;
-        // Brief "tap" flash on the bubble before fullscreen opens
-        if (event.snapTargetId) {
-          frameStateRef.current.snapTappingId = event.snapTargetId;
-          await delay(280);
-          frameStateRef.current.snapTappingId = undefined;
-        }
+        const OPEN_DUR = 280;
+        const CLOSE_DUR = 250;
+        const holdDur = Math.max(0, snapDuration - OPEN_DUR - CLOSE_DUR);
+
+        // Zoom-in from snap bubble to fullscreen
         frameStateRef.current.snapFullscreenActive = true;
         frameStateRef.current.snapFullscreenEventId = event.id;
-        await delay(snapDuration);
-        frameStateRef.current.snapFullscreenActive = false;
-        frameStateRef.current.snapFullscreenEventId = undefined;
+        frameStateRef.current.snapOpeningStartTime = performance.now() - playbackStartTimeRef.current;
+        await delay(OPEN_DUR);
+        frameStateRef.current.snapOpeningStartTime = undefined;
+
+        // Hold fullscreen
+        await delay(holdDur);
+
+        // Mark as opened so bubble switches to outlined state, then zoom-out
         if (event.snapTargetId) {
           snapOpenedIdsRef.current = new Set([...snapOpenedIdsRef.current, event.snapTargetId]);
           frameStateRef.current.snapOpenedIds = new Set(snapOpenedIdsRef.current);
         }
+        frameStateRef.current.snapClosingStartTime = performance.now() - playbackStartTimeRef.current;
+        await delay(CLOSE_DUR);
+        frameStateRef.current.snapClosingStartTime = undefined;
+        frameStateRef.current.snapFullscreenActive = false;
+        frameStateRef.current.snapFullscreenEventId = undefined;
+
         await delay(300);
         continue;
       }
