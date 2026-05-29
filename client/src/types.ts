@@ -93,6 +93,7 @@ export interface ChatConfig {
   export16x9?: boolean;
   endScreenEnabled?: boolean;
   endScreenText?: string;
+  endScreenTextColor?: string;
   endScreenDelayMs?: number;
   endScreenDurationMs?: number;
 }

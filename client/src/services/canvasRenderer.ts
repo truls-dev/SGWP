@@ -543,6 +543,13 @@ export class CanvasRenderer {
     const isVideoMode = state.chatConfig.isVideoBackgroundMode;
     const kbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
 
+    // Shortcut: if end screen is already running and snapshot exists, draw frozen frame + overlay only
+    if (state.endScreenActive && this.lastEndScreenActive && this.endScreenSnapshot) {
+      ctx.drawImage(this.endScreenSnapshot, 0, 0);
+      this.drawEndScreen(this.ctx, state);
+      return this.canvas;
+    }
+
     if (isVideoMode) {
       if (state.backgroundVideo && state.backgroundVideo.videoWidth) {
         this.drawVideoBackground(ctx, state.backgroundVideo);
@@ -1719,13 +1726,28 @@ export class CanvasRenderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const maxW = pr.w * 0.78;
-      const lines = this.wrapText(ctx, state.chatConfig.endScreenText, maxW);
+      // Respect explicit newlines before word-wrapping each paragraph
+      const paragraphs = state.chatConfig.endScreenText.split('\n');
+      const lines: string[] = [];
+      for (const para of paragraphs) {
+        if (para === '') {
+          lines.push('');
+        } else {
+          lines.push(...this.wrapText(ctx, para, maxW));
+        }
+      }
       const lineH = Math.round(fontSize * 1.35);
       const totalH = lines.length * lineH;
       const startY = pr.y + pr.h / 2 - totalH / 2 + lineH / 2;
-      ctx.shadowColor = 'rgba(0,0,0,0.55)';
-      ctx.shadowBlur = 28;
-      ctx.fillStyle = '#FFFFFF';
+      const textColor = state.chatConfig.endScreenTextColor ?? '#000000';
+      // Shadow contrasts with text color based on luminance
+      const r = parseInt(textColor.slice(1, 3), 16);
+      const g = parseInt(textColor.slice(3, 5), 16);
+      const b = parseInt(textColor.slice(5, 7), 16);
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      ctx.shadowColor = lum > 0.5 ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = textColor;
       lines.forEach((line, i) => {
         ctx.fillText(line, pr.x + pr.w / 2, startY + i * lineH);
       });

@@ -3498,7 +3498,18 @@ const App: React.FC = () => {
             {state.chat.endScreenEnabled && (
               <div className="space-y-5 bg-white/5 p-5 rounded-[28px] border border-white/5 animate-in slide-in-from-top-2 duration-300">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">End Screen Text</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase">End Screen Text</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-gray-500">Text color</span>
+                      <input
+                        type="color"
+                        value={state.chat.endScreenTextColor ?? '#000000'}
+                        onChange={e => updateChat('endScreenTextColor', e.target.value)}
+                        className="w-7 h-7 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+                      />
+                    </div>
+                  </div>
                   <textarea
                     rows={2}
                     placeholder='e.g. "To be continued… Subscribe for part 2!"'
