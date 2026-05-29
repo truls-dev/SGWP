@@ -70,6 +70,7 @@ export interface ChatConfig {
   groupIconUrl?: string;
   isKeyboardCropped?: boolean;
   isKeyboardHidden?: boolean;
+  phoneYOffset?: number;
   isShortCrop?: boolean;
   shortCropHeight: number;
   topCornerRadius: number;

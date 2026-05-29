@@ -538,7 +538,7 @@ export class CanvasRenderer {
       const phoneW = this.W * scale;
       const phoneH = this.H * scale;
       const ox = (this.W - phoneW) / 2;
-      const oy = (this.H - phoneH) / 2;
+      const oy = (this.H - phoneH) / 2 + (state.chatConfig.phoneYOffset ?? 0);
 
       const actualKbH = state.chatConfig.isShortCrop ? KEYBOARD_SHORT_H : KEYBOARD_H;
       const clipPhoneH = state.chatConfig.isKeyboardHidden

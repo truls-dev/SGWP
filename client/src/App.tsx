@@ -116,6 +116,7 @@ const App: React.FC = () => {
       groupIconUrl: undefined,
       isKeyboardCropped: false,
       isKeyboardHidden: false,
+      phoneYOffset: 0,
       isShortCrop: true,
       shortCropHeight: 850,
       topCornerRadius: 10,
@@ -769,6 +770,7 @@ const App: React.FC = () => {
           groupIconUrl: undefined,
           isKeyboardCropped: false,
           isKeyboardHidden: false,
+          phoneYOffset: 0,
           isShortCrop: true,
           shortCropHeight: 850,
           topCornerRadius: 10,
@@ -3250,6 +3252,24 @@ const App: React.FC = () => {
                           type="range" min="0.4" max="1.0" step="0.01" 
                           value={state.chat.videoModeScale} 
                           onChange={e => updateChat('videoModeScale', parseFloat(e.target.value))}
+                          className="w-full accent-[#FF0054] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Vertical Position</label>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-black text-[#FF0054]">{(state.chat.phoneYOffset ?? 0) > 0 ? '+' : ''}{state.chat.phoneYOffset ?? 0}px</span>
+                            {(state.chat.phoneYOffset ?? 0) !== 0 && (
+                              <button onClick={() => updateChat('phoneYOffset', 0)} className="text-[8px] text-gray-500 hover:text-white transition-colors uppercase font-black">reset</button>
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="range" min="-500" max="500" step="5"
+                          value={state.chat.phoneYOffset ?? 0}
+                          onChange={e => updateChat('phoneYOffset', parseInt(e.target.value))}
                           className="w-full accent-[#FF0054] h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
