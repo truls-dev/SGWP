@@ -2,7 +2,7 @@
 const SELFIE_STICKER_ID = "8c315eb6-cba4-4865-8746-a999698198b6";
 const PEEKING_COMIC_ID = 10211153;
 
-export const AVATAR_POOL = [
+const ORIGINAL_AVATAR_IDS = [
   "280531978_4-s1", "280531979_4-s1", "280531982_4-s1",
   "280531984_4-s1", "280531985_4-s1",
   "121464857_22-s1", "121464858_22-s1", "121464861_22-s1",
@@ -17,6 +17,10 @@ export const AVATAR_POOL = [
   "128257000_1-s1", "128257001_1-s1", "128257002_1-s1", "128257003_1-s1", "128257004_1-s1",
   "128257005_1-s1", "128257006_1-s1", "128257007_1-s1", "128257008_1-s1"
 ];
+
+const GENERATED_AVATAR_IDS: string[] = Array.from({ length: 1000 }, (_, i) => `${221111111 + i}_2-s1`);
+
+export const AVATAR_POOL = [...ORIGINAL_AVATAR_IDS, ...GENERATED_AVATAR_IDS];
 
 export const getRandomAvatarId = (): string => {
   return AVATAR_POOL[Math.floor(Math.random() * AVATAR_POOL.length)];
