@@ -1,0 +1,1 @@
+- [Snap status bar sizing](snap-status-bar-sizing.md) — snap fullscreen status bar must replicate the chat's FULL effective transform (phoneScale × uiScale), not just video scale; uiScale defaults to 1.5.

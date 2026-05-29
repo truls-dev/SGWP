@@ -265,6 +265,10 @@ export class CanvasRenderer {
   private actionIconsTransitionTime = -Infinity;
   private snapOriginRect: { x: number; y: number; w: number; h: number } | null = null;
   private phoneCanvasRect: { x: number; y: number; w: number; h: number } = { x: 0, y: 0, w: 1080, h: 1920 };
+  // The horizontal/vertical scale applied to the phone UI (before uiScale). Used
+  // so the snap fullscreen status bar can replicate the chat status bar's exact size.
+  private phoneScaleX = 1;
+  private phoneScaleY = 1;
   private endScreenSnapshot: HTMLCanvasElement | null = null;
   private lastEndScreenActive = false;
 
@@ -587,6 +591,8 @@ export class CanvasRenderer {
       ctx.clip();
 
       this.phoneCanvasRect = { x: ox, y: oy, w: phoneW, h: phoneH };
+      this.phoneScaleX = scale;
+      this.phoneScaleY = scale;
       ctx.translate(ox, oy);
       ctx.scale(scale, scale);
       this.drawPhoneUI(ctx, state, kbH);
@@ -633,12 +639,16 @@ export class CanvasRenderer {
         ctx.closePath();
         ctx.clip();
         this.phoneCanvasRect = { x: safePad, y: phoneY, w: this.W - safePad * 2, h: phoneH };
+        this.phoneScaleX = safeScale;
+        this.phoneScaleY = 1;
         ctx.translate(safePad, phoneY);
         ctx.scale(safeScale, 1);
         this.drawPhoneUI(ctx, state, kbH);
         ctx.restore();
       } else {
         this.phoneCanvasRect = { x: safePad, y: 0, w: this.W - safePad * 2, h: this.H };
+        this.phoneScaleX = safeScale;
+        this.phoneScaleY = 1;
         ctx.save();
         ctx.translate(safePad, 0);
         ctx.scale(safeScale, 1);
@@ -1113,12 +1123,13 @@ export class CanvasRenderer {
     state: FrameState,
     y: number,
     iconColor = '#000000',
+    width = this.W,
   ): void {
     const isWhite = iconColor === '#FFFFFF';
 
     if (!isWhite) {
       ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, y, this.W, STATUS_BAR_H);
+      ctx.fillRect(0, y, width, STATUS_BAR_H);
     }
 
     ctx.fillStyle = iconColor;
@@ -1153,9 +1164,9 @@ export class CanvasRenderer {
 
     ctx.font = `bold 30px ${FONT_SYSTEM}`;
     ctx.textAlign = "center";
-    this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
+    this.fillTextWithEmoji(ctx, state.systemConfig.time, width / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
 
-    let rx = this.W - 22;
+    let rx = width - 22;
     const batteryImg = isWhite ? this.getWhiteIcon('battery') : this.images.get('battery');
     if (batteryImg) {
       const src = isWhite ? batteryImg : batteryImg as HTMLImageElement;
@@ -1658,21 +1669,24 @@ export class CanvasRenderer {
 
     const pr = this.phoneCanvasRect;
 
-    // The snap opens as a TRUE fullscreen overlay using full (non-video)
-    // proportions, independent of the phone's video-background scale. This keeps
-    // the status bar at the same size as the default chat mode. In non-video mode
-    // `fs` is identical to `pr`; in video mode the snap expands to full size with
-    // a full-size status bar and extra black space, as requested.
-    const safePad = 20;
-    const fs = { x: safePad, y: 0, w: this.W - safePad * 2, h: this.H };
+    // The snap stays confined to the phone area (so the video background remains
+    // visible around it). The status bar is drawn so it is PIXEL-IDENTICAL to the
+    // chat-mode status bar: the chat draws it with the phone scale (phoneScaleX/Y)
+    // and then an extra uiScale, laying it out across `this.W / uiScale`. We
+    // replicate that exact transform here. The larger bar pushes the snap image
+    // down, adding the extra black space on top, exactly as requested.
+    const uiScale = state.systemConfig.uiScale || 1;
+    const sbScaleX = this.phoneScaleX * uiScale;
+    const sbScaleY = this.phoneScaleY * uiScale;
+    const statusLocalW = this.W / uiScale; // same layout width the chat uses
 
-    // Uniform scaling (xScale = yScale) so text is never horizontally squished.
-    const scale = fs.w / this.W;
+    // Uniform-ish scale used for the snap menu dots (small overlay)
+    const scale = sbScaleX;
 
     // Canvas-space heights for the status bar and the snap bottom bar
     // snapChatBar image is 497×121 — maintain aspect ratio across the phone width
-    const statusBarCanvasH = STATUS_BAR_H * scale;
-    const snapBarCanvasH = Math.round(fs.w * (121 / 497));
+    const statusBarCanvasH = STATUS_BAR_H * sbScaleY;
+    const snapBarCanvasH = Math.round(pr.w * (121 / 497));
 
     // Origin: snap bubble square (canvas-space) — animates from the phone area
     const origin = this.snapOriginRect ?? {
@@ -1682,11 +1696,11 @@ export class CanvasRenderer {
       h: 38,
     };
 
-    // Target: full snap area minus status bar at top and send-bar at bottom
-    const targetX = fs.x;
-    const targetY = fs.y + statusBarCanvasH;
-    const targetW = fs.w;
-    const targetH = fs.h - statusBarCanvasH - snapBarCanvasH;
+    // Target: phone area minus status bar at top and send-bar at bottom
+    const targetX = pr.x;
+    const targetY = pr.y + statusBarCanvasH;
+    const targetW = pr.w;
+    const targetH = pr.h - statusBarCanvasH - snapBarCanvasH;
 
     const ix = origin.x + (targetX - origin.x) * t;
     const iy = origin.y + (targetY - origin.y) * t;
@@ -1697,10 +1711,10 @@ export class CanvasRenderer {
     // Black bg clipped to phone area only
     ctx.save();
     ctx.beginPath();
-    ctx.rect(fs.x, fs.y, fs.w, fs.h);
+    ctx.rect(pr.x, pr.y, pr.w, pr.h);
     ctx.clip();
     ctx.fillStyle = `rgba(0,0,0,${t})`;
-    ctx.fillRect(fs.x, fs.y, fs.w, fs.h);
+    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
     ctx.restore();
 
     // Snap image with rounded corners, bottom-anchored within the image area
@@ -1736,25 +1750,25 @@ export class CanvasRenderer {
       ctx.save();
       ctx.globalAlpha = dotAlpha;
 
-      // ── White status bar — uniform scale so text is never squished ──────
+      // ── White status bar — pixel-identical to the chat status bar ──────────
       ctx.save();
-      ctx.translate(fs.x, fs.y);
-      ctx.scale(scale, scale);
-      this.drawStatusBar(ctx, state, 0, '#FFFFFF');
+      ctx.translate(pr.x, pr.y);
+      ctx.scale(sbScaleX, sbScaleY);
+      this.drawStatusBar(ctx, state, 0, '#FFFFFF', statusLocalW);
       ctx.restore();
 
       // ── "Send a chat" bottom bar (image asset) ──────────────────────────
-      const barY = fs.y + fs.h - snapBarCanvasH;
+      const barY = pr.y + pr.h - snapBarCanvasH;
       const snapChatBarImg = this.images.get('snapChatBar');
       if (snapChatBarImg && snapChatBarImg.width > 0) {
-        ctx.drawImage(snapChatBarImg, fs.x, barY, fs.w, snapBarCanvasH);
+        ctx.drawImage(snapChatBarImg, pr.x, barY, pr.w, snapBarCanvasH);
       }
 
       // ── 3 vertical dots ──────────────────────────────────────────────────
       const dotR = 7 * scale;
       const dotSpacing = 19 * scale;
-      const dotsX = fs.x + fs.w - 38 * scale;
-      const dotsStartY = fs.y + statusBarCanvasH + 36 * scale;
+      const dotsX = pr.x + pr.w - 38 * scale;
+      const dotsStartY = pr.y + statusBarCanvasH + 36 * scale;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
