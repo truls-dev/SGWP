@@ -1616,26 +1616,36 @@ export class CanvasRenderer {
   ): void {
     const OPEN_DUR = 280;
     const CLOSE_DUR = 250;
-    const imgCornerR = 44;
+    const imgCornerR = 18; // visible rounded corners on the snap image
     const sqRadius = 8;
 
-    // t = 0: image at snap bubble square, t = 1: image fills canvas
+    // t = 0: image at snap bubble square, t = 1: image fills snap area
     let t = 1;
 
     if (state.snapOpeningStartTime !== undefined) {
       const elapsed = state.time - state.snapOpeningStartTime;
       const raw = Math.min(Math.max(elapsed / OPEN_DUR, 0), 1);
-      // easeOutCubic — fast start, settles into fullscreen
       t = 1 - Math.pow(1 - raw, 3);
     } else if (state.snapClosingStartTime !== undefined) {
       const elapsed = state.time - state.snapClosingStartTime;
       const raw = Math.min(Math.max(elapsed / CLOSE_DUR, 0), 1);
-      // easeInCubic — slow start, accelerates back to bubble
       t = 1 - Math.pow(raw, 2);
     }
 
-    // Origin: the snap bubble's red/outlined square (canvas-space coords)
     const pr = this.phoneCanvasRect;
+
+    // Scale factors matching the actual phone UI rendering:
+    // non-video: ctx.scale(safeScale, 1) — X scaled, Y is 1:1
+    // video mode: ctx.scale(scale, scale) — both axes
+    const isVideoMode = state.chatConfig.isVideoBackgroundMode;
+    const xScale = pr.w / this.W;
+    const yScale = isVideoMode ? pr.w / this.W : 1;
+
+    // Canvas-space heights for the status bar and the snap bottom bar
+    const statusBarCanvasH = STATUS_BAR_H * yScale;
+    const snapBarCanvasH = Math.round(116 * yScale);
+
+    // Origin: snap bubble square (canvas-space)
     const origin = this.snapOriginRect ?? {
       x: pr.x + pr.w / 2 - 19,
       y: pr.y + pr.h / 2 - 19,
@@ -1643,14 +1653,19 @@ export class CanvasRenderer {
       h: 38,
     };
 
-    // Target: the phone area in canvas space (not the whole canvas)
-    const ix = origin.x + (pr.x - origin.x) * t;
-    const iy = origin.y + (pr.y - origin.y) * t;
-    const iw = origin.w + (pr.w - origin.w) * t;
-    const ih = origin.h + (pr.h - origin.h) * t;
+    // Target: phone area minus status bar at top and send-bar at bottom
+    const targetX = pr.x;
+    const targetY = pr.y + statusBarCanvasH;
+    const targetW = pr.w;
+    const targetH = pr.h - statusBarCanvasH - snapBarCanvasH;
+
+    const ix = origin.x + (targetX - origin.x) * t;
+    const iy = origin.y + (targetY - origin.y) * t;
+    const iw = origin.w + (targetW - origin.w) * t;
+    const ih = origin.h + (targetH - origin.h) * t;
     const ir = sqRadius + (imgCornerR - sqRadius) * t;
 
-    // Black bg clipped to phone area only (preserves video background outside phone)
+    // Black bg clipped to phone area only
     ctx.save();
     ctx.beginPath();
     ctx.rect(pr.x, pr.y, pr.w, pr.h);
@@ -1659,6 +1674,7 @@ export class CanvasRenderer {
     ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
     ctx.restore();
 
+    // Snap image with rounded corners, bottom-anchored within the image area
     const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
     ctx.save();
     ctx.beginPath();
@@ -1670,46 +1686,110 @@ export class CanvasRenderer {
       const canR = iw / ih;
       let dx: number, dy: number, dw: number, dh: number;
       if (imgR > canR) {
-        // Image wider than frame: fill height, clip sides — bottom-anchor: image bottom = frame bottom
+        // Wider image: fill height, clip sides; bottom of image = bottom of frame
         dh = ih; dw = ih * imgR;
         dx = ix + (iw - dw) / 2; dy = iy + ih - dh;
       } else {
-        // Image taller than frame: fill width, clip top — bottom-anchor: image bottom = frame bottom
+        // Taller image: fill width, clip top; bottom of image = bottom of frame
         dw = iw; dh = iw / imgR;
         dx = ix; dy = iy + ih - dh;
       }
       ctx.drawImage(img, dx, dy, dw, dh);
     } else {
-      // No image: dark placeholder so animation is still visible
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(ix, iy, iw, ih);
     }
     ctx.restore();
 
-    // White status bar — same proportions as chat mode, fades in with the snap opening
+    // Overlays fade in as snap opens
     const dotAlpha = t > 0.7 ? (t - 0.7) / 0.3 : 0;
     if (dotAlpha > 0) {
       ctx.save();
       ctx.globalAlpha = dotAlpha;
-      // Transform into phone-local space so drawStatusBar draws at the right scale
+
+      // ── White status bar (same scale as chat mode) ──────────────────────
+      ctx.save();
       ctx.translate(pr.x, pr.y);
-      ctx.scale(pr.w / this.W, pr.w / this.W);
+      ctx.scale(xScale, yScale);
       this.drawStatusBar(ctx, state, 0, '#FFFFFF');
       ctx.restore();
 
-      // 3 vertical dots
-      ctx.save();
-      ctx.globalAlpha = dotAlpha;
-      const dotR = 7;
-      const dotSpacing = 19;
-      const dotsX = pr.x + pr.w - 38;
-      const dotsStartY = pr.y + STATUS_BAR_H + 36;
+      // ── "Send a chat" bottom bar ─────────────────────────────────────────
+      const barY = pr.y + pr.h - snapBarCanvasH;
+      const sc = xScale; // convenience: scale most sizes with xScale
+      const btnR = snapBarCanvasH * 0.34;
+      const barPad = 22 * sc;
+      const lineW = 2.5 * sc;
+      const iconS = btnR * 0.5;
+      const btnCY = barY + snapBarCanvasH / 2;
+
+      // Camera circle (left)
+      const camX = pr.x + barPad + btnR;
+      ctx.beginPath();
+      ctx.arc(camX, btnCY, btnR, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = lineW;
+      ctx.stroke();
+      // camera body
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = lineW;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      const cw = iconS * 1.4, ch = iconS;
+      ctx.strokeRect(camX - cw / 2, btnCY - ch / 2, cw, ch);
+      ctx.beginPath();
+      ctx.arc(camX, btnCY, iconS * 0.38, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Download circle (right)
+      const dlX = pr.x + pr.w - barPad - btnR;
+      ctx.beginPath();
+      ctx.arc(dlX, btnCY, btnR, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = lineW;
+      ctx.stroke();
+      // download arrow
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = lineW;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(dlX, btnCY - iconS * 0.6);
+      ctx.lineTo(dlX, btnCY + iconS * 0.2);
+      ctx.moveTo(dlX - iconS * 0.55, btnCY - iconS * 0.15);
+      ctx.lineTo(dlX, btnCY + iconS * 0.55);
+      ctx.lineTo(dlX + iconS * 0.55, btnCY - iconS * 0.15);
+      ctx.stroke();
+
+      // "Send a chat" pill (center)
+      const pillX = camX + btnR + barPad;
+      const pillRight = dlX - btnR - barPad;
+      const pillW = pillRight - pillX;
+      const pillH = snapBarCanvasH * 0.52;
+      const pillY = barY + (snapBarCanvasH - pillH) / 2;
+      ctx.beginPath();
+      (ctx as any).roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = lineW;
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `${Math.round(28 * sc)}px ${FONT_SYSTEM}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Send a chat', pillX + pillW / 2, btnCY);
+
+      // ── 3 vertical dots ──────────────────────────────────────────────────
+      const dotR = 7 * sc;
+      const dotSpacing = 19 * sc;
+      const dotsX = pr.x + pr.w - 38 * sc;
+      const dotsStartY = pr.y + statusBarCanvasH + 36 * yScale;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
         ctx.arc(dotsX, dotsStartY + i * dotSpacing, dotR, 0, Math.PI * 2);
         ctx.fill();
       }
+
       ctx.restore();
     }
   }
