@@ -4187,15 +4187,15 @@ const App: React.FC = () => {
                       onChange={handleSnapImageUpload}
                     />
 
-                    <div className="flex flex-wrap gap-2 pt-4">
-                      <button onClick={() => addScriptItem(MessageType.TEXT)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
-                      <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
-                      <button onClick={() => addScriptItem(MessageType.GIF)} className="flex-1 bg-[#FF6B9D]/10 border border-[#FF6B9D]/20 text-[#FF6B9D] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#FF6B9D]/20 active:scale-95">+ GIF</button>
-                      <button onClick={() => addScriptItem(MessageType.CONTACT_CARD)} className="flex-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-yellow-400/20 active:scale-95">+ CONTACT</button>
-                      <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
-                      <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="flex-1 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95"><i className="fa-solid fa-bell mr-1"></i> + iOS NOTIF</button>
-                      <button onClick={() => addScriptItem(MessageType.SNAP)} className="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-red-500/20 active:scale-95">📸 + SNAP</button>
-                      <button onClick={() => addScriptItem(MessageType.OPEN_SNAP)} className="flex-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-orange-500/20 active:scale-95">👁 + OPEN SNAP</button>
+                    <div className="grid grid-cols-4 gap-2 pt-4">
+                      <button onClick={() => addScriptItem(MessageType.TEXT)} className="bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
+                      <button onClick={() => addScriptItem(MessageType.IMAGE)} className="bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
+                      <button onClick={() => addScriptItem(MessageType.GIF)} className="bg-[#FF6B9D]/10 border border-[#FF6B9D]/20 text-[#FF6B9D] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#FF6B9D]/20 active:scale-95">+ GIF</button>
+                      <button onClick={() => addScriptItem(MessageType.CONTACT_CARD)} className="bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-yellow-400/20 active:scale-95">+ CONTACT</button>
+                      <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
+                      <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95">+ iOS NOTIF</button>
+                      <button onClick={() => addScriptItem(MessageType.SNAP)} className="bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-red-500/20 active:scale-95">📸 + SNAP</button>
+                      <button onClick={() => addScriptItem(MessageType.OPEN_SNAP)} className="bg-orange-500/10 border border-orange-500/20 text-orange-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-orange-500/20 active:scale-95">👁 + OPEN SNAP</button>
                     </div>
                   </>
                 )}
