@@ -261,6 +261,7 @@ export class CanvasRenderer {
   private actionIconsVisible = true;
   private actionIconsTransitionTime = -Infinity;
   private snapOriginRect: { x: number; y: number; w: number; h: number } | null = null;
+  private phoneCanvasRect: { x: number; y: number; w: number; h: number } = { x: 0, y: 0, w: 1080, h: 1920 };
 
   resetAnimations(): void {
     this.presenceAnims.clear();
@@ -569,6 +570,7 @@ export class CanvasRenderer {
       ctx.closePath();
       ctx.clip();
 
+      this.phoneCanvasRect = { x: ox, y: oy, w: phoneW, h: phoneH };
       ctx.translate(ox, oy);
       ctx.scale(scale, scale);
       this.drawPhoneUI(ctx, state, kbH);
@@ -614,11 +616,13 @@ export class CanvasRenderer {
         ctx.quadraticCurveTo(safePad, phoneY, safePad + cr, phoneY);
         ctx.closePath();
         ctx.clip();
+        this.phoneCanvasRect = { x: safePad, y: phoneY, w: this.W - safePad * 2, h: phoneH };
         ctx.translate(safePad, phoneY);
         ctx.scale(safeScale, 1);
         this.drawPhoneUI(ctx, state, kbH);
         ctx.restore();
       } else {
+        this.phoneCanvasRect = { x: safePad, y: 0, w: this.W - safePad * 2, h: this.H };
         ctx.save();
         ctx.translate(safePad, 0);
         ctx.scale(safeScale, 1);
@@ -1593,24 +1597,30 @@ export class CanvasRenderer {
       t = 1 - Math.pow(raw, 2);
     }
 
-    // Origin: the snap bubble's red/outlined square position
+    // Origin: the snap bubble's red/outlined square (canvas-space coords)
+    const pr = this.phoneCanvasRect;
     const origin = this.snapOriginRect ?? {
-      x: this.W / 2 - 19,
-      y: this.H / 2 - 19,
+      x: pr.x + pr.w / 2 - 19,
+      y: pr.y + pr.h / 2 - 19,
       w: 38,
       h: 38,
     };
 
-    // Interpolated destination rect
-    const ix = origin.x + (0 - origin.x) * t;
-    const iy = origin.y + (0 - origin.y) * t;
-    const iw = origin.w + (this.W - origin.w) * t;
-    const ih = origin.h + (this.H - origin.h) * t;
+    // Target: the phone area in canvas space (not the whole canvas)
+    const ix = origin.x + (pr.x - origin.x) * t;
+    const iy = origin.y + (pr.y - origin.y) * t;
+    const iw = origin.w + (pr.w - origin.w) * t;
+    const ih = origin.h + (pr.h - origin.h) * t;
     const ir = sqRadius + (imgCornerR - sqRadius) * t;
 
-    // Black bg fades in alongside the image
+    // Black bg clipped to phone area only (preserves video background outside phone)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pr.x, pr.y, pr.w, pr.h);
+    ctx.clip();
     ctx.fillStyle = `rgba(0,0,0,${t})`;
-    ctx.fillRect(0, 0, this.W, this.H);
+    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
+    ctx.restore();
 
     const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
     ctx.save();
@@ -1631,21 +1641,21 @@ export class CanvasRenderer {
       }
       ctx.drawImage(img, dx, dy, dw, dh);
     } else {
-      // No image yet: draw a dark placeholder so animation is still visible
+      // No image: dark placeholder so animation is still visible
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(ix, iy, iw, ih);
     }
     ctx.restore();
 
-    // 3 vertical dots — fade in as image approaches fullscreen
+    // 3 vertical dots — fade in as image approaches fullscreen, inside phone area
     const dotAlpha = t > 0.7 ? (t - 0.7) / 0.3 : 0;
     if (dotAlpha > 0) {
       ctx.save();
       ctx.globalAlpha = dotAlpha;
       const dotR = 7;
       const dotSpacing = 19;
-      const dotsX = this.W - 38;
-      const dotsStartY = STATUS_BAR_H + 36;
+      const dotsX = pr.x + pr.w - 38;
+      const dotsStartY = pr.y + STATUS_BAR_H + 36;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
