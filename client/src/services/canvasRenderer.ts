@@ -1508,8 +1508,9 @@ export class CanvasRenderer {
     (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
     ctx.stroke();
 
-    const sqSize = 54;
-    const sqRadius = 12;
+    const fontSize = 38;
+    const sqSize = 38;
+    const sqRadius = 8;
     const sqX = textStartX + 22;
     const sqY = y + (cardH - sqSize) / 2;
 
@@ -1520,42 +1521,23 @@ export class CanvasRenderer {
       ctx.fill();
     } else {
       ctx.strokeStyle = '#E8453C';
-      ctx.lineWidth = 3.5;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       (ctx as any).roundRect(sqX, sqY, sqSize, sqSize, sqRadius);
       ctx.stroke();
 
-      const circX = textStartX + cardW - 46;
-      const circY = y + cardH / 2;
-      const circR = 30;
-      ctx.fillStyle = '#1C1C1E';
-      ctx.beginPath();
-      ctx.arc(circX, circY, circR, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#FFFFFF';
-      const camW = 30, camH = 22;
-      const camX = circX - camW / 2;
-      const camY = circY - camH / 2;
-      ctx.beginPath();
-      (ctx as any).roundRect(camX, camY, camW, camH, 4);
-      ctx.fill();
-
-      ctx.fillStyle = '#1C1C1E';
-      ctx.beginPath();
-      ctx.arc(circX, circY, 7, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      const bW = 10, bH = 5;
-      (ctx as any).roundRect(circX - bW / 2, camY - bH + 1, bW, bH, 2);
-      ctx.fill();
+      const camBtnImg = this.images.get("cameraBtn");
+      const camBtnSize = 66;
+      const camBtnX = textStartX + cardW - camBtnSize - 14;
+      const camBtnY = y + (cardH - camBtnSize) / 2;
+      if (camBtnImg) {
+        ctx.drawImage(camBtnImg, camBtnX, camBtnY, camBtnSize, camBtnSize);
+      }
     }
 
-    const textX = sqX + sqSize + 20;
+    const textX = sqX + sqSize + 16;
     const label = snapOpened ? 'Hold to replay or save' : 'Tap to view';
-    ctx.font = `700 38px ${FONT_REGULAR}`;
+    ctx.font = `700 ${fontSize}px ${FONT_REGULAR}`;
     ctx.fillStyle = '#111111';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
