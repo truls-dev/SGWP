@@ -331,6 +331,7 @@ const App: React.FC = () => {
   const lockscreenActiveRef = useRef(false);
   const lockscreenNotifRef = useRef<TimedNotification | null>(null);
   const lockscreenSwipeRef = useRef(0);
+  const snapOpenedIdsRef = useRef<Set<string>>(new Set());
   const playbackStartTimeRef = useRef<number>(0);
   const workerTimerRef = useRef<ReturnType<typeof createWorkerTimer> | null>(null);
   const frameStateRef = useRef<FrameState>({
@@ -356,6 +357,8 @@ const App: React.FC = () => {
   const exportBgVideoInputRef = useRef<HTMLInputElement>(0 as any);
   const timelineImageInputRef = useRef<HTMLInputElement>(0 as any);
   const activeTimelineEventIdRef = useRef<string | null>(null);
+  const snapImageInputRef = useRef<HTMLInputElement>(0 as any);
+  const activeSnapEventIdRef = useRef<string | null>(null);
 
   const messagesToRender = playbackMode ? playbackItems : state.script;
   const [scriptParticipantIds, setScriptParticipantIds] = useState<string[]>([]);
@@ -381,7 +384,7 @@ const App: React.FC = () => {
   useEffect(() => {
     frameStateRef.current = {
       ...frameStateRef.current,
-      messages: (playbackMode ? playbackItems : state.script).filter(m => m.type !== MessageType.IOS_NOTIFICATION),
+      messages: (playbackMode ? playbackItems : state.script).filter(m => m.type !== MessageType.IOS_NOTIFICATION && m.type !== MessageType.OPEN_SNAP),
       compositionText,
       isMeTyping,
       activeKey,
@@ -526,7 +529,7 @@ const App: React.FC = () => {
       } else if (preEvent.type !== MessageType.NOTIFICATION && preEvent.senderId && preEvent.senderId !== 'me') {
         if (!preShownActiveIds.includes(preEvent.senderId)) preShownActiveIds.push(preEvent.senderId);
       }
-      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.GIF || preEvent.type === MessageType.NOTIFICATION || preEvent.type === MessageType.CONTACT_CARD) && !preEvent.isBackspaced) {
+      if ((preEvent.type === MessageType.TEXT || preEvent.type === MessageType.STICKER || preEvent.type === MessageType.IMAGE || preEvent.type === MessageType.GIF || preEvent.type === MessageType.NOTIFICATION || preEvent.type === MessageType.CONTACT_CARD || preEvent.type === MessageType.SNAP) && !preEvent.isBackspaced) {
         preShownItems.push({ ...preEvent, instanceId: uuidv4() });
       }
     }
@@ -546,6 +549,10 @@ const App: React.FC = () => {
     lockscreenActiveRef.current = false;
     lockscreenNotifRef.current = null;
     lockscreenSwipeRef.current = 0;
+    snapOpenedIdsRef.current = new Set();
+    frameStateRef.current.snapFullscreenActive = false;
+    frameStateRef.current.snapFullscreenEventId = undefined;
+    frameStateRef.current.snapOpenedIds = new Set();
     frameStateRef.current.compositionText = '';
     frameStateRef.current.isMeTyping = false;
     if (canvasRendererRef.current) {
@@ -824,6 +831,25 @@ const App: React.FC = () => {
 
   const OUTRO_WEBM_URL = 'https://raw.githubusercontent.com/truls-dev/images/main/animation%20effect.webm';
 
+  const handleSnapImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activeSnapEventIdRef.current) {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const result = loadEvent.target?.result;
+        if (typeof result === 'string') {
+          const eventId = activeSnapEventIdRef.current;
+          setState(prev => ({
+            ...prev,
+            script: prev.script.map(s => s.id === eventId ? { ...s, snapImageUrl: result } : s)
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
   const handleTimelineImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && activeTimelineEventIdRef.current) {
@@ -1042,8 +1068,8 @@ const App: React.FC = () => {
     const newItem: ScriptEvent = {
       id: uuidv4(),
       type,
-      senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : (type === MessageType.IOS_NOTIFICATION ? undefined : state.cast[0].id)),
-      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.GIF || type === MessageType.IOS_NOTIFICATION || type === MessageType.CONTACT_CARD ? '' : 'New message')),
+      senderId: senderId || (type === MessageType.PRESENCE ? state.cast.find(c => !c.isMe)?.id : (type === MessageType.IOS_NOTIFICATION || type === MessageType.OPEN_SNAP ? undefined : state.cast[0].id)),
+      text: type === MessageType.NOTIFICATION ? 'NEW NOTIFICATION' : (type === MessageType.PRESENCE ? '' : (type === MessageType.IMAGE || type === MessageType.GIF || type === MessageType.IOS_NOTIFICATION || type === MessageType.CONTACT_CARD || type === MessageType.SNAP || type === MessageType.OPEN_SNAP ? '' : 'New message')),
       presenceAction: type === MessageType.PRESENCE ? 'ENTER' : undefined,
       isVertical: false,
       isBackspaced: false,
@@ -1057,6 +1083,14 @@ const App: React.FC = () => {
         notifSenderName: 'Jane',
         notifMessage: "I'm on my way!",
         notifDurationMs: 2500,
+      } : {}),
+      ...(type === MessageType.SNAP ? {
+        senderId: senderId || state.cast.find(c => !c.isMe)?.id || state.cast[0].id,
+      } : {}),
+      ...(type === MessageType.OPEN_SNAP ? {
+        snapDurationMs: 3000,
+        snapTargetId: undefined,
+        snapImageUrl: undefined,
       } : {}),
     };
     setState(prev => ({ ...prev, script: [...prev.script, newItem] }));
@@ -1283,7 +1317,7 @@ const App: React.FC = () => {
           } else if (pe.type !== MessageType.NOTIFICATION && pe.senderId && pe.senderId !== 'me') {
             if (!preShownIds.includes(pe.senderId)) preShownIds.push(pe.senderId);
           }
-          if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.GIF || pe.type === MessageType.NOTIFICATION || pe.type === MessageType.CONTACT_CARD) && !pe.isBackspaced) {
+              if ((pe.type === MessageType.TEXT || pe.type === MessageType.STICKER || pe.type === MessageType.IMAGE || pe.type === MessageType.GIF || pe.type === MessageType.NOTIFICATION || pe.type === MessageType.CONTACT_CARD || pe.type === MessageType.SNAP) && !pe.isBackspaced) {
             setPlaybackItems(prev => [...prev, { ...pe, instanceId: uuidv4(), revealedAt: Date.now() }]);
           }
         }
@@ -1426,7 +1460,7 @@ const App: React.FC = () => {
       }
 
       // If it's the other person sending, ensure they "arrive" before typing/sending
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD || event.type === MessageType.SNAP)) {
         if (!localActiveParticipantIds.includes(event.senderId)) {
            updateActiveIds(Array.from(new Set([event.senderId as string, ...localActiveParticipantIds])));
            await delay(600);
@@ -1456,6 +1490,21 @@ const App: React.FC = () => {
         continue;
       }
 
+      if (event.type === MessageType.OPEN_SNAP) {
+        const snapDuration = event.snapDurationMs || 3000;
+        frameStateRef.current.snapFullscreenActive = true;
+        frameStateRef.current.snapFullscreenEventId = event.id;
+        await delay(snapDuration);
+        frameStateRef.current.snapFullscreenActive = false;
+        frameStateRef.current.snapFullscreenEventId = undefined;
+        if (event.snapTargetId) {
+          snapOpenedIdsRef.current = new Set([...snapOpenedIdsRef.current, event.snapTargetId]);
+          frameStateRef.current.snapOpenedIds = new Set(snapOpenedIdsRef.current);
+        }
+        await delay(300);
+        continue;
+      }
+
       if (event.type === MessageType.NOTIFICATION) {
         if (!event.isBackspaced) {
           setPlaybackItems(prev => [...prev, { ...event, instanceId: uuidv4(), revealedAt: Date.now() }]);
@@ -1464,7 +1513,7 @@ const App: React.FC = () => {
           soundService.playEffect(event.soundEffect);
         }
         await delay(1000);
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD || event.type === MessageType.SNAP) {
         const sender = seqCast.find(c => c.id === event.senderId);
         if (!sender) continue;
         
@@ -2457,7 +2506,7 @@ const App: React.FC = () => {
         continue;
       }
 
-      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD)) {
+      if (event.senderId && event.senderId !== 'me' && (event.type === MessageType.TEXT || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.STICKER || event.type === MessageType.CONTACT_CARD || event.type === MessageType.SNAP)) {
         if (!activeIds.includes(event.senderId)) {
           activeIds.push(event.senderId);
           totalMs += 600;
@@ -2478,7 +2527,7 @@ const App: React.FC = () => {
 
       if (event.type === MessageType.NOTIFICATION) {
         totalMs += 1000;
-      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD) {
+      } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD || event.type === MessageType.SNAP) {
         if (sender && !sender.isMe) {
           totalMs += chat.messageDelay;
         }
@@ -3630,14 +3679,14 @@ const App: React.FC = () => {
                           onDragOver={(e) => handleDragOver(e, idx)}
                           onDrop={(e) => handleDrop(e, idx)}
                           onDragEnd={() => setDraggedItemIndex(null)}
-                          className={`bg-black/30 border ${item.type === MessageType.PRESENCE ? 'border-[#33B5FF]/30 bg-[#33B5FF]/5' : item.type === MessageType.IOS_NOTIFICATION ? 'border-green-500/30 bg-green-500/5' : 'border-white/10'} p-4 rounded-2xl relative transition-all hover:border-white/20 cursor-grab active:cursor-grabbing ${draggedItemIndex === idx ? 'opacity-40 grayscale scale-95' : 'opacity-100'}`}
+                          className={`bg-black/30 border ${item.type === MessageType.PRESENCE ? 'border-[#33B5FF]/30 bg-[#33B5FF]/5' : item.type === MessageType.IOS_NOTIFICATION ? 'border-green-500/30 bg-green-500/5' : item.type === MessageType.SNAP ? 'border-red-500/30 bg-red-500/5' : item.type === MessageType.OPEN_SNAP ? 'border-orange-500/30 bg-orange-500/5' : 'border-white/10'} p-4 rounded-2xl relative transition-all hover:border-white/20 cursor-grab active:cursor-grabbing ${draggedItemIndex === idx ? 'opacity-40 grayscale scale-95' : 'opacity-100'}`}
                         >
                           <div className="flex justify-between items-center mb-2.5 pointer-events-none">
                             <div className="flex gap-2 items-center pointer-events-auto">
                               <div className="text-gray-600 px-1"><i className="fa-solid fa-grip-vertical"></i></div>
                               <select 
                                 className="bg-[#1a1a1a] border border-white/10 text-[10px] font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer hover:bg-black transition-colors" 
-                                value={item.type === MessageType.NOTIFICATION ? 'SYSTEM' : (item.type === MessageType.PRESENCE ? 'PRESENCE' : (item.type === MessageType.IOS_NOTIFICATION ? 'IOS_NOTIF' : item.senderId))} 
+                                value={item.type === MessageType.NOTIFICATION ? 'SYSTEM' : (item.type === MessageType.PRESENCE ? 'PRESENCE' : (item.type === MessageType.IOS_NOTIFICATION ? 'IOS_NOTIF' : (item.type === MessageType.SNAP ? `SNAP__${item.senderId || ''}` : (item.type === MessageType.OPEN_SNAP ? 'OPEN_SNAP' : item.senderId))))} 
                                 onChange={e => {
                                   const val = e.target.value;
                                   const newScript = [...state.script];
@@ -3647,8 +3696,13 @@ const App: React.FC = () => {
                                       newScript[idx] = { ...item, type: MessageType.PRESENCE, senderId: state.cast.find(c => !c.isMe)?.id, presenceAction: 'ENTER' };
                                   } else if (val === 'IOS_NOTIF') {
                                       newScript[idx] = { ...item, type: MessageType.IOS_NOTIFICATION, senderId: undefined, notifPlatform: item.notifPlatform || 'Messages', notifSenderName: item.notifSenderName || 'Jane', notifMessage: item.notifMessage || "I'm on my way!", notifDurationMs: item.notifDurationMs || 2500 };
+                                  } else if (val === 'OPEN_SNAP') {
+                                      newScript[idx] = { ...item, type: MessageType.OPEN_SNAP, senderId: undefined, snapDurationMs: item.snapDurationMs || 3000 };
+                                  } else if (val.startsWith('SNAP__')) {
+                                      const senderId = val.replace('SNAP__', '') || state.cast.find(c => !c.isMe)?.id;
+                                      newScript[idx] = { ...item, type: MessageType.SNAP, senderId };
                                   } else {
-                                      newScript[idx] = { ...item, type: item.type === MessageType.NOTIFICATION || item.type === MessageType.PRESENCE || item.type === MessageType.IOS_NOTIFICATION ? MessageType.TEXT : item.type, senderId: val };
+                                      newScript[idx] = { ...item, type: item.type === MessageType.NOTIFICATION || item.type === MessageType.PRESENCE || item.type === MessageType.IOS_NOTIFICATION || item.type === MessageType.SNAP || item.type === MessageType.OPEN_SNAP ? MessageType.TEXT : item.type, senderId: val };
                                   }
                                   setState(prev => ({ ...prev, script: newScript }));
                                 }}
@@ -3656,6 +3710,8 @@ const App: React.FC = () => {
                                 <option value="SYSTEM">Alert / Notification</option>
                                 <option value="PRESENCE">Presence Event</option>
                                 <option value="IOS_NOTIF">iOS Notification</option>
+                                <option value="OPEN_SNAP">👁 Open Snap (trigger)</option>
+                                {state.cast.filter(c => !c.isMe).map(c => <option key={c.id} value={`SNAP__${c.id}`}>📸 Snap from {c.name}</option>)}
                                 {state.cast.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                               </select>
                             </div>
@@ -3972,6 +4028,66 @@ const App: React.FC = () => {
                                   </div>
                                 </div>
                               </div>
+                            ) : item.type === MessageType.SNAP ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
+                                  <span className="text-2xl">📸</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[10px] font-black text-red-400 uppercase tracking-widest">Snap Received</div>
+                                    <div className="text-[9px] text-gray-400 mt-0.5">Shows "Tap to view" bubble. Add an OPEN SNAP event below to trigger it.</div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : item.type === MessageType.OPEN_SNAP ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest shrink-0">Target Snap</label>
+                                  <select
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] font-bold outline-none cursor-pointer focus:border-orange-500"
+                                    value={item.snapTargetId || ''}
+                                    onChange={e => {
+                                      const newScript = [...state.script];
+                                      newScript[idx] = { ...item, snapTargetId: e.target.value || undefined };
+                                      setState(prev => ({ ...prev, script: newScript }));
+                                    }}
+                                  >
+                                    <option value="">— none —</option>
+                                    {state.script.filter(s => s.type === MessageType.SNAP).map(s => {
+                                      const snd = state.cast.find(c => c.id === s.senderId);
+                                      return <option key={s.id} value={s.id}>📸 Snap from {snd?.name || 'Unknown'}</option>;
+                                    })}
+                                  </select>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest shrink-0">Duration</label>
+                                  <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      step="0.5"
+                                      value={((item.snapDurationMs || 3000) / 1000).toFixed(1)}
+                                      onChange={e => {
+                                        const newScript = [...state.script];
+                                        newScript[idx] = { ...item, snapDurationMs: Math.max(500, parseFloat(e.target.value || '3') * 1000) };
+                                        setState(prev => ({ ...prev, script: newScript }));
+                                      }}
+                                      className="w-[36px] bg-transparent text-[10px] font-bold outline-none text-center"
+                                    />
+                                    <span className="text-[9px] text-gray-500">s fullscreen</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {item.snapImageUrl && (
+                                    <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                  )}
+                                  <button
+                                    onClick={() => { activeSnapEventIdRef.current = item.id; (snapImageInputRef.current as any)?.click(); }}
+                                    className="text-[10px] font-black uppercase text-orange-400 hover:text-white transition-colors flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md"
+                                  >
+                                    <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Image' : 'Upload Snap Image'}
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
                               <div className="space-y-2">
                                 <textarea rows={2} className="bg-transparent w-full text-xs font-medium focus:outline-none resize-none placeholder-gray-600" value={item.text} placeholder="Enter chat message content..." onChange={e => { const newScript = [...state.script]; newScript[idx].text = e.target.value; setState(prev => ({ ...prev, script: newScript })); }} />
@@ -4047,14 +4163,23 @@ const App: React.FC = () => {
                       accept="image/*" 
                       onChange={handleTimelineImageUpload}
                     />
+                    <input
+                      type="file"
+                      ref={snapImageInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleSnapImageUpload}
+                    />
 
-                    <div className="flex gap-2 pt-4">
+                    <div className="flex flex-wrap gap-2 pt-4">
                       <button onClick={() => addScriptItem(MessageType.TEXT)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ MSG</button>
                       <button onClick={() => addScriptItem(MessageType.IMAGE)} className="flex-1 bg-white/5 border border-white/10 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-white/10 active:scale-95">+ IMG</button>
                       <button onClick={() => addScriptItem(MessageType.GIF)} className="flex-1 bg-[#FF6B9D]/10 border border-[#FF6B9D]/20 text-[#FF6B9D] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#FF6B9D]/20 active:scale-95">+ GIF</button>
                       <button onClick={() => addScriptItem(MessageType.CONTACT_CARD)} className="flex-1 bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-yellow-400/20 active:scale-95">+ CONTACT</button>
                       <button onClick={() => addScriptItem(MessageType.PRESENCE)} className="flex-1 bg-[#33B5FF]/10 border border-[#33B5FF]/20 text-[#33B5FF] py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-[#33B5FF]/20 active:scale-95">+ PRESENCE</button>
                       <button onClick={() => addScriptItem(MessageType.IOS_NOTIFICATION)} className="flex-1 bg-green-500/10 border border-green-500/20 text-green-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-green-500/20 active:scale-95"><i className="fa-solid fa-bell mr-1"></i> + iOS NOTIF</button>
+                      <button onClick={() => addScriptItem(MessageType.SNAP)} className="flex-1 bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-red-500/20 active:scale-95">📸 + SNAP</button>
+                      <button onClick={() => addScriptItem(MessageType.OPEN_SNAP)} className="flex-1 bg-orange-500/10 border border-orange-500/20 text-orange-400 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition hover:bg-orange-500/20 active:scale-95">👁 + OPEN SNAP</button>
                     </div>
                   </>
                 )}
@@ -4103,10 +4228,10 @@ const App: React.FC = () => {
                           <div key={item.id} className="bg-black/20 border border-white/5 p-3 rounded-xl">
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] font-black text-gray-400 uppercase">
-                                {item.type === MessageType.NOTIFICATION ? 'SYSTEM' : item.type === MessageType.PRESENCE ? 'PRESENCE' : item.type === MessageType.IOS_NOTIFICATION ? 'iOS NOTIF' : (sender?.name || 'Unknown')}
+                                {item.type === MessageType.NOTIFICATION ? 'SYSTEM' : item.type === MessageType.PRESENCE ? 'PRESENCE' : item.type === MessageType.IOS_NOTIFICATION ? 'iOS NOTIF' : item.type === MessageType.SNAP ? 'SNAP' : item.type === MessageType.OPEN_SNAP ? 'OPEN SNAP' : (sender?.name || 'Unknown')}
                               </span>
                               <span className="text-[10px] text-gray-500 truncate flex-1">
-                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.GIF ? '🎬 GIF' : item.type === MessageType.STICKER ? '🎨 Sticker' : item.type === MessageType.CONTACT_CARD ? `👤 ${item.contactCardName || 'Contact'}` : (item.text || '')}
+                                {item.type === MessageType.PRESENCE ? (item.presenceAction === 'ENTER' ? 'Arrived' : 'Left') : item.type === MessageType.IMAGE ? '🖼 Image' : item.type === MessageType.GIF ? '🎬 GIF' : item.type === MessageType.STICKER ? '🎨 Sticker' : item.type === MessageType.CONTACT_CARD ? `👤 ${item.contactCardName || 'Contact'}` : item.type === MessageType.SNAP ? '📸 Snap received' : item.type === MessageType.OPEN_SNAP ? `👁 Open snap (${(item.snapDurationMs || 3000) / 1000}s)` : (item.text || '')}
                               </span>
                             </div>
                           </div>

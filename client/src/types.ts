@@ -7,7 +7,9 @@ export enum MessageType {
   NOTIFICATION = 'NOTIFICATION',
   PRESENCE = 'PRESENCE',
   IOS_NOTIFICATION = 'IOS_NOTIFICATION',
-  CONTACT_CARD = 'CONTACT_CARD'
+  CONTACT_CARD = 'CONTACT_CARD',
+  SNAP = 'SNAP',
+  OPEN_SNAP = 'OPEN_SNAP',
 }
 
 export enum SenderType {
@@ -49,6 +51,9 @@ export interface ScriptEvent {
   contactCardName?: string;
   contactCardUsername?: string;
   contactCardAvatarId?: string;
+  snapImageUrl?: string;
+  snapDurationMs?: number;
+  snapTargetId?: string;
 }
 
 export interface SystemConfig {

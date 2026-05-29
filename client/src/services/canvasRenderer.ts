@@ -33,6 +33,9 @@ export interface FrameState {
   lockscreenActive?: boolean;
   lockscreenNotification?: TimedNotification | null;
   lockscreenSwipeProgress?: number;
+  snapFullscreenActive?: boolean;
+  snapFullscreenEventId?: string;
+  snapOpenedIds?: Set<string>;
 }
 
 interface StickerAnimState {
@@ -246,6 +249,7 @@ export class CanvasRenderer {
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
   private gifVideos = new Map<string, HTMLVideoElement>();
+  private currentSnapOpenedIds: Set<string> = new Set();
   private hiddenVideoContainer: HTMLDivElement;
   private emojiImages = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
@@ -386,6 +390,9 @@ export class CanvasRenderer {
       if (e.type === MessageType.CONTACT_CARD && e.contactCardAvatarId) {
         const bitmojiUrl = getSelfieUrlForAvatar(e.contactCardAvatarId);
         promises.push(this.loadImg(`contact_${e.id}`, `/api/media-proxy?url=${encodeURIComponent(bitmojiUrl)}`));
+      }
+      if (e.type === MessageType.OPEN_SNAP && e.snapImageUrl) {
+        promises.push(this.loadImg(`snap_${e.id}`, e.snapImageUrl));
       }
     }
 
@@ -671,6 +678,9 @@ export class CanvasRenderer {
     }
 
     this.drawActiveNotifications(ctx, state);
+    if (state.snapFullscreenActive && state.snapFullscreenEventId) {
+      this.drawSnapFullscreen(ctx, state);
+    }
   }
 
   private drawLockscreen(
@@ -1226,7 +1236,8 @@ export class CanvasRenderer {
     const padX = isCropped ? MSG_PAD_X_CROPPED : MSG_PAD_X;
     const maxTextW = this.W - padX - MSG_PAD_X - BAR_WIDTH - BAR_GAP;
 
-    const msgs = state.messages.filter((m) => m.type !== MessageType.PRESENCE);
+    this.currentSnapOpenedIds = state.snapOpenedIds || new Set();
+    const msgs = state.messages.filter((m) => m.type !== MessageType.PRESENCE && m.type !== MessageType.OPEN_SNAP);
     const layouts: MsgLayout[] = [];
     let totalH = 80;
 
@@ -1262,7 +1273,9 @@ export class CanvasRenderer {
 
         ctx.font = `400 ${msgFontSize}px ${FONT_REGULAR}`;
 
-        if (msg.type === MessageType.CONTACT_CARD) {
+        if (msg.type === MessageType.SNAP) {
+          h += 100;
+        } else if (msg.type === MessageType.CONTACT_CARD) {
           h += 165;
         } else if (msg.type === MessageType.STICKER) {
           h += 200;
@@ -1401,7 +1414,10 @@ export class CanvasRenderer {
     const textStartX = padX + BAR_WIDTH + BAR_GAP;
     const barStartY = curY;
 
-    if (msg.type === MessageType.CONTACT_CARD) {
+    if (msg.type === MessageType.SNAP) {
+      const snapOpened = this.currentSnapOpenedIds.has(msg.id);
+      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened);
+    } else if (msg.type === MessageType.CONTACT_CARD) {
       this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
       curY += 155;
     } else if (msg.type === MessageType.STICKER) {
@@ -1462,6 +1478,111 @@ export class CanvasRenderer {
         ctx.fillStyle = barColor;
         ctx.fillRect(padX, barStartY, BAR_WIDTH, barH);
       }
+    }
+  }
+
+  private drawSnapBubble(
+    ctx: CanvasRenderingContext2D,
+    textStartX: number,
+    y: number,
+    maxTextW: number,
+    snapOpened: boolean,
+  ): number {
+    const cardH = 100;
+    const cardW = Math.min(750, maxTextW);
+    const cardRadius = 18;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.06)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
+    ctx.stroke();
+
+    const sqSize = 54;
+    const sqRadius = 12;
+    const sqX = textStartX + 22;
+    const sqY = y + (cardH - sqSize) / 2;
+
+    if (!snapOpened) {
+      ctx.fillStyle = '#E8453C';
+      ctx.beginPath();
+      (ctx as any).roundRect(sqX, sqY, sqSize, sqSize, sqRadius);
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = '#E8453C';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      (ctx as any).roundRect(sqX, sqY, sqSize, sqSize, sqRadius);
+      ctx.stroke();
+
+      const circX = textStartX + cardW - 46;
+      const circY = y + cardH / 2;
+      const circR = 30;
+      ctx.fillStyle = '#1C1C1E';
+      ctx.beginPath();
+      ctx.arc(circX, circY, circR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      const camW = 30, camH = 22;
+      const camX = circX - camW / 2;
+      const camY = circY - camH / 2;
+      ctx.beginPath();
+      (ctx as any).roundRect(camX, camY, camW, camH, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#1C1C1E';
+      ctx.beginPath();
+      ctx.arc(circX, circY, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      const bW = 10, bH = 5;
+      (ctx as any).roundRect(circX - bW / 2, camY - bH + 1, bW, bH, 2);
+      ctx.fill();
+    }
+
+    const textX = sqX + sqSize + 20;
+    const label = snapOpened ? 'Hold to replay or save' : 'Tap to view';
+    ctx.font = `700 38px ${FONT_REGULAR}`;
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, textX, y + cardH / 2);
+
+    return cardH;
+  }
+
+  private drawSnapFullscreen(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+  ): void {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, this.W, this.H);
+    const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
+    if (img && img.width > 0 && img.height > 0) {
+      const imgR = img.width / img.height;
+      const canR = this.W / this.H;
+      let dx: number, dy: number, dw: number, dh: number;
+      if (imgR > canR) {
+        dh = this.H; dw = this.H * imgR;
+        dx = (this.W - dw) / 2; dy = 0;
+      } else {
+        dw = this.W; dh = this.W / imgR;
+        dx = 0; dy = (this.H - dh) / 2;
+      }
+      ctx.drawImage(img, dx, dy, dw, dh);
     }
   }
 
