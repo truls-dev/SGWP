@@ -253,6 +253,7 @@ export class CanvasRenderer {
   private W = 1080;
   private H = 1920;
   private images = new Map<string, HTMLImageElement>();
+  private whiteIconCache = new Map<string, HTMLCanvasElement>();
   private gifVideos = new Map<string, HTMLVideoElement>();
   private currentSnapOpenedIds: Set<string> = new Set();
   private hiddenVideoContainer: HTMLDivElement;
@@ -1085,6 +1086,28 @@ export class CanvasRenderer {
     ctx.drawImage(vid, dx, dy, dw, dh);
   }
 
+  /**
+   * Returns a cached HTMLCanvasElement of the given image key recoloured solid
+   * white. Operates on a separate alpha-enabled offscreen canvas (source-in
+   * composite) so the result has transparent backgrounds and purely white
+   * foreground pixels — safe to draw onto the main alpha:false canvas.
+   */
+  private getWhiteIcon(key: string): HTMLCanvasElement | null {
+    if (this.whiteIconCache.has(key)) return this.whiteIconCache.get(key)!;
+    const img = this.images.get(key);
+    if (!img || !img.width) return null;
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const cx = c.getContext('2d')!; // alpha:true by default — critical
+    cx.drawImage(img, 0, 0);
+    cx.globalCompositeOperation = 'source-in';
+    cx.fillStyle = '#FFFFFF';
+    cx.fillRect(0, 0, img.width, img.height);
+    this.whiteIconCache.set(key, c);
+    return c;
+  }
+
   private drawStatusBar(
     ctx: CanvasRenderingContext2D,
     state: FrameState,
@@ -1133,25 +1156,22 @@ export class CanvasRenderer {
     this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, y + STATUS_BAR_H / 2, FONT_SYSTEM, 30);
 
     let rx = this.W - 22;
-    const batteryImg = this.images.get("battery");
+    const batteryImg = isWhite ? this.getWhiteIcon('battery') : this.images.get('battery');
     if (batteryImg) {
+      const src = isWhite ? batteryImg : batteryImg as HTMLImageElement;
       const ih = 24;
-      const iw = batteryImg.width * (ih / batteryImg.height);
+      const iw = (src.width) * (ih / (src.height));
       rx -= iw;
-      if (isWhite) ctx.filter = 'invert(1)';
-      ctx.drawImage(batteryImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-      if (isWhite) ctx.filter = 'none';
+      ctx.drawImage(src, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
       rx -= 14;
     }
 
-    const wifiImg = this.images.get("wifi");
+    const wifiImg = isWhite ? this.getWhiteIcon('wifi') : this.images.get('wifi');
     if (wifiImg) {
       const ih = 25;
-      const iw = wifiImg.width * (ih / wifiImg.height);
+      const iw = (wifiImg.width) * (ih / (wifiImg.height));
       rx -= iw;
-      if (isWhite) ctx.filter = 'invert(1)';
       ctx.drawImage(wifiImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
-      if (isWhite) ctx.filter = 'none';
     }
   }
 
@@ -1638,15 +1658,13 @@ export class CanvasRenderer {
 
     const pr = this.phoneCanvasRect;
 
-    // Status bar is always drawn at Y scale = 1 (no vertical compression),
-    // matching the default non-video chat mode sizing regardless of videoModeScale.
-    // X scale maps the 1080-local-unit width onto the phone canvas width.
-    const xScale = pr.w / this.W;
-    const yScale = 1;
+    // Use uniform scaling (xScale = yScale) so text is never horizontally squished.
+    // This matches the proportions of the chat mode status bar.
+    const scale = pr.w / this.W;
 
     // Canvas-space heights for the status bar and the snap bottom bar
     // snapChatBar image is 497×121 — maintain aspect ratio across the phone width
-    const statusBarCanvasH = STATUS_BAR_H; // always 42 canvas-px, same as chat mode
+    const statusBarCanvasH = STATUS_BAR_H * scale;
     const snapBarCanvasH = Math.round(pr.w * (121 / 497));
 
     // Origin: snap bubble square (canvas-space)
@@ -1711,10 +1729,10 @@ export class CanvasRenderer {
       ctx.save();
       ctx.globalAlpha = dotAlpha;
 
-      // ── White status bar (same scale as chat mode) ──────────────────────
+      // ── White status bar — uniform scale so text is never squished ──────
       ctx.save();
       ctx.translate(pr.x, pr.y);
-      ctx.scale(xScale, yScale);
+      ctx.scale(scale, scale);
       this.drawStatusBar(ctx, state, 0, '#FFFFFF');
       ctx.restore();
 
@@ -1726,10 +1744,10 @@ export class CanvasRenderer {
       }
 
       // ── 3 vertical dots ──────────────────────────────────────────────────
-      const dotR = 7 * xScale;
-      const dotSpacing = 19 * xScale;
-      const dotsX = pr.x + pr.w - 38 * xScale;
-      const dotsStartY = pr.y + statusBarCanvasH + 36 * yScale;
+      const dotR = 7 * scale;
+      const dotSpacing = 19 * scale;
+      const dotsX = pr.x + pr.w - 38 * scale;
+      const dotsStartY = pr.y + statusBarCanvasH + 36 * scale;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
