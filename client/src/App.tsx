@@ -4050,8 +4050,22 @@ const App: React.FC = () => {
                                   <span className="text-2xl">📸</span>
                                   <div className="flex-1 min-w-0">
                                     <div className="text-[10px] font-black text-red-400 uppercase tracking-widest">Snap Received</div>
-                                    <div className="text-[9px] text-gray-400 mt-0.5">Shows "Tap to view" bubble. Add an OPEN SNAP event below to trigger it.</div>
+                                    <div className="text-[9px] text-gray-400 mt-0.5">Add an OPEN SNAP event below to trigger it.</div>
                                   </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest shrink-0">Label</label>
+                                  <input
+                                    type="text"
+                                    placeholder="Tap to view"
+                                    value={item.snapLabel || ''}
+                                    onChange={e => {
+                                      const newScript = [...state.script];
+                                      newScript[idx] = { ...item, snapLabel: e.target.value || undefined };
+                                      setState(prev => ({ ...prev, script: newScript }));
+                                    }}
+                                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-red-500 placeholder-gray-600"
+                                  />
                                 </div>
                               </div>
                             ) : item.type === MessageType.OPEN_SNAP ? (

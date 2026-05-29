@@ -52,6 +52,7 @@ export interface ScriptEvent {
   contactCardUsername?: string;
   contactCardAvatarId?: string;
   snapImageUrl?: string;
+  snapLabel?: string;
   snapDurationMs?: number;
   snapTargetId?: string;
 }

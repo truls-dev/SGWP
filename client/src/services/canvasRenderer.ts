@@ -1429,7 +1429,7 @@ export class CanvasRenderer {
     if (msg.type === MessageType.SNAP) {
       const snapOpened = this.currentSnapOpenedIds.has(msg.id);
       const snapTapping = state.snapTappingId === msg.id;
-      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping);
+      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping, msg.snapLabel);
     } else if (msg.type === MessageType.CONTACT_CARD) {
       this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
       curY += 155;
@@ -1501,6 +1501,7 @@ export class CanvasRenderer {
     maxTextW: number,
     snapOpened: boolean,
     snapTapping = false,
+    snapLabel?: string,
   ): number {
     const cardH = 100;
     const cardW = Math.min(750, maxTextW);
@@ -1563,7 +1564,7 @@ export class CanvasRenderer {
     }
 
     const textX = sqX + sqSize + 16;
-    const label = snapOpened ? 'Hold to replay or save' : 'Tap to view';
+    const label = snapOpened ? 'Hold to replay or save' : (snapLabel || 'Tap to view');
     ctx.font = `700 ${fontSize}px ${FONT_REGULAR}`;
     ctx.fillStyle = '#111111';
     ctx.textAlign = 'left';
