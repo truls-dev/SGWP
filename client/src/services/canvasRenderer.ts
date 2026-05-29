@@ -1699,23 +1699,18 @@ export class CanvasRenderer {
     const t = Math.min(1, Math.max(0, (state.time - (state.endScreenStartTime ?? 0)) / FADE_DUR));
     const pr = this.phoneCanvasRect;
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(pr.x, pr.y, pr.w, pr.h);
-    ctx.clip();
-
     if (this.endScreenSnapshot) {
+      ctx.save();
       ctx.filter = `blur(${Math.round(30 * t)}px)`;
       ctx.globalAlpha = Math.min(1, t * 1.3);
-      ctx.drawImage(this.endScreenSnapshot, pr.x, pr.y, pr.w, pr.h, pr.x, pr.y, pr.w, pr.h);
+      ctx.drawImage(this.endScreenSnapshot, 0, 0, this.W, this.H, 0, 0, this.W, this.H);
       ctx.filter = 'none';
       ctx.globalAlpha = 1;
+      ctx.restore();
     }
 
     ctx.fillStyle = `rgba(255,255,255,${t * 0.38})`;
-    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
-
-    ctx.restore();
+    ctx.fillRect(0, 0, this.W, this.H);
 
     if (t > 0.3 && state.chatConfig.endScreenText) {
       const textAlpha = Math.min(1, (t - 0.3) / 0.45);

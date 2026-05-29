@@ -1897,7 +1897,7 @@ const App: React.FC = () => {
       frameStateRef.current.endScreenStartTime = performance.now() - playbackStartTimeRef.current;
       await delay(FADE_IN + screenDuration);
       if ((runningStatusRef.current as string) === 'idle') return;
-      frameStateRef.current.endScreenActive = false;
+      // Keep endScreenActive=true — the recording/preview teardown will clear it
     }
 
     const restoreActiveSequence = () => {
