@@ -1550,22 +1550,116 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     state: FrameState,
   ): void {
+    // Black background
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, this.W, this.H);
+
+    const bottomBarH = 186;
+    const imgTop = STATUS_BAR_H;
+    const imgBottom = this.H - bottomBarH;
+    const imgAreaW = this.W;
+    const imgAreaH = imgBottom - imgTop;
+    const imgCornerR = 44;
+
+    // Draw snap image with rounded corners
     const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
     if (img && img.width > 0 && img.height > 0) {
+      ctx.save();
+      ctx.beginPath();
+      (ctx as any).roundRect(0, imgTop, imgAreaW, imgAreaH, imgCornerR);
+      ctx.clip();
       const imgR = img.width / img.height;
-      const canR = this.W / this.H;
+      const canR = imgAreaW / imgAreaH;
       let dx: number, dy: number, dw: number, dh: number;
       if (imgR > canR) {
-        dh = this.H; dw = this.H * imgR;
-        dx = (this.W - dw) / 2; dy = 0;
+        dh = imgAreaH; dw = imgAreaH * imgR;
+        dx = (imgAreaW - dw) / 2; dy = imgTop;
       } else {
-        dw = this.W; dh = this.W / imgR;
-        dx = 0; dy = (this.H - dh) / 2;
+        dw = imgAreaW; dh = imgAreaW / imgR;
+        dx = 0; dy = imgTop + (imgAreaH - dh) / 2;
       }
       ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
     }
+
+    // Status bar — white icons on black (reuse lockscreen bar + add centered time)
+    this.drawLockscreenStatusBar(ctx, state, 0);
+    ctx.font = `bold 30px ${FONT_SYSTEM}`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    this.fillTextWithEmoji(ctx, state.systemConfig.time, this.W / 2, STATUS_BAR_H / 2, FONT_SYSTEM, 30);
+
+    // 3 vertical dots (top-right corner over image)
+    const dotR = 7;
+    const dotSpacing = 19;
+    const dotsX = this.W - 38;
+    const dotsStartY = imgTop + 36;
+    ctx.fillStyle = '#FFFFFF';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.arc(dotsX, dotsStartY + i * (dotR * 2 + dotSpacing - dotR * 2), dotR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Bottom action bar
+    const barCenterY = imgBottom + bottomBarH / 2;
+    const btnSize = 90;
+    const btnPad = 38;
+
+    // Camera button (left) — use same cameraBtn image as chat input
+    const camBtnImg = this.images.get('cameraBtn');
+    if (camBtnImg) {
+      ctx.drawImage(camBtnImg, btnPad, barCenterY - btnSize / 2, btnSize, btnSize);
+    }
+
+    // Save / download button (right) — white circle outline + download arrow
+    const saveCX = this.W - btnPad - btnSize / 2;
+    const saveCY = barCenterY;
+    const saveR = btnSize / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(saveCX, saveCY, saveR, 0, Math.PI * 2);
+    ctx.stroke();
+    // Arrow shaft + head + baseline
+    const aw = 22;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(saveCX, saveCY - aw * 0.7);
+    ctx.lineTo(saveCX, saveCY + aw * 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(saveCX - aw * 0.5, saveCY - aw * 0.2);
+    ctx.lineTo(saveCX, saveCY + aw * 0.35);
+    ctx.lineTo(saveCX + aw * 0.5, saveCY - aw * 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(saveCX - aw * 0.55, saveCY + aw * 0.6);
+    ctx.lineTo(saveCX + aw * 0.55, saveCY + aw * 0.6);
+    ctx.stroke();
+
+    // "Send a chat" outlined pill (center)
+    const pillL = btnPad + btnSize + 22;
+    const pillR = this.W - btnPad - btnSize - 22;
+    const pillW = pillR - pillL;
+    const pillH = 86;
+    const pillY = barCenterY - pillH / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    (ctx as any).roundRect(pillL, pillY, pillW, pillH, pillH / 2);
+    ctx.stroke();
+    const chatFontSize = 34;
+    ctx.font = `400 ${chatFontSize}px ${FONT_REGULAR}`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Send a chat', pillL + pillW / 2, barCenterY);
   }
 
   private drawContactCard(
