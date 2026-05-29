@@ -1085,11 +1085,16 @@ export class CanvasRenderer {
     ctx: CanvasRenderingContext2D,
     state: FrameState,
     y: number,
+    iconColor = '#000000',
   ): void {
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, y, this.W, STATUS_BAR_H);
+    const isWhite = iconColor === '#FFFFFF';
 
-    ctx.fillStyle = "#000000";
+    if (!isWhite) {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, y, this.W, STATUS_BAR_H);
+    }
+
+    ctx.fillStyle = iconColor;
     ctx.font = `bold 28px ${FONT_SYSTEM}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
@@ -1107,7 +1112,7 @@ export class CanvasRenderer {
     ctx.save();
     ctx.translate(signalX, signalY);
     ctx.scale(sx, sy);
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = iconColor;
 
     ctx.fill(new Path2D("M22.959 16.9531H25.332C25.9375 16.9531 26.3477 16.5234 26.3477 15.8887V1.06445C26.3477 0.429688 25.9375 0 25.332 0H22.959C22.3535 0 21.9336 0.429688 21.9336 1.06445V15.8887C21.9336 16.5234 22.3535 16.9531 22.959 16.9531Z"));
     ctx.fill(new Path2D("M15.6543 16.9531H18.0078C18.6133 16.9531 19.0332 16.5234 19.0332 15.8887V4.92188C19.0332 4.28711 18.6133 3.85742 18.0078 3.85742H15.6543C15.0391 3.85742 14.6289 4.28711 14.6289 4.92188V15.8887C14.6289 16.5234 15.0391 16.9531 15.6543 16.9531Z"));
@@ -1116,7 +1121,7 @@ export class CanvasRenderer {
 
     ctx.restore();
 
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = iconColor;
     this.fillTextWithEmoji(ctx, state.systemConfig.carrier, signalX + signalW + 8, carrierY, FONT_SYSTEM, 28);
 
     ctx.font = `bold 30px ${FONT_SYSTEM}`;
@@ -1129,7 +1134,9 @@ export class CanvasRenderer {
       const ih = 24;
       const iw = batteryImg.width * (ih / batteryImg.height);
       rx -= iw;
+      if (isWhite) ctx.filter = 'invert(1)';
       ctx.drawImage(batteryImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      if (isWhite) ctx.filter = 'none';
       rx -= 14;
     }
 
@@ -1138,7 +1145,9 @@ export class CanvasRenderer {
       const ih = 25;
       const iw = wifiImg.width * (ih / wifiImg.height);
       rx -= iw;
+      if (isWhite) ctx.filter = 'invert(1)';
       ctx.drawImage(wifiImg, rx, y + (STATUS_BAR_H - ih) / 2, iw, ih);
+      if (isWhite) ctx.filter = 'none';
     }
   }
 
@@ -1661,11 +1670,13 @@ export class CanvasRenderer {
       const canR = iw / ih;
       let dx: number, dy: number, dw: number, dh: number;
       if (imgR > canR) {
+        // Image wider than frame: fill height, clip sides — bottom-anchor: image bottom = frame bottom
         dh = ih; dw = ih * imgR;
-        dx = ix + (iw - dw) / 2; dy = iy;
+        dx = ix + (iw - dw) / 2; dy = iy + ih - dh;
       } else {
+        // Image taller than frame: fill width, clip top — bottom-anchor: image bottom = frame bottom
         dw = iw; dh = iw / imgR;
-        dx = ix; dy = iy + (ih - dh) / 2;
+        dx = ix; dy = iy + ih - dh;
       }
       ctx.drawImage(img, dx, dy, dw, dh);
     } else {
@@ -1675,9 +1686,18 @@ export class CanvasRenderer {
     }
     ctx.restore();
 
-    // 3 vertical dots — fade in as image approaches fullscreen, inside phone area
+    // White status bar — same proportions as chat mode, fades in with the snap opening
     const dotAlpha = t > 0.7 ? (t - 0.7) / 0.3 : 0;
     if (dotAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = dotAlpha;
+      // Transform into phone-local space so drawStatusBar draws at the right scale
+      ctx.translate(pr.x, pr.y);
+      ctx.scale(pr.w / this.W, pr.w / this.W);
+      this.drawStatusBar(ctx, state, 0, '#FFFFFF');
+      ctx.restore();
+
+      // 3 vertical dots
       ctx.save();
       ctx.globalAlpha = dotAlpha;
       const dotR = 7;
