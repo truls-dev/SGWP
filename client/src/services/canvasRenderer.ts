@@ -1658,16 +1658,23 @@ export class CanvasRenderer {
 
     const pr = this.phoneCanvasRect;
 
-    // Use uniform scaling (xScale = yScale) so text is never horizontally squished.
-    // This matches the proportions of the chat mode status bar.
-    const scale = pr.w / this.W;
+    // The snap opens as a TRUE fullscreen overlay using full (non-video)
+    // proportions, independent of the phone's video-background scale. This keeps
+    // the status bar at the same size as the default chat mode. In non-video mode
+    // `fs` is identical to `pr`; in video mode the snap expands to full size with
+    // a full-size status bar and extra black space, as requested.
+    const safePad = 20;
+    const fs = { x: safePad, y: 0, w: this.W - safePad * 2, h: this.H };
+
+    // Uniform scaling (xScale = yScale) so text is never horizontally squished.
+    const scale = fs.w / this.W;
 
     // Canvas-space heights for the status bar and the snap bottom bar
     // snapChatBar image is 497×121 — maintain aspect ratio across the phone width
     const statusBarCanvasH = STATUS_BAR_H * scale;
-    const snapBarCanvasH = Math.round(pr.w * (121 / 497));
+    const snapBarCanvasH = Math.round(fs.w * (121 / 497));
 
-    // Origin: snap bubble square (canvas-space)
+    // Origin: snap bubble square (canvas-space) — animates from the phone area
     const origin = this.snapOriginRect ?? {
       x: pr.x + pr.w / 2 - 19,
       y: pr.y + pr.h / 2 - 19,
@@ -1675,11 +1682,11 @@ export class CanvasRenderer {
       h: 38,
     };
 
-    // Target: phone area minus status bar at top and send-bar at bottom
-    const targetX = pr.x;
-    const targetY = pr.y + statusBarCanvasH;
-    const targetW = pr.w;
-    const targetH = pr.h - statusBarCanvasH - snapBarCanvasH;
+    // Target: full snap area minus status bar at top and send-bar at bottom
+    const targetX = fs.x;
+    const targetY = fs.y + statusBarCanvasH;
+    const targetW = fs.w;
+    const targetH = fs.h - statusBarCanvasH - snapBarCanvasH;
 
     const ix = origin.x + (targetX - origin.x) * t;
     const iy = origin.y + (targetY - origin.y) * t;
@@ -1690,10 +1697,10 @@ export class CanvasRenderer {
     // Black bg clipped to phone area only
     ctx.save();
     ctx.beginPath();
-    ctx.rect(pr.x, pr.y, pr.w, pr.h);
+    ctx.rect(fs.x, fs.y, fs.w, fs.h);
     ctx.clip();
     ctx.fillStyle = `rgba(0,0,0,${t})`;
-    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
+    ctx.fillRect(fs.x, fs.y, fs.w, fs.h);
     ctx.restore();
 
     // Snap image with rounded corners, bottom-anchored within the image area
@@ -1731,23 +1738,23 @@ export class CanvasRenderer {
 
       // ── White status bar — uniform scale so text is never squished ──────
       ctx.save();
-      ctx.translate(pr.x, pr.y);
+      ctx.translate(fs.x, fs.y);
       ctx.scale(scale, scale);
       this.drawStatusBar(ctx, state, 0, '#FFFFFF');
       ctx.restore();
 
       // ── "Send a chat" bottom bar (image asset) ──────────────────────────
-      const barY = pr.y + pr.h - snapBarCanvasH;
+      const barY = fs.y + fs.h - snapBarCanvasH;
       const snapChatBarImg = this.images.get('snapChatBar');
       if (snapChatBarImg && snapChatBarImg.width > 0) {
-        ctx.drawImage(snapChatBarImg, pr.x, barY, pr.w, snapBarCanvasH);
+        ctx.drawImage(snapChatBarImg, fs.x, barY, fs.w, snapBarCanvasH);
       }
 
       // ── 3 vertical dots ──────────────────────────────────────────────────
       const dotR = 7 * scale;
       const dotSpacing = 19 * scale;
-      const dotsX = pr.x + pr.w - 38 * scale;
-      const dotsStartY = pr.y + statusBarCanvasH + 36 * scale;
+      const dotsX = fs.x + fs.w - 38 * scale;
+      const dotsStartY = fs.y + statusBarCanvasH + 36 * scale;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
