@@ -362,6 +362,10 @@ export class CanvasRenderer {
         "https://raw.githubusercontent.com/truls-dev/images/main/snaplogo.png",
       ],
       [
+        "snapChatBar",
+        "https://raw.githubusercontent.com/truls-dev/images/main/image.png",
+      ],
+      [
         "imessageLogo",
         "https://raw.githubusercontent.com/truls-dev/images/main/IMessage_logo.png",
       ],
@@ -1642,8 +1646,9 @@ export class CanvasRenderer {
     const yScale = isVideoMode ? pr.w / this.W : 1;
 
     // Canvas-space heights for the status bar and the snap bottom bar
+    // snapChatBar image is 497×121 — maintain aspect ratio across the phone width
     const statusBarCanvasH = STATUS_BAR_H * yScale;
-    const snapBarCanvasH = Math.round(116 * yScale);
+    const snapBarCanvasH = Math.round(pr.w * (121 / 497));
 
     // Origin: snap bubble square (canvas-space)
     const origin = this.snapOriginRect ?? {
@@ -1714,74 +1719,17 @@ export class CanvasRenderer {
       this.drawStatusBar(ctx, state, 0, '#FFFFFF');
       ctx.restore();
 
-      // ── "Send a chat" bottom bar ─────────────────────────────────────────
+      // ── "Send a chat" bottom bar (image asset) ──────────────────────────
       const barY = pr.y + pr.h - snapBarCanvasH;
-      const sc = xScale; // convenience: scale most sizes with xScale
-      const btnR = snapBarCanvasH * 0.34;
-      const barPad = 22 * sc;
-      const lineW = 2.5 * sc;
-      const iconS = btnR * 0.5;
-      const btnCY = barY + snapBarCanvasH / 2;
-
-      // Camera circle (left)
-      const camX = pr.x + barPad + btnR;
-      ctx.beginPath();
-      ctx.arc(camX, btnCY, btnR, 0, Math.PI * 2);
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = lineW;
-      ctx.stroke();
-      // camera body
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = lineW;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      const cw = iconS * 1.4, ch = iconS;
-      ctx.strokeRect(camX - cw / 2, btnCY - ch / 2, cw, ch);
-      ctx.beginPath();
-      ctx.arc(camX, btnCY, iconS * 0.38, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Download circle (right)
-      const dlX = pr.x + pr.w - barPad - btnR;
-      ctx.beginPath();
-      ctx.arc(dlX, btnCY, btnR, 0, Math.PI * 2);
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = lineW;
-      ctx.stroke();
-      // download arrow
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = lineW;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(dlX, btnCY - iconS * 0.6);
-      ctx.lineTo(dlX, btnCY + iconS * 0.2);
-      ctx.moveTo(dlX - iconS * 0.55, btnCY - iconS * 0.15);
-      ctx.lineTo(dlX, btnCY + iconS * 0.55);
-      ctx.lineTo(dlX + iconS * 0.55, btnCY - iconS * 0.15);
-      ctx.stroke();
-
-      // "Send a chat" pill (center)
-      const pillX = camX + btnR + barPad;
-      const pillRight = dlX - btnR - barPad;
-      const pillW = pillRight - pillX;
-      const pillH = snapBarCanvasH * 0.52;
-      const pillY = barY + (snapBarCanvasH - pillH) / 2;
-      ctx.beginPath();
-      (ctx as any).roundRect(pillX, pillY, pillW, pillH, pillH / 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-      ctx.lineWidth = lineW;
-      ctx.stroke();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = `${Math.round(28 * sc)}px ${FONT_SYSTEM}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Send a chat', pillX + pillW / 2, btnCY);
+      const snapChatBarImg = this.images.get('snapChatBar');
+      if (snapChatBarImg && snapChatBarImg.width > 0) {
+        ctx.drawImage(snapChatBarImg, pr.x, barY, pr.w, snapBarCanvasH);
+      }
 
       // ── 3 vertical dots ──────────────────────────────────────────────────
-      const dotR = 7 * sc;
-      const dotSpacing = 19 * sc;
-      const dotsX = pr.x + pr.w - 38 * sc;
+      const dotR = 7 * xScale;
+      const dotSpacing = 19 * xScale;
+      const dotsX = pr.x + pr.w - 38 * xScale;
       const dotsStartY = pr.y + statusBarCanvasH + 36 * yScale;
       ctx.fillStyle = '#FFFFFF';
       for (let i = 0; i < 3; i++) {
