@@ -1327,7 +1327,7 @@ export class CanvasRenderer {
       const y = drawYs[i];
       if (y + item.h < areaY - 20) continue;
       if (y > areaY + areaH + 20) continue;
-      this.drawMessage(ctx, item, y, padX, maxTextW, false, msgFontSize, msgLineH);
+      this.drawMessage(ctx, state, item, y, padX, maxTextW, false, msgFontSize, msgLineH);
     }
 
     for (let i = 0; i < layouts.length; i++) {
@@ -1373,6 +1373,7 @@ export class CanvasRenderer {
 
   private drawMessage(
     ctx: CanvasRenderingContext2D,
+    state: FrameState,
     item: MsgLayout,
     y: number,
     padX: number,
