@@ -1091,7 +1091,7 @@ const App: React.FC = () => {
       } : {}),
       ...(type === MessageType.OPEN_SNAP ? {
         snapDurationMs: 3000,
-        snapTargetId: undefined,
+        snapTargetId: [...state.script].reverse().find(s => s.type === MessageType.SNAP)?.id,
         snapImageUrl: undefined,
       } : {}),
     };
