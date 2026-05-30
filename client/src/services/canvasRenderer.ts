@@ -2149,10 +2149,16 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
-    if (selfieImg && typingFrac > 0) {
+    // While typing, the avatar that pops up is normally the selfie pose. When a
+    // snap is being sent, swap it for the snap pose so ONLY that pose pokes up
+    // (and the typing bubble below is suppressed). The snap pose pokes up fully
+    // (no sink) to read as a distinct "sending a snap" gesture.
+    const snapSendImg = isSnapSend ? this.images.get(`snapsend_${partner.bitmojiAvatarId}`) : null;
+    const typingImg = snapSendImg || selfieImg;
+    if (typingImg && typingFrac > 0) {
       const imgW = containerW * (1.0 + typingFrac * SP.TYPING_SCALE);
-      const imgH = selfieImg.height * (imgW / selfieImg.width);
-      const sinkOffset = SP.TYPING_SINK * imgH;
+      const imgH = typingImg.height * (imgW / typingImg.width);
+      const sinkOffset = snapSendImg ? 0 : SP.TYPING_SINK * imgH;
       const ax = avatarCenterX - imgW / 2;
       const ay = bottom - imgH + totalSlideY + sinkOffset;
 
@@ -2163,7 +2169,7 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.rect(clipLeft, clipTop, clipW, bottom - clipTop);
       ctx.clip();
-      ctx.drawImage(selfieImg, ax, ay, imgW, imgH);
+      ctx.drawImage(typingImg, ax, ay, imgW, imgH);
       ctx.restore();
     }
 
@@ -2178,7 +2184,11 @@ export class CanvasRenderer {
       totalSlideY +
       SP.BUBBLE_OFFSET_Y;
 
-    if (isTyping && typingEased > 0) {
+    // The typing speech bubble is suppressed entirely while a snap is being sent
+    // — only the snap pose bitmoji (above) should show.
+    if (isSnapSend) {
+      // no bubble
+    } else if (isTyping && typingEased > 0) {
       const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
       const bScale = 0.6 + 0.4 * t;
       const bRotate = -5 * (1 - t) * (Math.PI / 180);
@@ -2193,11 +2203,7 @@ export class CanvasRenderer {
       ctx.rotate(bRotate);
       ctx.scale(bScale, bScale);
       ctx.translate(-originX, -originY + bTranslateY);
-      if (isSnapSend) {
-        this.drawSnapSendingBitmoji(ctx, state.time, partner.bitmojiAvatarId, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
-      } else {
-        this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
-      }
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
       const rawT = typingEased;
@@ -2214,11 +2220,7 @@ export class CanvasRenderer {
       ctx.rotate(bRotate);
       ctx.scale(bScale, bScale);
       ctx.translate(-originX, -originY);
-      if (isSnapSend) {
-        this.drawSnapSendingBitmoji(ctx, state.time, partner.bitmojiAvatarId, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
-      } else {
-        this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
-      }
+      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
       ctx.restore();
     }
   }
@@ -2412,7 +2414,10 @@ export class CanvasRenderer {
           const peekingImg = this.images.get(peekingKey);
           const selfieImg = this.images.get(selfieKey);
 
-          const activeImg = isTyping ? selfieImg : peekingImg;
+          // When a snap is being sent, the typing avatar is swapped for the snap
+          // pose so only that pose pokes up (the bubble below is suppressed).
+          const snapSendImg = isSnapSend ? this.images.get(`snapsend_${member.bitmojiAvatarId}`) : null;
+          const activeImg = isTyping ? (snapSendImg || selfieImg) : peekingImg;
 
           if (activeImg) {
             const imgW = sItemW * GP.AVATAR_SCALE;
@@ -2444,7 +2449,11 @@ export class CanvasRenderer {
           const typingProgress = Math.min(typingElapsed / typingDuration, 1);
           const typingEased = this.easeOut(typingProgress);
 
-          if (isTyping && typingEased > 0) {
+          // The typing speech bubble is suppressed while a snap is being sent —
+          // only the snap pose bitmoji (above) should show.
+          if (isSnapSend) {
+            // no bubble
+          } else if (isTyping && typingEased > 0) {
             const t = this.cubicBezier(0.175, 0.885, 0.32, 1.15, typingEased);
             const bScale = 0.6 + 0.4 * t;
             const bRotate = -5 * (1 - t) * (Math.PI / 180);
@@ -2459,11 +2468,7 @@ export class CanvasRenderer {
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy + bTranslateY);
-            if (isSnapSend) {
-              this.drawSnapSendingBitmoji(ctx, state.time, member.bitmojiAvatarId, grpBubbleX, grpBubbleY, sBubbleSize);
-            } else {
-              this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
-            }
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
             ctx.restore();
           } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
             const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
@@ -2479,38 +2484,12 @@ export class CanvasRenderer {
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy);
-            if (isSnapSend) {
-              this.drawSnapSendingBitmoji(ctx, state.time, member.bitmojiAvatarId, grpBubbleX, grpBubbleY, sBubbleSize);
-            } else {
-              this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
-            }
+            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
             ctx.restore();
           }
         }
       }
     }
-  }
-
-  // Draws the "snap being sent" bitmoji in place of the typing bubble. The
-  // image is anchored to the same bubble box but drawn larger so the character
-  // pops above the pill. Falls back to the typing bubble if the image is missing.
-  private drawSnapSendingBitmoji(
-    ctx: CanvasRenderingContext2D,
-    time: number,
-    avatarId: string,
-    x: number,
-    y: number,
-    size: number,
-  ): void {
-    const img = this.images.get(`snapsend_${avatarId}`);
-    if (!img) {
-      this.drawTypingBubble(ctx, time, x, y, size);
-      return;
-    }
-    const drawSize = size * 1.7;
-    const dx = x + size / 2 - drawSize / 2;
-    const dy = y + size - drawSize;
-    ctx.drawImage(img, dx, dy, drawSize, drawSize);
   }
 
   private drawTypingBubble(
