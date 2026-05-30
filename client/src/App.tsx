@@ -342,6 +342,7 @@ const App: React.FC = () => {
     isShiftActive: true,
     keyboardLayout: 'ALPHA',
     typingParticipantIds: [],
+    snapSendingParticipantIds: [],
     activeParticipantIds: [],
     scriptParticipantIds: [],
     systemConfig: state.system,
@@ -546,6 +547,7 @@ const App: React.FC = () => {
     setKeyboardLayout('ALPHA');
     frameStateRef.current.activeParticipantIds = preShownActiveIds;
     frameStateRef.current.typingParticipantIds = [];
+    frameStateRef.current.snapSendingParticipantIds = [];
     lockscreenActiveRef.current = false;
     lockscreenNotifRef.current = null;
     lockscreenSwipeRef.current = 0;
@@ -1536,9 +1538,16 @@ const App: React.FC = () => {
         if (!sender) continue;
         
         if (!sender.isMe) {
+            const isSnap = event.type === MessageType.SNAP;
+            if (isSnap) {
+              frameStateRef.current.snapSendingParticipantIds = [sender.id];
+            }
             updateTypingIds(Array.from(new Set([...localTypingParticipantIds, sender.id])));
             await delay(seqChat.messageDelay);
             updateTypingIds(localTypingParticipantIds.filter(id => id !== sender.id));
+            if (isSnap) {
+              frameStateRef.current.snapSendingParticipantIds = [];
+            }
         }
 
         if (!event.isBackspaced) {

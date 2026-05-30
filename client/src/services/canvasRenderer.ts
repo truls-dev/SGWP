@@ -10,6 +10,7 @@ import { KeyboardLayout } from "../components/IOSKeyboard";
 import {
   getSelfieUrlForAvatar,
   getPeekingUrlForAvatar,
+  getSnapSendingUrlForAvatar,
 } from "./bitmojiService";
 import { SNAP_COLORS } from "../constants";
 
@@ -21,6 +22,7 @@ export interface FrameState {
   isShiftActive: boolean;
   keyboardLayout: KeyboardLayout;
   typingParticipantIds: string[];
+  snapSendingParticipantIds?: string[];
   activeParticipantIds: string[];
   scriptParticipantIds: string[];
   systemConfig: SystemConfig;
@@ -269,12 +271,17 @@ export class CanvasRenderer {
   // so the snap fullscreen status bar can replicate the chat status bar's exact size.
   private phoneScaleX = 1;
   private phoneScaleY = 1;
+  // Tracks which participants' current typing episode is actually a snap being
+  // sent. Set while the participant is typing; persists through the pop-out so
+  // the bitmoji (not the typing dots) is shown for the whole in/out animation.
+  private snapSendingMode = new Map<string, boolean>();
   private endScreenSnapshot: HTMLCanvasElement | null = null;
   private lastEndScreenActive = false;
 
   resetAnimations(): void {
     this.presenceAnims.clear();
     this.presenceEnabled = false;
+    this.snapSendingMode.clear();
   }
 
   enablePresence(): void {
@@ -392,6 +399,12 @@ export class CanvasRenderer {
         this.loadImg(
           `peeking_${m.bitmojiAvatarId}`,
           getPeekingUrlForAvatar(m.bitmojiAvatarId),
+        ),
+      );
+      promises.push(
+        this.loadImg(
+          `snapsend_${m.bitmojiAvatarId}`,
+          getSnapSendingUrlForAvatar(m.bitmojiAvatarId),
         ),
       );
     }
@@ -2062,6 +2075,10 @@ export class CanvasRenderer {
 
     const isArrived = state.activeParticipantIds.includes(partner.id);
     const isTyping = state.typingParticipantIds.includes(partner.id);
+    if (isTyping) {
+      this.snapSendingMode.set(partner.id, !!state.snapSendingParticipantIds?.includes(partner.id));
+    }
+    const isSnapSend = this.snapSendingMode.get(partner.id) === true;
     const anim = this.getPresenceAnim(
       partner.id,
       isArrived,
@@ -2176,7 +2193,11 @@ export class CanvasRenderer {
       ctx.rotate(bRotate);
       ctx.scale(bScale, bScale);
       ctx.translate(-originX, -originY + bTranslateY);
-      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      if (isSnapSend) {
+        this.drawSnapSendingBitmoji(ctx, state.time, partner.bitmojiAvatarId, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      } else {
+        this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      }
       ctx.restore();
     } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
       const rawT = typingEased;
@@ -2193,7 +2214,11 @@ export class CanvasRenderer {
       ctx.rotate(bRotate);
       ctx.scale(bScale, bScale);
       ctx.translate(-originX, -originY);
-      this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      if (isSnapSend) {
+        this.drawSnapSendingBitmoji(ctx, state.time, partner.bitmojiAvatarId, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      } else {
+        this.drawTypingBubble(ctx, state.time, bubbleCenterX, bubbleY, SP.BUBBLE_SIZE);
+      }
       ctx.restore();
     }
   }
@@ -2332,6 +2357,10 @@ export class CanvasRenderer {
     for (let i = 0; i < sorted.length; i++) {
       const member = sorted[i];
       const isTyping = state.typingParticipantIds.includes(member.id);
+      if (isTyping) {
+        this.snapSendingMode.set(member.id, !!state.snapSendingParticipantIds?.includes(member.id));
+      }
+      const isSnapSend = this.snapSendingMode.get(member.id) === true;
       const hasArrived = state.activeParticipantIds.includes(member.id);
       const pillColor = hasArrived ? member.color || "#33B5FF" : "#CCCCCC";
       const anim = this.getPresenceAnim(
@@ -2430,7 +2459,11 @@ export class CanvasRenderer {
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy + bTranslateY);
-            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
+            if (isSnapSend) {
+              this.drawSnapSendingBitmoji(ctx, state.time, member.bitmojiAvatarId, grpBubbleX, grpBubbleY, sBubbleSize);
+            } else {
+              this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
+            }
             ctx.restore();
           } else if (!isTyping && typingEased < 1 && anim.hasEverTyped) {
             const t = this.cubicBezier(0.4, 0, 1, 1, typingEased);
@@ -2446,12 +2479,38 @@ export class CanvasRenderer {
             ctx.rotate(bRotate);
             ctx.scale(bScale, bScale);
             ctx.translate(-ox, -oy);
-            this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
+            if (isSnapSend) {
+              this.drawSnapSendingBitmoji(ctx, state.time, member.bitmojiAvatarId, grpBubbleX, grpBubbleY, sBubbleSize);
+            } else {
+              this.drawTypingBubble(ctx, state.time, grpBubbleX, grpBubbleY, sBubbleSize);
+            }
             ctx.restore();
           }
         }
       }
     }
+  }
+
+  // Draws the "snap being sent" bitmoji in place of the typing bubble. The
+  // image is anchored to the same bubble box but drawn larger so the character
+  // pops above the pill. Falls back to the typing bubble if the image is missing.
+  private drawSnapSendingBitmoji(
+    ctx: CanvasRenderingContext2D,
+    time: number,
+    avatarId: string,
+    x: number,
+    y: number,
+    size: number,
+  ): void {
+    const img = this.images.get(`snapsend_${avatarId}`);
+    if (!img) {
+      this.drawTypingBubble(ctx, time, x, y, size);
+      return;
+    }
+    const drawSize = size * 1.7;
+    const dx = x + size / 2 - drawSize / 2;
+    const dy = y + size - drawSize;
+    ctx.drawImage(img, dx, dy, drawSize, drawSize);
   }
 
   private drawTypingBubble(

@@ -1,6 +1,7 @@
 
 const SELFIE_STICKER_ID = "8c315eb6-cba4-4865-8746-a999698198b6";
 const PEEKING_COMIC_ID = 10211153;
+const SNAP_SENDING_POSE_ID = "8509c119-82ff-4994-9e51-4952029b6381";
 
 const ORIGINAL_AVATAR_IDS = [
   "280531978_4-s1", "280531979_4-s1", "280531982_4-s1",
@@ -112,6 +113,10 @@ export const getSelfieUrlForAvatar = (avatarId: string): string => {
 
 export const getPeekingUrlForAvatar = (avatarId: string): string => {
   return makePanelUrl(PEEKING_COMIC_ID, avatarId);
+};
+
+export const getSnapSendingUrlForAvatar = (avatarId: string): string => {
+  return makePanelUrl(SNAP_SENDING_POSE_ID, avatarId);
 };
 
 export const renderFromTemplateSrc = (srcTemplate: string, avatarA: string, avatarB?: string): string => {
