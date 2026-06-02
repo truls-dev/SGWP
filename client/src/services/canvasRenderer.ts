@@ -2042,8 +2042,8 @@ export class CanvasRenderer {
     const railTop = photoTop + 42 * u;
     const railBottomMax = carouselCY - 54 * u;
     // Pack the icons tightly (fixed step) but compress if there isn't room.
-    const railStep = Math.min(38 * u, (railBottomMax - railTop) / (tools.length - 1));
-    const toolSize = 25 * u;
+    const railStep = Math.min(40 * u, (railBottomMax - railTop) / (tools.length - 1));
+    const toolSize = 29 * u;
     tools.forEach((name, i) => {
       const cy = railTop + i * railStep;
       const greyed = name === 'crop';
@@ -2176,7 +2176,7 @@ export class CanvasRenderer {
     color: string,
   ): void {
     const r = s / 2;
-    const lw = Math.max(1.4, s * 0.105);
+    const lw = Math.max(1.6, s * 0.12);
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
