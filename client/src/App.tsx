@@ -1499,6 +1499,22 @@ const App: React.FC = () => {
       }
 
       if (event.type === MessageType.OPEN_SNAP) {
+        // If this trigger targets a snap that "me" sent, just flip its chat
+        // bubble from "Delivered" to "Opened" (the recipient viewed it). No
+        // fullscreen replay — the sender doesn't re-open their own snap.
+        const targetSnap = event.snapTargetId ? seqScript.find(s => s.id === event.snapTargetId) : undefined;
+        const targetSender = targetSnap ? seqCast.find(c => c.id === targetSnap.senderId) : undefined;
+        if (targetSender?.isMe) {
+          if (event.snapTargetId) {
+            const opened = new Set(snapOpenedIdsRef.current);
+            opened.add(event.snapTargetId);
+            snapOpenedIdsRef.current = opened;
+            frameStateRef.current.snapOpenedIds = new Set(opened);
+          }
+          await delay(500);
+          continue;
+        }
+
         const snapDuration = event.snapDurationMs || 3000;
         const OPEN_DUR = 280;
         const CLOSE_DUR = 250;
@@ -1594,16 +1610,6 @@ const App: React.FC = () => {
            }
         }
 
-        // A snap "me" sent shows "Delivered" first, then flips to "Opened" a
-        // beat later (simulating the recipient viewing it).
-        if (sender.isMe && event.type === MessageType.SNAP) {
-          await delay(1500);
-          if ((runningStatusRef.current as string) === 'idle') break;
-          const opened = new Set(snapOpenedIdsRef.current);
-          opened.add(event.id);
-          snapOpenedIdsRef.current = opened;
-          frameStateRef.current.snapOpenedIds = new Set(opened);
-        }
         
         if (state.system.isSoundEnabled) {
           if (event.soundEffect) {
@@ -2617,7 +2623,6 @@ const App: React.FC = () => {
         }
         if (sender?.isMe && event.type === MessageType.SNAP) {
           totalMs += event.snapDurationMs || 1800;
-          totalMs += 1500; // Delivered -> Opened beat
         }
         if (sender?.isMe && !isGroup) {
           const them = cast.find(c => !c.isMe);
