@@ -1522,7 +1522,11 @@ export class CanvasRenderer {
     if (msg.type === MessageType.SNAP) {
       const snapOpened = this.currentSnapOpenedIds.has(msg.id);
       const snapTapping = state.snapTappingId === msg.id;
-      curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping, msg.snapLabel);
+      if (sender?.isMe) {
+        curY += this.drawMeSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened);
+      } else {
+        curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping, msg.snapLabel);
+      }
     } else if (msg.type === MessageType.CONTACT_CARD) {
       this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
       curY += 155;
@@ -1663,6 +1667,71 @@ export class CanvasRenderer {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, textX, y + cardH / 2);
+
+    return cardH;
+  }
+
+  // Chat card for a snap the "me" person SENT. Shows a red play-arrow that is
+  // filled while "Delivered" (recipient hasn't opened) and an outline once
+  // "Opened" (recipient has viewed it).
+  private drawMeSnapBubble(
+    ctx: CanvasRenderingContext2D,
+    textStartX: number,
+    y: number,
+    maxTextW: number,
+    snapOpened: boolean,
+  ): number {
+    const cardH = 100;
+    const cardW = Math.min(750, maxTextW);
+    const cardRadius = 18;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.06)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 2;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    (ctx as any).roundRect(textStartX, y, cardW, cardH, cardRadius);
+    ctx.stroke();
+
+    const cy = y + cardH / 2;
+    const arrowColor = '#F4493C';
+    const aw = 38;
+    const ah = 46;
+    const ax = textStartX + 26;
+
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ax, cy - ah / 2);
+    ctx.lineTo(ax + aw, cy);
+    ctx.lineTo(ax, cy + ah / 2);
+    ctx.closePath();
+    if (!snapOpened) {
+      ctx.fillStyle = arrowColor;
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = arrowColor;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    const textX = ax + aw + 24;
+    const label = snapOpened ? 'Opened' : 'Delivered';
+    ctx.font = `700 38px ${FONT_REGULAR}`;
+    ctx.fillStyle = '#111111';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, textX, cy);
 
     return cardH;
   }
@@ -1969,11 +2038,12 @@ export class CanvasRenderer {
 
     // ── Right-hand tool rail ──
     const tools = ['text', 'pen', 'sticker', 'scissors', 'music', 'scan', 'smiley', 'ai', 'wand', 'paint', 'link', 'crop'];
-    const railX = pr.x + pr.w - 26 * u;
-    const railTop = photoTop + 38 * u;
-    const railBottom = carouselCY - 64 * u;
-    const railStep = (railBottom - railTop) / (tools.length - 1);
-    const toolSize = 23 * u;
+    const railX = pr.x + pr.w - 24 * u;
+    const railTop = photoTop + 42 * u;
+    const railBottomMax = carouselCY - 54 * u;
+    // Pack the icons tightly (fixed step) but compress if there isn't room.
+    const railStep = Math.min(38 * u, (railBottomMax - railTop) / (tools.length - 1));
+    const toolSize = 25 * u;
     tools.forEach((name, i) => {
       const cy = railTop + i * railStep;
       const greyed = name === 'crop';
@@ -2106,7 +2176,7 @@ export class CanvasRenderer {
     color: string,
   ): void {
     const r = s / 2;
-    const lw = Math.max(1, s * 0.085);
+    const lw = Math.max(1.4, s * 0.105);
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;

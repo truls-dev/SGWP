@@ -1593,6 +1593,17 @@ const App: React.FC = () => {
               await delay(400); 
            }
         }
+
+        // A snap "me" sent shows "Delivered" first, then flips to "Opened" a
+        // beat later (simulating the recipient viewing it).
+        if (sender.isMe && event.type === MessageType.SNAP) {
+          await delay(1500);
+          if ((runningStatusRef.current as string) === 'idle') break;
+          const opened = new Set(snapOpenedIdsRef.current);
+          opened.add(event.id);
+          snapOpenedIdsRef.current = opened;
+          frameStateRef.current.snapOpenedIds = new Set(opened);
+        }
         
         if (state.system.isSoundEnabled) {
           if (event.soundEffect) {
@@ -2606,6 +2617,7 @@ const App: React.FC = () => {
         }
         if (sender?.isMe && event.type === MessageType.SNAP) {
           totalMs += event.snapDurationMs || 1800;
+          totalMs += 1500; // Delivered -> Opened beat
         }
         if (sender?.isMe && !isGroup) {
           const them = cast.find(c => !c.isMe);
