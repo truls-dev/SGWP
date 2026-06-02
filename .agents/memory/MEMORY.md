@@ -1,2 +1,3 @@
 - [Snap status bar sizing](snap-status-bar-sizing.md) — snap fullscreen status bar must replicate the chat's FULL effective transform (phoneScale × uiScale), not just video scale; uiScale defaults to 1.5.
 - [Snap image data model](snap-image-data-model.md) — received-snap image lives on OPEN_SNAP; me-sent-snap image lives on the SNAP event itself.
+- [Snap-send editor view](snap-send-editor-view.md) — me-sent-snap fullscreen recreates Snapchat post-capture editor; draw chrome/circles in canvas space (u=sbScaleX, arc()) so they stay round in short-crop.

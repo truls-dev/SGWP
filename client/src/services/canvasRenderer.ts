@@ -1802,16 +1802,17 @@ export class CanvasRenderer {
     }
   }
 
-  // Fullscreen camera "Send to [recipient]" view shown when the "me" person
-  // sends a snap. The snap image fills the phone area, with the same white
-  // status bar used when viewing snaps and a "Send to [name]" header.
+  // Fullscreen Snapchat camera/editor "Send to" screen shown when the "me"
+  // person sends a snap. Recreates the post-capture editor: black status bar
+  // strip, the captured photo, an X (close), a sound pill, the right-hand tool
+  // rail, a download arrow, the friend carousel, and the bottom send bar with
+  // the recipient name + send arrow.
   private drawSnapSendFullscreen(
     ctx: CanvasRenderingContext2D,
     state: FrameState,
   ): void {
     const OPEN_DUR = 250;
     const CLOSE_DUR = 250;
-    const imgCornerR = 18;
 
     // Fade/scale the whole view in on open and out on close.
     let t = 1;
@@ -1826,15 +1827,12 @@ export class CanvasRenderer {
     }
 
     const pr = this.phoneCanvasRect;
-
     const uiScale = state.systemConfig.uiScale || 1;
     const sbScaleX = this.phoneScaleX * uiScale;
     const sbScaleY = this.phoneScaleY * uiScale;
     const statusLocalW = this.W / uiScale;
-    const scale = sbScaleX;
-
-    const statusBarCanvasH = STATUS_BAR_H * sbScaleY;
-    const snapBarCanvasH = Math.round(pr.w * (121 / 497));
+    const u = sbScaleX; // canvas px per UI px
+    const statusBarH = STATUS_BAR_H * sbScaleY;
 
     // Black bg clipped to phone area
     ctx.save();
@@ -1845,120 +1843,466 @@ export class CanvasRenderer {
     ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
     ctx.restore();
 
-    // Whole view fades/scales in from 92% -> 100%
-    const viewScale = 0.92 + 0.08 * t;
+    // Whole view fades/scales in from 95% -> 100%
+    const viewScale = 0.95 + 0.05 * t;
     ctx.save();
     ctx.globalAlpha = t;
-    const cx = pr.x + pr.w / 2;
-    const cy = pr.y + pr.h / 2;
-    ctx.translate(cx, cy);
+    const vcx = pr.x + pr.w / 2;
+    const vcy = pr.y + pr.h / 2;
+    ctx.translate(vcx, vcy);
     ctx.scale(viewScale, viewScale);
-    ctx.translate(-cx, -cy);
+    ctx.translate(-vcx, -vcy);
 
-    // Snap image fills the area between status bar and bottom bar
-    const ix = pr.x;
-    const iy = pr.y + statusBarCanvasH;
-    const iw = pr.w;
-    const ih = pr.h - statusBarCanvasH - snapBarCanvasH;
-
-    const img = this.images.get(`snap_${state.snapSendEventId}`);
+    // Clip everything to the phone area
     ctx.save();
     ctx.beginPath();
-    (ctx as any).roundRect(ix, iy, iw, ih, imgCornerR);
+    ctx.rect(pr.x, pr.y, pr.w, pr.h);
     ctx.clip();
+
+    // ── Captured photo (fills below the status bar, rounded top corners) ──
+    const photoTop = pr.y + statusBarH;
+    const photoR = 14 * u;
+    ctx.save();
+    ctx.beginPath();
+    (ctx as any).roundRect(pr.x, photoTop, pr.w, pr.h - statusBarH, [photoR, photoR, 0, 0]);
+    ctx.clip();
+    const img = this.images.get(`snap_${state.snapSendEventId}`);
     if (img && img.width > 0 && img.height > 0) {
       const imgR = img.width / img.height;
-      const canR = iw / ih;
+      const areaH = pr.h - statusBarH;
+      const canR = pr.w / areaH;
       let dx: number, dy: number, dw: number, dh: number;
       if (imgR > canR) {
-        dh = ih; dw = ih * imgR;
-        dx = ix + (iw - dw) / 2; dy = iy + ih - dh;
+        dh = areaH; dw = areaH * imgR;
+        dx = pr.x + (pr.w - dw) / 2; dy = photoTop;
       } else {
-        dw = iw; dh = iw / imgR;
-        dx = ix; dy = iy + ih - dh;
+        dw = pr.w; dh = pr.w / imgR;
+        dx = pr.x; dy = photoTop + (areaH - dh) / 2;
       }
       ctx.drawImage(img, dx, dy, dw, dh);
     } else {
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(ix, iy, iw, ih);
+      ctx.fillStyle = '#2f3b33';
+      ctx.fillRect(pr.x, photoTop, pr.w, pr.h - statusBarH);
     }
     ctx.restore();
 
-    // White status bar — pixel-identical to the chat status bar
+    // ── Layout anchors ──
+    const carouselCY = pr.y + pr.h - 96 * u;
+    const sendBarCY = pr.y + pr.h - 40 * u;
+
+    // Bottom scrim so the carousel + send bar read clearly over the photo
+    const scrimTop = carouselCY - 70 * u;
+    const grad = ctx.createLinearGradient(0, scrimTop, 0, pr.y + pr.h);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.72)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(pr.x, scrimTop, pr.w, pr.y + pr.h - scrimTop);
+
+    // ── White status bar (on the black top strip) ──
     ctx.save();
     ctx.translate(pr.x, pr.y);
     ctx.scale(sbScaleX, sbScaleY);
     this.drawStatusBar(ctx, state, 0, '#FFFFFF', statusLocalW);
     ctx.restore();
 
-    // ── "Send to [recipient]" bottom pill ──────────────────────────────────
-    const recipient =
-      state.chatConfig.headerName || state.chatConfig.contactName || '';
-    const barY = pr.y + pr.h - snapBarCanvasH;
-    const pillH = 56 * scale;
-    const pillCY = barY + snapBarCanvasH / 2;
-    const padX = 24 * scale;
-    const sendLabel = 'Send to';
-
-    ctx.save();
-    ctx.textBaseline = 'middle' as any;
-    ctx.textAlign = 'left';
-
-    // Measure the recipient name to size the pill
-    const nameFontPx = 30 * scale;
-    ctx.font = `700 ${nameFontPx}px ${FONT_HEADER}`;
-    const nameW = ctx.measureText(recipient).width;
-    const labelFontPx = 22 * scale;
-    ctx.font = `600 ${labelFontPx}px ${FONT_REGULAR}`;
-    const labelW = ctx.measureText(sendLabel).width;
-
-    const arrowR = 22 * scale;
-    const gap = 14 * scale;
-    const contentW = labelW + gap + nameW + gap * 1.5 + arrowR * 2;
-    const pillW = contentW + padX * 2;
-    const pillX = pr.x + pr.w / 2 - pillW / 2;
-
-    // Pill background
-    ctx.beginPath();
-    (ctx as any).roundRect(pillX, pillCY - pillH / 2, pillW, pillH, pillH / 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fill();
-
-    let tx = pillX + padX;
-    // "Send to" label (light gray)
-    ctx.textBaseline = 'middle';
-    ctx.font = `600 ${labelFontPx}px ${FONT_REGULAR}`;
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText(sendLabel, tx, pillCY);
-    tx += labelW + gap;
-
-    // Recipient name (white, bold)
-    ctx.font = `700 ${nameFontPx}px ${FONT_HEADER}`;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(recipient, tx, pillCY);
-    tx += nameW + gap * 1.5;
-
-    // Blue circular send arrow
-    const arrowCX = tx + arrowR;
-    ctx.beginPath();
-    ctx.arc(arrowCX, pillCY, arrowR, 0, Math.PI * 2);
-    ctx.fillStyle = '#0FADFF';
-    ctx.fill();
-    // Paper-plane-ish arrow (simple chevron)
+    // ── X (close) top-left ──
+    const xCX = pr.x + 26 * u;
+    const xCY = photoTop + 26 * u;
+    const xR = 11 * u;
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 3 * scale;
+    ctx.lineWidth = 2.6 * u;
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(arrowCX - arrowR * 0.45, pillCY);
-    ctx.lineTo(arrowCX + arrowR * 0.45, pillCY);
-    ctx.moveTo(arrowCX + arrowR * 0.05, pillCY - arrowR * 0.4);
-    ctx.lineTo(arrowCX + arrowR * 0.45, pillCY);
-    ctx.lineTo(arrowCX + arrowR * 0.05, pillCY + arrowR * 0.4);
+    ctx.moveTo(xCX - xR, xCY - xR); ctx.lineTo(xCX + xR, xCY + xR);
+    ctx.moveTo(xCX + xR, xCY - xR); ctx.lineTo(xCX - xR, xCY + xR);
     ctx.stroke();
 
-    ctx.restore();
+    // ── Sound pill (top-center) ──
+    {
+      const pillH = 34 * u;
+      const pillCY = photoTop + 26 * u;
+      const thumb = 24 * u;
+      const label = 'Add a sound';
+      ctx.textBaseline = 'middle' as any;
+      ctx.textAlign = 'left';
+      const fontPx = 17 * u;
+      ctx.font = `600 ${fontPx}px ${FONT_SYSTEM}`;
+      const labelW = ctx.measureText(label).width;
+      const padL = 6 * u, gap = 8 * u, padR = 14 * u, plusW = 18 * u;
+      const pillW = padL + thumb + gap + labelW + gap + plusW + padR;
+      const pillX = pr.x + pr.w / 2 - pillW / 2;
+      ctx.beginPath();
+      (ctx as any).roundRect(pillX, pillCY - pillH / 2, pillW, pillH, pillH / 2);
+      ctx.fillStyle = 'rgba(20,20,20,0.7)';
+      ctx.fill();
+      // album thumbnail
+      ctx.save();
+      ctx.beginPath();
+      (ctx as any).roundRect(pillX + padL, pillCY - thumb / 2, thumb, thumb, 5 * u);
+      ctx.clip();
+      const tg = ctx.createLinearGradient(pillX + padL, pillCY - thumb / 2, pillX + padL + thumb, pillCY + thumb / 2);
+      tg.addColorStop(0, '#8E2DE2'); tg.addColorStop(1, '#F857A6');
+      ctx.fillStyle = tg;
+      ctx.fillRect(pillX + padL, pillCY - thumb / 2, thumb, thumb);
+      this.drawSnapToolIcon(ctx, 'music', pillX + padL + thumb / 2, pillCY, thumb * 0.62, '#FFFFFF');
+      ctx.restore();
+      // label
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `600 ${fontPx}px ${FONT_SYSTEM}`;
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, pillX + padL + thumb + gap, pillCY + 1 * u);
+      // divider + plus
+      const plusCX = pillX + pillW - padR - plusW / 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1.5 * u;
+      ctx.beginPath();
+      ctx.moveTo(plusCX - plusW / 2 - 4 * u, pillCY - 9 * u);
+      ctx.lineTo(plusCX - plusW / 2 - 4 * u, pillCY + 9 * u);
+      ctx.stroke();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.2 * u;
+      ctx.beginPath();
+      ctx.moveTo(plusCX - 6 * u, pillCY); ctx.lineTo(plusCX + 6 * u, pillCY);
+      ctx.moveTo(plusCX, pillCY - 6 * u); ctx.lineTo(plusCX, pillCY + 6 * u);
+      ctx.stroke();
+    }
 
+    // ── Right-hand tool rail ──
+    const tools = ['text', 'pen', 'sticker', 'scissors', 'music', 'scan', 'smiley', 'ai', 'wand', 'paint', 'link', 'crop'];
+    const railX = pr.x + pr.w - 26 * u;
+    const railTop = photoTop + 38 * u;
+    const railBottom = carouselCY - 64 * u;
+    const railStep = (railBottom - railTop) / (tools.length - 1);
+    const toolSize = 23 * u;
+    tools.forEach((name, i) => {
+      const cy = railTop + i * railStep;
+      const greyed = name === 'crop';
+      this.drawSnapToolIcon(ctx, name, railX, cy, toolSize, greyed ? 'rgba(255,255,255,0.4)' : '#FFFFFF');
+    });
+
+    // ── Download arrow (bottom-left of photo) ──
+    {
+      const dCX = pr.x + 28 * u;
+      const dCY = carouselCY - 56 * u;
+      const ds = 11 * u;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.6 * u;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(dCX, dCY - ds); ctx.lineTo(dCX, dCY + ds * 0.7);
+      ctx.moveTo(dCX - ds * 0.7, dCY); ctx.lineTo(dCX, dCY + ds * 0.7);
+      ctx.lineTo(dCX + ds * 0.7, dCY);
+      ctx.stroke();
+    }
+
+    // ── Friend carousel ──
+    {
+      const meId = state.cast.find(c => c.isMe)?.bitmojiAvatarId;
+      const themIds = state.cast.filter(c => !c.isMe).map(c => c.bitmojiAvatarId);
+      const selfies: HTMLImageElement[] = [];
+      for (const id of [themIds[0], meId, themIds[1], themIds[2]]) {
+        if (id) { const im = this.images.get(`selfie_${id}`); if (im && im.width > 0 && im.height > 0) selfies.push(im); }
+      }
+      const palette = ['#E8A87C', '#6C7B95', '#C0392B', '#5DADE2', '#48C9B0', '#A569BD', '#F4D03F', '#85929E'];
+      const count = 9;
+      const centerIdx = 4;
+      const r = 21 * u;
+      const slotW = pr.w / count;
+      let selfieI = 0;
+      for (let i = 0; i < count; i++) {
+        const cx = pr.x + slotW * (i + 0.5);
+        if (i === centerIdx) {
+          // empty white-ring (memories/camera roll placeholder)
+          ctx.beginPath();
+          ctx.arc(cx, carouselCY, r * 1.18, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          ctx.lineWidth = 2.4 * u;
+          ctx.stroke();
+          continue;
+        }
+        const useSelfie = selfieI < selfies.length && (i % 2 === 0);
+        if (useSelfie) {
+          const im = selfies[selfieI++];
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, carouselCY, r, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(cx - r, carouselCY - r, r * 2, r * 2);
+          const ir = im.width / im.height;
+          let dw = r * 2, dh = r * 2;
+          if (ir > 1) { dw = r * 2 * ir; } else { dh = r * 2 / ir; }
+          ctx.drawImage(im, cx - dw / 2, carouselCY - dh / 2, dw, dh);
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(cx, carouselCY, r, 0, Math.PI * 2);
+          ctx.fillStyle = palette[i % palette.length];
+          ctx.fill();
+        }
+      }
+    }
+
+    // ── Bottom send bar ──
+    const recipient = state.chatConfig.headerName || state.chatConfig.contactName || '';
+    // "+ More Friends" pill (left)
+    {
+      ctx.textBaseline = 'middle' as any;
+      ctx.textAlign = 'left';
+      const fontPx = 15 * u;
+      ctx.font = `600 ${fontPx}px ${FONT_SYSTEM}`;
+      const label = '+ More Friends';
+      const labelW = ctx.measureText(label).width;
+      const padX = 14 * u;
+      const pillW = labelW + padX * 2;
+      const pillH = 32 * u;
+      const pillX = pr.x + 16 * u;
+      ctx.beginPath();
+      (ctx as any).roundRect(pillX, sendBarCY - pillH / 2, pillW, pillH, pillH / 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1.5 * u;
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(label, pillX + padX, sendBarCY + 1 * u);
+    }
+    // Recipient name + solid send arrow (right)
+    {
+      ctx.textBaseline = 'middle' as any;
+      ctx.textAlign = 'right';
+      const fontPx = 22 * u;
+      ctx.font = `700 ${fontPx}px ${FONT_SYSTEM}`;
+      const arrowW = 30 * u;
+      const arrowGap = 14 * u;
+      const arrowCX = pr.x + pr.w - 26 * u;
+      const nameRight = arrowCX - arrowW / 2 - arrowGap;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(recipient, nameRight, sendBarCY + 1 * u);
+      // solid white send arrow (paper-plane-ish chevron arrow)
+      const aw = arrowW, ah = 26 * u;
+      const ax = arrowCX - aw / 2;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.moveTo(ax, sendBarCY - ah / 2);
+      ctx.lineTo(ax + aw, sendBarCY);
+      ctx.lineTo(ax, sendBarCY + ah / 2);
+      ctx.lineTo(ax + aw * 0.34, sendBarCY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore(); // phone-area clip
+    ctx.restore(); // view scale/alpha
+  }
+
+  // Draws a simplified white Snapchat editor tool icon centered at (cx, cy)
+  // with overall size `s` (canvas px). Used by the snap-send screen.
+  private drawSnapToolIcon(
+    ctx: CanvasRenderingContext2D,
+    name: string,
+    cx: number,
+    cy: number,
+    s: number,
+    color: string,
+  ): void {
+    const r = s / 2;
+    const lw = Math.max(1, s * 0.085);
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    switch (name) {
+      case 'text': {
+        ctx.font = `800 ${s * 1.05}px ${FONT_SYSTEM}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle' as any;
+        ctx.fillText('T', cx, cy + s * 0.04);
+        break;
+      }
+      case 'pen': {
+        // pencil along the diagonal
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.7, cy + r * 0.7);
+        ctx.lineTo(cx + r * 0.55, cy - r * 0.55);
+        ctx.stroke();
+        // tip
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.7, cy + r * 0.7);
+        ctx.lineTo(cx - r * 0.7 + r * 0.28, cy + r * 0.7 - r * 0.02);
+        ctx.lineTo(cx - r * 0.7 + r * 0.02, cy + r * 0.7 - r * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        // eraser cap
+        ctx.beginPath();
+        ctx.moveTo(cx + r * 0.55, cy - r * 0.55);
+        ctx.lineTo(cx + r * 0.78, cy - r * 0.32);
+        ctx.stroke();
+        break;
+      }
+      case 'sticker': {
+        const rr = r * 0.82;
+        ctx.beginPath();
+        (ctx as any).roundRect(cx - rr, cy - rr, rr * 2, rr * 1.45, r * 0.28);
+        ctx.stroke();
+        // folded corner
+        ctx.beginPath();
+        ctx.moveTo(cx + rr * 0.2, cy + rr * 0.45);
+        ctx.lineTo(cx + rr, cy + rr * 0.45);
+        ctx.lineTo(cx + rr * 0.2, cy - rr * 0.35);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      }
+      case 'scissors': {
+        // two handle rings
+        const hr = r * 0.34;
+        ctx.beginPath(); ctx.arc(cx - r * 0.5, cy + r * 0.45, hr, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx + r * 0.5, cy + r * 0.45, hr, 0, Math.PI * 2); ctx.stroke();
+        // blades
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.5 + hr * 0.6, cy + r * 0.45 - hr * 0.6);
+        ctx.lineTo(cx + r * 0.65, cy - r * 0.75);
+        ctx.moveTo(cx + r * 0.5 - hr * 0.6, cy + r * 0.45 - hr * 0.6);
+        ctx.lineTo(cx - r * 0.65, cy - r * 0.75);
+        ctx.stroke();
+        break;
+      }
+      case 'music': {
+        const x1 = cx - r * 0.35, x2 = cx + r * 0.5;
+        const topY = cy - r * 0.7, botY = cy + r * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, botY);
+        ctx.lineTo(x1, topY);
+        ctx.lineTo(x2, topY - r * 0.18);
+        ctx.lineTo(x2, cy + r * 0.3);
+        ctx.stroke();
+        const nr = r * 0.26;
+        ctx.beginPath(); ctx.arc(x1 - nr * 0.5, botY, nr, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x2 - nr * 0.5, cy + r * 0.3, nr, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'scan': {
+        const rr = r * 0.85;
+        const c = rr * 0.55;
+        const corners = [
+          [-rr, -rr, 1, 1], [rr, -rr, -1, 1], [-rr, rr, 1, -1], [rr, rr, -1, -1],
+        ];
+        for (const [ox, oy, sx, sy] of corners) {
+          ctx.beginPath();
+          ctx.moveTo(cx + ox, cy + oy + sy * c);
+          ctx.lineTo(cx + ox, cy + oy);
+          ctx.lineTo(cx + ox + sx * c, cy + oy);
+          ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.16, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'smiley': {
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.85, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx - r * 0.32, cy - r * 0.2, r * 0.1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + r * 0.32, cy - r * 0.2, r * 0.1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy + r * 0.05, r * 0.4, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+        // small sparkle
+        this.drawSparkle(ctx, cx + r * 0.78, cy - r * 0.7, r * 0.32, color);
+        break;
+      }
+      case 'ai': {
+        // gradient ring
+        const ring = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+        ring.addColorStop(0, '#00E5FF');
+        ring.addColorStop(0.5, '#7C4DFF');
+        ring.addColorStop(1, '#FF4081');
+        ctx.save();
+        ctx.strokeStyle = ring;
+        ctx.lineWidth = lw * 1.3;
+        ctx.beginPath(); ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        this.drawSparkle(ctx, cx, cy, r * 0.95, color);
+        break;
+      }
+      case 'wand': {
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.6, cy + r * 0.7);
+        ctx.lineTo(cx + r * 0.35, cy - r * 0.25);
+        ctx.stroke();
+        this.drawSparkle(ctx, cx + r * 0.55, cy - r * 0.55, r * 0.45, color);
+        break;
+      }
+      case 'paint': {
+        // bucket body (parallelogram) + drip
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-0.35);
+        ctx.beginPath();
+        (ctx as any).roundRect(-r * 0.5, -r * 0.55, r * 1.0, r * 1.1, r * 0.18);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.5, -r * 0.35);
+        ctx.lineTo(r * 0.5, -r * 0.35);
+        ctx.stroke();
+        ctx.restore();
+        // drip
+        ctx.beginPath();
+        ctx.arc(cx + r * 0.75, cy + r * 0.55, r * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+        this.drawSparkle(ctx, cx - r * 0.7, cy - r * 0.55, r * 0.32, color);
+        break;
+      }
+      case 'link': {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-Math.PI / 4);
+        const lwk = r * 0.5;
+        ctx.beginPath();
+        (ctx as any).roundRect(-r * 0.85, -lwk, r * 1.05, lwk * 2, lwk);
+        ctx.stroke();
+        ctx.beginPath();
+        (ctx as any).roundRect(-r * 0.2, -lwk, r * 1.05, lwk * 2, lwk);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+      case 'crop': {
+        const rr = r * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx - rr, cy - rr * 0.4);
+        ctx.lineTo(cx - rr, cy + rr);
+        ctx.lineTo(cx + rr * 0.4, cy + rr);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + rr, cy + rr * 0.4);
+        ctx.lineTo(cx + rr, cy - rr);
+        ctx.lineTo(cx - rr * 0.4, cy - rr);
+        ctx.stroke();
+        break;
+      }
+    }
+    ctx.restore();
+  }
+
+  // 4-point sparkle/star used by several editor icons.
+  private drawSparkle(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    s: number,
+    color: string,
+  ): void {
+    ctx.save();
+    ctx.fillStyle = color;
+    const o = s;       // outer
+    const i = s * 0.32; // inner
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - o);
+    ctx.quadraticCurveTo(cx + i * 0.6, cy - i * 0.6, cx + o, cy);
+    ctx.quadraticCurveTo(cx + i * 0.6, cy + i * 0.6, cx, cy + o);
+    ctx.quadraticCurveTo(cx - i * 0.6, cy + i * 0.6, cx - o, cy);
+    ctx.quadraticCurveTo(cx - i * 0.6, cy - i * 0.6, cx, cy - o);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
   }
 
