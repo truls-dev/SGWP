@@ -386,6 +386,14 @@ const App: React.FC = () => {
     frameStateRef.current = {
       ...frameStateRef.current,
       messages: (playbackMode ? playbackItems : state.script).filter(m => m.type !== MessageType.IOS_NOTIFICATION && m.type !== MessageType.OPEN_SNAP),
+      snapVideoIds: (() => {
+        const ids = new Set<string>();
+        for (const ev of state.script) {
+          if (ev.type === MessageType.SNAP && ev.snapIsVideo) ids.add(ev.id);
+          if (ev.type === MessageType.OPEN_SNAP && ev.snapIsVideo && ev.snapTargetId) ids.add(ev.snapTargetId);
+        }
+        return ids;
+      })(),
       compositionText,
       isMeTyping,
       activeKey,
@@ -842,15 +850,40 @@ const App: React.FC = () => {
   const handleSnapImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && activeSnapEventIdRef.current) {
+      const isVideo = file.type.startsWith('video/');
       const reader = new FileReader();
       reader.onload = (loadEvent) => {
         const result = loadEvent.target?.result;
         if (typeof result === 'string') {
           const eventId = activeSnapEventIdRef.current;
-          setState(prev => ({
-            ...prev,
-            script: prev.script.map(s => s.id === eventId ? { ...s, snapImageUrl: result } : s)
-          }));
+          const applyUpdate = (durationMs?: number) => {
+            setState(prev => ({
+              ...prev,
+              script: prev.script.map(s => s.id === eventId ? {
+                ...s,
+                snapImageUrl: result,
+                snapIsVideo: isVideo,
+                ...(durationMs ? { snapDurationMs: durationMs } : {}),
+              } : s)
+            }));
+          };
+          if (isVideo) {
+            // For video snaps, the snap duration matches the video's length.
+            // Always set a duration deterministically (fall back if the probe fails).
+            const FALLBACK_VIDEO_MS = 5000;
+            const probe = document.createElement('video');
+            probe.preload = 'metadata';
+            probe.onloadedmetadata = () => {
+              const ms = isFinite(probe.duration) && probe.duration > 0
+                ? Math.round(probe.duration * 1000)
+                : FALLBACK_VIDEO_MS;
+              applyUpdate(ms);
+            };
+            probe.onerror = () => applyUpdate(FALLBACK_VIDEO_MS);
+            probe.src = result;
+          } else {
+            applyUpdate(undefined);
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -4256,13 +4289,17 @@ const App: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
                                       {item.snapImageUrl && (
-                                        <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                        item.snapIsVideo ? (
+                                          <video src={item.snapImageUrl} muted className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                        ) : (
+                                          <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                        )
                                       )}
                                       <button
                                         onClick={() => { activeSnapEventIdRef.current = item.id; (snapImageInputRef.current as any)?.click(); }}
                                         className="text-[10px] font-black uppercase text-red-400 hover:text-white transition-colors flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md"
                                       >
-                                        <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Image' : 'Upload Snap Image'}
+                                        <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Media' : 'Upload Snap Media'}
                                       </button>
                                     </div>
                                   </>
@@ -4310,13 +4347,17 @@ const App: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
                                   {item.snapImageUrl && (
-                                    <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                    item.snapIsVideo ? (
+                                      <video src={item.snapImageUrl} muted className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                    ) : (
+                                      <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                    )
                                   )}
                                   <button
                                     onClick={() => { activeSnapEventIdRef.current = item.id; (snapImageInputRef.current as any)?.click(); }}
                                     className="text-[10px] font-black uppercase text-orange-400 hover:text-white transition-colors flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md"
                                   >
-                                    <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Image' : 'Upload Snap Image'}
+                                    <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Media' : 'Upload Snap Media'}
                                   </button>
                                 </div>
                               </div>
@@ -4399,7 +4440,7 @@ const App: React.FC = () => {
                       type="file"
                       ref={snapImageInputRef}
                       className="hidden"
-                      accept="image/*"
+                      accept="image/*,video/*"
                       onChange={handleSnapImageUpload}
                     />
 

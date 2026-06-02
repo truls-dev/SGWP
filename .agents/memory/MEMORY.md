@@ -2,3 +2,4 @@
 - [Snap image data model](snap-image-data-model.md) — received-snap image lives on OPEN_SNAP; me-sent-snap image lives on the SNAP event itself.
 - [Snap-send editor view](snap-send-editor-view.md) — me-sent-snap fullscreen recreates Snapchat post-capture editor; draw chrome/circles in canvas space (u=sbScaleX, arc()) so they stay round in short-crop.
 - [Me-sent snap bubble](me-snap-bubble.md) — me-snaps use drawMeSnapBubble (white card, red play-arrow): filled+"Delivered" until opened, outline+"Opened"; playback flips via snapOpenedIds keyed by event.id, keep playback+estimator 1500ms delay in lockstep.
+- [Snap video support](snap-video.md) — snaps can be image OR video (snapIsVideo flag); video bubble icons go purple #99529e via snapVideoIds Set keyed by SNAP id; video duration auto-syncs; loadVideo must skip proxy for data: URLs.

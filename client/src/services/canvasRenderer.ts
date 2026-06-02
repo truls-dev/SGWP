@@ -38,6 +38,7 @@ export interface FrameState {
   snapFullscreenActive?: boolean;
   snapFullscreenEventId?: string;
   snapOpenedIds?: Set<string>;
+  snapVideoIds?: Set<string>;
   snapTappingId?: string;
   snapOpeningStartTime?: number;
   snapClosingStartTime?: number;
@@ -262,6 +263,9 @@ export class CanvasRenderer {
   private whiteIconCache = new Map<string, HTMLCanvasElement>();
   private gifVideos = new Map<string, HTMLVideoElement>();
   private currentSnapOpenedIds: Set<string> = new Set();
+  private currentSnapVideoIds: Set<string> = new Set();
+  private lastSnapFsId?: string;
+  private lastSnapSendId?: string;
   private hiddenVideoContainer: HTMLDivElement;
   private emojiImages = new Map<string, HTMLImageElement>();
   private stickerAnim: StickerAnimState | null = null;
@@ -427,7 +431,11 @@ export class CanvasRenderer {
         promises.push(this.loadImg(`contact_${e.id}`, `/api/media-proxy?url=${encodeURIComponent(bitmojiUrl)}`));
       }
       if ((e.type === MessageType.OPEN_SNAP || e.type === MessageType.SNAP) && e.snapImageUrl) {
-        promises.push(this.loadImg(`snap_${e.id}`, e.snapImageUrl));
+        if (e.snapIsVideo) {
+          promises.push(this.loadVideo(`snap_${e.id}`, e.snapImageUrl));
+        } else {
+          promises.push(this.loadImg(`snap_${e.id}`, e.snapImageUrl));
+        }
       }
     }
 
@@ -484,7 +492,9 @@ export class CanvasRenderer {
   private loadVideo(key: string, originalUrl: string): Promise<void> {
     if (!originalUrl) return Promise.resolve();
     if (this.gifVideos.has(key)) return Promise.resolve();
-    const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
+    const proxyUrl = originalUrl.startsWith('data:')
+      ? originalUrl
+      : `/api/media-proxy?url=${encodeURIComponent(originalUrl)}`;
     return new Promise((resolve) => {
       const video = document.createElement('video');
       video.crossOrigin = 'anonymous';
@@ -1341,6 +1351,27 @@ export class CanvasRenderer {
     const maxTextW = this.W - padX - MSG_PAD_X - BAR_WIDTH - BAR_GAP;
 
     this.currentSnapOpenedIds = state.snapOpenedIds || new Set();
+    this.currentSnapVideoIds = state.snapVideoIds || new Set();
+
+    // Restart snap videos from the beginning each time a fullscreen / send view opens
+    if (state.snapFullscreenActive && state.snapFullscreenEventId) {
+      if (this.lastSnapFsId !== state.snapFullscreenEventId) {
+        this.lastSnapFsId = state.snapFullscreenEventId;
+        const v = this.gifVideos.get(`snap_${state.snapFullscreenEventId}`);
+        if (v) { try { v.currentTime = 0; v.play().catch(() => {}); } catch {} }
+      }
+    } else {
+      this.lastSnapFsId = undefined;
+    }
+    if (state.snapSendActive && state.snapSendEventId) {
+      if (this.lastSnapSendId !== state.snapSendEventId) {
+        this.lastSnapSendId = state.snapSendEventId;
+        const v = this.gifVideos.get(`snap_${state.snapSendEventId}`);
+        if (v) { try { v.currentTime = 0; v.play().catch(() => {}); } catch {} }
+      }
+    } else {
+      this.lastSnapSendId = undefined;
+    }
     const msgs = state.messages.filter((m) => m.type !== MessageType.PRESENCE && m.type !== MessageType.OPEN_SNAP);
     const layouts: MsgLayout[] = [];
     let totalH = 80;
@@ -1522,10 +1553,11 @@ export class CanvasRenderer {
     if (msg.type === MessageType.SNAP) {
       const snapOpened = this.currentSnapOpenedIds.has(msg.id);
       const snapTapping = state.snapTappingId === msg.id;
+      const snapIsVideo = this.currentSnapVideoIds.has(msg.id);
       if (sender?.isMe) {
-        curY += this.drawMeSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened);
+        curY += this.drawMeSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapIsVideo);
       } else {
-        curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping, msg.snapLabel);
+        curY += this.drawSnapBubble(ctx, textStartX, curY, maxTextW, snapOpened, snapTapping, msg.snapLabel, snapIsVideo);
       }
     } else if (msg.type === MessageType.CONTACT_CARD) {
       this.drawContactCard(ctx, msg, textStartX, curY, fontSize);
@@ -1599,8 +1631,10 @@ export class CanvasRenderer {
     snapOpened: boolean,
     snapTapping = false,
     snapLabel?: string,
+    isVideo = false,
   ): number {
     const cardH = 100;
+    const accent = isVideo ? '#99529e' : '#E8453C';
     const cardW = Math.min(750, maxTextW);
     const cardRadius = 18;
 
@@ -1640,12 +1674,12 @@ export class CanvasRenderer {
     };
 
     if (!snapOpened) {
-      ctx.fillStyle = '#E8453C';
+      ctx.fillStyle = accent;
       ctx.beginPath();
       (ctx as any).roundRect(sqX, sqY, sqSize, sqSize, sqRadius);
       ctx.fill();
     } else {
-      ctx.strokeStyle = '#E8453C';
+      ctx.strokeStyle = accent;
       ctx.lineWidth = 3;
       ctx.beginPath();
       (ctx as any).roundRect(sqX, sqY, sqSize, sqSize, sqRadius);
@@ -1680,6 +1714,7 @@ export class CanvasRenderer {
     y: number,
     maxTextW: number,
     snapOpened: boolean,
+    isVideo = false,
   ): number {
     const cardH = 100;
     const cardW = Math.min(750, maxTextW);
@@ -1702,7 +1737,7 @@ export class CanvasRenderer {
     ctx.stroke();
 
     const cy = y + cardH / 2;
-    const arrowColor = '#F4493C';
+    const arrowColor = isVideo ? '#99529e' : '#F4493C';
     const aw = 38;
     const ah = 46;
     const ax = textStartX + 26;
@@ -1809,14 +1844,18 @@ export class CanvasRenderer {
     ctx.restore();
 
     // Snap image with rounded corners, bottom-anchored within the image area
-    const img = this.images.get(`snap_${state.snapFullscreenEventId}`);
+    const fsVid = this.gifVideos.get(`snap_${state.snapFullscreenEventId}`);
+    const fsImg = this.images.get(`snap_${state.snapFullscreenEventId}`);
+    const fsMedia = fsVid || fsImg;
+    const fsMW = fsVid ? fsVid.videoWidth : (fsImg?.width ?? 0);
+    const fsMH = fsVid ? fsVid.videoHeight : (fsImg?.height ?? 0);
     ctx.save();
     ctx.beginPath();
     (ctx as any).roundRect(ix, iy, iw, ih, Math.max(ir, 0));
     ctx.clip();
 
-    if (img && img.width > 0 && img.height > 0) {
-      const imgR = img.width / img.height;
+    if (fsMedia && fsMW > 0 && fsMH > 0) {
+      const imgR = fsMW / fsMH;
       const canR = iw / ih;
       let dx: number, dy: number, dw: number, dh: number;
       if (imgR > canR) {
@@ -1828,7 +1867,7 @@ export class CanvasRenderer {
         dw = iw; dh = iw / imgR;
         dx = ix; dy = iy + ih - dh;
       }
-      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.drawImage(fsMedia as HTMLImageElement | HTMLVideoElement, dx, dy, dw, dh);
     } else {
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(ix, iy, iw, ih);
@@ -1935,9 +1974,13 @@ export class CanvasRenderer {
     ctx.beginPath();
     (ctx as any).roundRect(pr.x, photoTop, pr.w, pr.h - statusBarH, [photoR, photoR, 0, 0]);
     ctx.clip();
-    const img = this.images.get(`snap_${state.snapSendEventId}`);
-    if (img && img.width > 0 && img.height > 0) {
-      const imgR = img.width / img.height;
+    const ssVid = this.gifVideos.get(`snap_${state.snapSendEventId}`);
+    const ssImg = this.images.get(`snap_${state.snapSendEventId}`);
+    const ssMedia = ssVid || ssImg;
+    const ssMW = ssVid ? ssVid.videoWidth : (ssImg?.width ?? 0);
+    const ssMH = ssVid ? ssVid.videoHeight : (ssImg?.height ?? 0);
+    if (ssMedia && ssMW > 0 && ssMH > 0) {
+      const imgR = ssMW / ssMH;
       const areaH = pr.h - statusBarH;
       const canR = pr.w / areaH;
       let dx: number, dy: number, dw: number, dh: number;
@@ -1948,7 +1991,7 @@ export class CanvasRenderer {
         dw = pr.w; dh = pr.w / imgR;
         dx = pr.x; dy = photoTop + (areaH - dh) / 2;
       }
-      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.drawImage(ssMedia as HTMLImageElement | HTMLVideoElement, dx, dy, dw, dh);
     } else {
       ctx.fillStyle = '#2f3b33';
       ctx.fillRect(pr.x, photoTop, pr.w, pr.h - statusBarH);

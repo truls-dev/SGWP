@@ -55,6 +55,7 @@ export interface ScriptEvent {
   snapLabel?: string;
   snapDurationMs?: number;
   snapTargetId?: string;
+  snapIsVideo?: boolean;
 }
 
 export interface SystemConfig {
