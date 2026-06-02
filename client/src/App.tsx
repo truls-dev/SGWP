@@ -3873,7 +3873,7 @@ const App: React.FC = () => {
                                 <option value="PRESENCE">Presence Event</option>
                                 <option value="IOS_NOTIF">iOS Notification</option>
                                 <option value="OPEN_SNAP">👁 Open Snap (trigger)</option>
-                                {state.cast.filter(c => !c.isMe).map(c => <option key={c.id} value={`SNAP__${c.id}`}>📸 Snap from {c.name}</option>)}
+                                {state.cast.map(c => <option key={c.id} value={`SNAP__${c.id}`}>📸 Snap from {c.isMe ? 'ME' : c.name}</option>)}
                                 {state.cast.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                               </select>
                             </div>
