@@ -554,6 +554,10 @@ const App: React.FC = () => {
     snapOpenedIdsRef.current = new Set();
     frameStateRef.current.snapFullscreenActive = false;
     frameStateRef.current.snapFullscreenEventId = undefined;
+    frameStateRef.current.snapSendActive = false;
+    frameStateRef.current.snapSendEventId = undefined;
+    frameStateRef.current.snapSendOpeningStartTime = undefined;
+    frameStateRef.current.snapSendClosingStartTime = undefined;
     frameStateRef.current.snapOpenedIds = new Set();
     frameStateRef.current.endScreenActive = false;
     frameStateRef.current.endScreenStartTime = undefined;
@@ -1548,6 +1552,33 @@ const App: React.FC = () => {
             if (isSnap) {
               frameStateRef.current.snapSendingParticipantIds = [];
             }
+        }
+
+        // When "me" sends a snap, open the fullscreen camera "Send to" view,
+        // hold it for a beat, then fire the send and return to the chat.
+        if (sender.isMe && event.type === MessageType.SNAP) {
+          const sendDuration = event.snapDurationMs || 1800;
+          const OPEN_DUR = 250;
+          const CLOSE_DUR = 250;
+          const holdDur = Math.max(0, sendDuration - OPEN_DUR - CLOSE_DUR);
+
+          frameStateRef.current.snapSendActive = true;
+          frameStateRef.current.snapSendEventId = event.id;
+          frameStateRef.current.snapSendOpeningStartTime = performance.now() - playbackStartTimeRef.current;
+          await delay(OPEN_DUR);
+          frameStateRef.current.snapSendOpeningStartTime = undefined;
+
+          await delay(holdDur);
+
+          frameStateRef.current.snapSendClosingStartTime = performance.now() - playbackStartTimeRef.current;
+          await delay(CLOSE_DUR);
+          frameStateRef.current.snapSendClosingStartTime = undefined;
+          frameStateRef.current.snapSendActive = false;
+          frameStateRef.current.snapSendEventId = undefined;
+
+          // If playback was stopped during the send animation, bail out before
+          // appending the snap to the chat.
+          if ((runningStatusRef.current as string) === 'idle') break;
         }
 
         if (!event.isBackspaced) {
@@ -2572,6 +2603,9 @@ const App: React.FC = () => {
       } else if (event.type === MessageType.STICKER || event.type === MessageType.IMAGE || event.type === MessageType.GIF || event.type === MessageType.CONTACT_CARD || event.type === MessageType.SNAP) {
         if (sender && !sender.isMe) {
           totalMs += chat.messageDelay;
+        }
+        if (sender?.isMe && event.type === MessageType.SNAP) {
+          totalMs += event.snapDurationMs || 1800;
         }
         if (sender?.isMe && !isGroup) {
           const them = cast.find(c => !c.isMe);
@@ -4157,12 +4191,16 @@ const App: React.FC = () => {
                                 </div>
                               </div>
                             ) : item.type === MessageType.SNAP ? (
+                              (() => {
+                                const snapSender = state.cast.find(c => c.id === item.senderId);
+                                const isMeSnap = !!snapSender?.isMe;
+                                return (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
                                   <span className="text-2xl">📸</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-[10px] font-black text-red-400 uppercase tracking-widest">Snap Received</div>
-                                    <div className="text-[9px] text-gray-400 mt-0.5">Add an OPEN SNAP event below to trigger it.</div>
+                                    <div className="text-[10px] font-black text-red-400 uppercase tracking-widest">{isMeSnap ? 'Snap Sent' : 'Snap Received'}</div>
+                                    <div className="text-[9px] text-gray-400 mt-0.5">{isMeSnap ? 'Shows a "Send to" camera view, then appears in chat.' : 'Add an OPEN SNAP event below to trigger it.'}</div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -4179,7 +4217,42 @@ const App: React.FC = () => {
                                     className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-red-500 placeholder-gray-600"
                                   />
                                 </div>
+                                {isMeSnap && (
+                                  <>
+                                    <div className="flex items-center gap-2">
+                                      <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest shrink-0">Send View</label>
+                                      <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5">
+                                        <input
+                                          type="number"
+                                          min="0.5"
+                                          step="0.5"
+                                          value={((item.snapDurationMs || 1800) / 1000).toFixed(1)}
+                                          onChange={e => {
+                                            const newScript = [...state.script];
+                                            newScript[idx] = { ...item, snapDurationMs: Math.max(500, parseFloat(e.target.value || '1.8') * 1000) };
+                                            setState(prev => ({ ...prev, script: newScript }));
+                                          }}
+                                          className="w-[36px] bg-transparent text-[10px] font-bold outline-none text-center"
+                                        />
+                                        <span className="text-[9px] text-gray-500">s on screen</span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {item.snapImageUrl && (
+                                        <img src={item.snapImageUrl} alt="snap" className="w-12 h-12 rounded-lg object-cover border border-white/20 shrink-0" />
+                                      )}
+                                      <button
+                                        onClick={() => { activeSnapEventIdRef.current = item.id; (snapImageInputRef.current as any)?.click(); }}
+                                        className="text-[10px] font-black uppercase text-red-400 hover:text-white transition-colors flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md"
+                                      >
+                                        <i className="fa-solid fa-image"></i> {item.snapImageUrl ? 'Swap Image' : 'Upload Snap Image'}
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
+                                );
+                              })()
                             ) : item.type === MessageType.OPEN_SNAP ? (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 mb-2">

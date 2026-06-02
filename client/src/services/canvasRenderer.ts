@@ -41,6 +41,10 @@ export interface FrameState {
   snapTappingId?: string;
   snapOpeningStartTime?: number;
   snapClosingStartTime?: number;
+  snapSendActive?: boolean;
+  snapSendEventId?: string;
+  snapSendOpeningStartTime?: number;
+  snapSendClosingStartTime?: number;
   endScreenActive?: boolean;
   endScreenStartTime?: number;
 }
@@ -422,7 +426,7 @@ export class CanvasRenderer {
         const bitmojiUrl = getSelfieUrlForAvatar(e.contactCardAvatarId);
         promises.push(this.loadImg(`contact_${e.id}`, `/api/media-proxy?url=${encodeURIComponent(bitmojiUrl)}`));
       }
-      if (e.type === MessageType.OPEN_SNAP && e.snapImageUrl) {
+      if ((e.type === MessageType.OPEN_SNAP || e.type === MessageType.SNAP) && e.snapImageUrl) {
         promises.push(this.loadImg(`snap_${e.id}`, e.snapImageUrl));
       }
     }
@@ -674,6 +678,11 @@ export class CanvasRenderer {
     // so the black bg covers the full canvas and zoom coords are correct.
     if (state.snapFullscreenActive && state.snapFullscreenEventId) {
       this.drawSnapFullscreen(this.ctx, state);
+    }
+
+    // Draw the "me" snap-send camera view (fullscreen "Send to [recipient]")
+    if (state.snapSendActive && state.snapSendEventId) {
+      this.drawSnapSendFullscreen(this.ctx, state);
     }
 
     // End screen frost overlay — capture snapshot on first active frame, then render
@@ -1791,6 +1800,166 @@ export class CanvasRenderer {
 
       ctx.restore();
     }
+  }
+
+  // Fullscreen camera "Send to [recipient]" view shown when the "me" person
+  // sends a snap. The snap image fills the phone area, with the same white
+  // status bar used when viewing snaps and a "Send to [name]" header.
+  private drawSnapSendFullscreen(
+    ctx: CanvasRenderingContext2D,
+    state: FrameState,
+  ): void {
+    const OPEN_DUR = 250;
+    const CLOSE_DUR = 250;
+    const imgCornerR = 18;
+
+    // Fade/scale the whole view in on open and out on close.
+    let t = 1;
+    if (state.snapSendOpeningStartTime !== undefined) {
+      const elapsed = state.time - state.snapSendOpeningStartTime;
+      const raw = Math.min(Math.max(elapsed / OPEN_DUR, 0), 1);
+      t = 1 - Math.pow(1 - raw, 3);
+    } else if (state.snapSendClosingStartTime !== undefined) {
+      const elapsed = state.time - state.snapSendClosingStartTime;
+      const raw = Math.min(Math.max(elapsed / CLOSE_DUR, 0), 1);
+      t = 1 - Math.pow(raw, 2);
+    }
+
+    const pr = this.phoneCanvasRect;
+
+    const uiScale = state.systemConfig.uiScale || 1;
+    const sbScaleX = this.phoneScaleX * uiScale;
+    const sbScaleY = this.phoneScaleY * uiScale;
+    const statusLocalW = this.W / uiScale;
+    const scale = sbScaleX;
+
+    const statusBarCanvasH = STATUS_BAR_H * sbScaleY;
+    const snapBarCanvasH = Math.round(pr.w * (121 / 497));
+
+    // Black bg clipped to phone area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pr.x, pr.y, pr.w, pr.h);
+    ctx.clip();
+    ctx.fillStyle = `rgba(0,0,0,${t})`;
+    ctx.fillRect(pr.x, pr.y, pr.w, pr.h);
+    ctx.restore();
+
+    // Whole view fades/scales in from 92% -> 100%
+    const viewScale = 0.92 + 0.08 * t;
+    ctx.save();
+    ctx.globalAlpha = t;
+    const cx = pr.x + pr.w / 2;
+    const cy = pr.y + pr.h / 2;
+    ctx.translate(cx, cy);
+    ctx.scale(viewScale, viewScale);
+    ctx.translate(-cx, -cy);
+
+    // Snap image fills the area between status bar and bottom bar
+    const ix = pr.x;
+    const iy = pr.y + statusBarCanvasH;
+    const iw = pr.w;
+    const ih = pr.h - statusBarCanvasH - snapBarCanvasH;
+
+    const img = this.images.get(`snap_${state.snapSendEventId}`);
+    ctx.save();
+    ctx.beginPath();
+    (ctx as any).roundRect(ix, iy, iw, ih, imgCornerR);
+    ctx.clip();
+    if (img && img.width > 0 && img.height > 0) {
+      const imgR = img.width / img.height;
+      const canR = iw / ih;
+      let dx: number, dy: number, dw: number, dh: number;
+      if (imgR > canR) {
+        dh = ih; dw = ih * imgR;
+        dx = ix + (iw - dw) / 2; dy = iy + ih - dh;
+      } else {
+        dw = iw; dh = iw / imgR;
+        dx = ix; dy = iy + ih - dh;
+      }
+      ctx.drawImage(img, dx, dy, dw, dh);
+    } else {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(ix, iy, iw, ih);
+    }
+    ctx.restore();
+
+    // White status bar — pixel-identical to the chat status bar
+    ctx.save();
+    ctx.translate(pr.x, pr.y);
+    ctx.scale(sbScaleX, sbScaleY);
+    this.drawStatusBar(ctx, state, 0, '#FFFFFF', statusLocalW);
+    ctx.restore();
+
+    // ── "Send to [recipient]" bottom pill ──────────────────────────────────
+    const recipient =
+      state.chatConfig.headerName || state.chatConfig.contactName || '';
+    const barY = pr.y + pr.h - snapBarCanvasH;
+    const pillH = 56 * scale;
+    const pillCY = barY + snapBarCanvasH / 2;
+    const padX = 24 * scale;
+    const sendLabel = 'Send to';
+
+    ctx.save();
+    ctx.textBaseline = 'middle' as any;
+    ctx.textAlign = 'left';
+
+    // Measure the recipient name to size the pill
+    const nameFontPx = 30 * scale;
+    ctx.font = `700 ${nameFontPx}px ${FONT_HEADER}`;
+    const nameW = ctx.measureText(recipient).width;
+    const labelFontPx = 22 * scale;
+    ctx.font = `600 ${labelFontPx}px ${FONT_REGULAR}`;
+    const labelW = ctx.measureText(sendLabel).width;
+
+    const arrowR = 22 * scale;
+    const gap = 14 * scale;
+    const contentW = labelW + gap + nameW + gap * 1.5 + arrowR * 2;
+    const pillW = contentW + padX * 2;
+    const pillX = pr.x + pr.w / 2 - pillW / 2;
+
+    // Pill background
+    ctx.beginPath();
+    (ctx as any).roundRect(pillX, pillCY - pillH / 2, pillW, pillH, pillH / 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fill();
+
+    let tx = pillX + padX;
+    // "Send to" label (light gray)
+    ctx.textBaseline = 'middle';
+    ctx.font = `600 ${labelFontPx}px ${FONT_REGULAR}`;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(sendLabel, tx, pillCY);
+    tx += labelW + gap;
+
+    // Recipient name (white, bold)
+    ctx.font = `700 ${nameFontPx}px ${FONT_HEADER}`;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(recipient, tx, pillCY);
+    tx += nameW + gap * 1.5;
+
+    // Blue circular send arrow
+    const arrowCX = tx + arrowR;
+    ctx.beginPath();
+    ctx.arc(arrowCX, pillCY, arrowR, 0, Math.PI * 2);
+    ctx.fillStyle = '#0FADFF';
+    ctx.fill();
+    // Paper-plane-ish arrow (simple chevron)
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3 * scale;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(arrowCX - arrowR * 0.45, pillCY);
+    ctx.lineTo(arrowCX + arrowR * 0.45, pillCY);
+    ctx.moveTo(arrowCX + arrowR * 0.05, pillCY - arrowR * 0.4);
+    ctx.lineTo(arrowCX + arrowR * 0.45, pillCY);
+    ctx.lineTo(arrowCX + arrowR * 0.05, pillCY + arrowR * 0.4);
+    ctx.stroke();
+
+    ctx.restore();
+
+    ctx.restore();
   }
 
   private drawEndScreen(ctx: CanvasRenderingContext2D, state: FrameState): void {
