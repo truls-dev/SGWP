@@ -491,19 +491,43 @@ export async function registerRoutes(
         parsed.hostname.endsWith('.giphy.com') ||
         parsed.hostname.endsWith('.giphy.net') ||
         parsed.hostname === 'sdk.bitmoji.com' ||
-        parsed.hostname.endsWith('.bitmoji.com');
+        parsed.hostname.endsWith('.bitmoji.com') ||
+        parsed.hostname === 'backend.korpi.ai' ||
+        parsed.hostname.endsWith('.korpi.ai');
       if (!allowed) {
         return res.status(403).json({ error: "Forbidden domain" });
       }
-      const response = await fetch(url);
-      if (!response.ok) return res.status(response.status).end();
+
+      // Forward Range header so video seeking works
+      const upstreamHeaders: Record<string, string> = {};
+      if (req.headers.range) upstreamHeaders['Range'] = req.headers.range;
+
+      const response = await fetch(url, { headers: upstreamHeaders });
+      if (!response.ok && response.status !== 206) return res.status(response.status).end();
+
       const contentType = response.headers.get('content-type') || 'video/mp4';
-      const buffer = Buffer.from(await response.arrayBuffer());
+      const contentLength = response.headers.get('content-length');
+      const contentRange = response.headers.get('content-range');
+      const acceptRanges = response.headers.get('accept-ranges');
+
       res.setHeader('Content-Type', contentType);
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', 'public, max-age=86400');
-      res.setHeader('Content-Length', buffer.byteLength);
-      res.send(buffer);
+      if (contentLength) res.setHeader('Content-Length', contentLength);
+      if (contentRange) res.setHeader('Content-Range', contentRange);
+      if (acceptRanges) res.setHeader('Accept-Ranges', acceptRanges);
+      else res.setHeader('Accept-Ranges', 'bytes');
+
+      res.status(response.status);
+
+      // Stream instead of buffering for large media
+      if (response.body) {
+        const { Readable } = await import('stream');
+        Readable.fromWeb(response.body as any).pipe(res);
+      } else {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        res.send(buffer);
+      }
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }

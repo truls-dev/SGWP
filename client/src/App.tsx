@@ -5198,7 +5198,10 @@ const App: React.FC = () => {
       <VideoGalleryModal
         open={showVideoGallery}
         onClose={() => setShowVideoGallery(false)}
-        onSelect={(url) => updateChat('exportBackgroundVideoUrl', url)}
+        onSelect={(url) => {
+          const proxied = url.startsWith('http') ? `/api/media-proxy?url=${encodeURIComponent(url)}` : url;
+          updateChat('exportBackgroundVideoUrl', proxied);
+        }}
         onUpload={() => exportBgVideoInputRef.current?.click()}
         currentVideoUrl={state.chat.exportBackgroundVideoUrl}
       />
